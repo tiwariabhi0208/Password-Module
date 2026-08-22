@@ -43,106 +43,78 @@ function getInitials(name) {
 function SchoolCrest({ size = 60 }) {
   const h = size * 1.12;
   return <svg width={size} height={h} viewBox="0 0 60 67" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {
-    /* Shield body */
-  }
+      {/* Shield body */}
       <path
-    d="M30 3L4 14V35C4 49 16 60 30 64C44 60 56 49 56 35V14L30 3Z"
-    fill={MAROON}
-    stroke={GOLD}
-    strokeWidth="2.5"
-    strokeLinejoin="round"
-  />
-      {
-    /* Inner shield ring */
-  }
+        d="M30 3L4 14V35C4 49 16 60 30 64C44 60 56 49 56 35V14L30 3Z"
+        fill={MAROON}
+        stroke={GOLD}
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      {/* Inner shield ring */}
       <path
-    d="M30 9L9 18V35C9 47 19 56 30 60C41 56 51 47 51 35V18L30 9Z"
-    fill="none"
-    stroke={GOLD}
-    strokeWidth="1"
-    opacity="0.5"
-  />
-      {
-    /* Torch flame */
-  }
+        d="M30 9L9 18V35C9 47 19 56 30 60C41 56 51 47 51 35V18L30 9Z"
+        fill="none"
+        stroke={GOLD}
+        strokeWidth="1"
+        opacity="0.5"
+      />
+      {/* Gold Star */}
       <path
-    d="M30 18C30 18 24 24 24 30C24 33.8 26.7 37 30 38C33.3 37 36 33.8 36 30C36 24 30 18 30 18Z"
-    fill={GOLD}
-  />
-      {
-    /* Flame inner highlight */
-  }
+        d="M 30 19 L 33.5 27 L 42 27 L 35 32 L 37.5 40 L 30 35 L 22.5 40 L 25 32 L 18 27 L 26.5 27 Z"
+        fill={GOLD}
+      />
+      {/* Torch flame (burgundy/maroon) inside the star */}
       <path
-    d="M30 22C30 22 27 26 27 29C27 31 28.3 32.5 30 33C31.7 32.5 33 31 33 29C33 26 30 22 30 22Z"
-    fill={MAROON}
-    opacity="0.4"
-  />
-      {
-    /* Torch handle */
-  }
-      <rect x="28" y="38" width="4" height="12" rx="2" fill={GOLD} />
-      {
-    /* Torch base */
-  }
-      <rect x="24.5" y="49" width="11" height="3" rx="1.5" fill={GOLD} />
+        d="M30 22C30 22 26.5 25.5 26.5 29C26.5 31.8 28 33.5 30 34.2C32 33.5 33.5 31.8 33.5 29C33.5 25.5 30 22 30 22Z"
+        fill={MAROON}
+      />
+      {/* Torch handle */}
+      <rect x="28" y="36" width="4" height="12" rx="2" fill={GOLD} />
+      {/* Torch base */}
+      <rect x="24.5" y="47" width="11" height="3" rx="1.5" fill={GOLD} />
     </svg>;
 }
 function AuthCard({ children }) {
   return <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
-      {
-    /* School building background */
-  }
+      {/* School building background */}
       <ImageWithFallback
-    src={schoolBg}
-    alt="South Point School, Guwahati campus building"
-    className="absolute inset-0 w-full h-full object-cover"
-  />
-      {
-    /* Maroon tinted overlay */
-  }
+        src={schoolBg}
+        alt="South Point School, Guwahati campus building"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Maroon tinted overlay */}
       <div className="absolute inset-0" style={{ backgroundColor: "rgba(80, 10, 25, 0.62)" }} />
 
-      {
-    /* Card */
-  }
-      <div className="relative z-10 w-full max-w-[360px] rounded-2xl overflow-hidden shadow-2xl">
-        {
-    /* Maroon header */
-  }
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-[420px] rounded-3xl overflow-hidden shadow-2xl border-2 border-white">
+        {/* Maroon header */}
         <div
-    className="flex flex-col items-center py-7 px-6"
-    style={{ backgroundColor: MAROON }}
-  >
+          className="flex flex-col items-center py-7 px-6"
+          style={{ backgroundColor: MAROON }}
+        >
           <SchoolCrest size={58} />
           <h1
-    className="mt-3 text-lg font-bold tracking-wide text-center"
-    style={{ color: GOLD }}
-  >
+            className="mt-2.5 text-xl font-bold tracking-wide text-center font-serif"
+            style={{ color: GOLD }}
+          >
             South Point School
           </h1>
-          <p
-    className="text-[10px] font-semibold tracking-[0.18em] uppercase mt-0.5 text-center"
-    style={{ color: GOLD, opacity: 0.85 }}
-  >
-            Guwahati
-          </p>
-          <div className="flex items-center gap-2 mt-2">
-            <span style={{ color: GOLD, opacity: 0.5 }} className="text-xs">—</span>
+          <div className="flex items-center gap-1.5 mt-1.5 w-full justify-center">
+            <span style={{ color: GOLD, opacity: 0.8 }} className="text-[10px] font-bold">—</span>
             <p
-    className="text-[9.5px] font-semibold tracking-[0.22em] uppercase"
-    style={{ color: GOLD, opacity: 0.75 }}
-  >
-              Credential Vault
+              className="text-[9px] font-bold tracking-[0.16em] uppercase text-center"
+              style={{ color: GOLD }}
+            >
+              Management Information System
             </p>
-            <span style={{ color: GOLD, opacity: 0.5 }} className="text-xs">—</span>
+            <span style={{ color: GOLD, opacity: 0.8 }} className="text-[10px] font-bold">—</span>
           </div>
+          <div className="text-[10px] leading-none mt-1" style={{ color: GOLD }}>•</div>
         </div>
 
-        {
-    /* White form body */
-  }
-        <div className="bg-white px-7 py-6">{children}</div>
+        {/* White form body */}
+        <div className="bg-white px-8 py-7">{children}</div>
       </div>
     </div>;
 }
@@ -287,27 +259,27 @@ function IconInput({
   ...props
 }) {
   return <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#94A3B8" }}>
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center" style={{ color: MAROON }}>
         {icon}
       </span>
       <input
-    {...props}
-    className="w-full h-10 pl-9 pr-9 text-sm border rounded-lg bg-white text-[#1A0810] placeholder:text-[#94A3B8] focus:outline-none transition-colors"
-    style={{
-      borderColor: BORDER
-    }}
-    onFocus={(e) => {
-      e.currentTarget.style.borderColor = MAROON;
-      e.currentTarget.style.boxShadow = `0 0 0 2px rgba(123,21,53,0.12)`;
-      props.onFocus?.(e);
-    }}
-    onBlur={(e) => {
-      e.currentTarget.style.borderColor = BORDER;
-      e.currentTarget.style.boxShadow = "none";
-      props.onBlur?.(e);
-    }}
-  />
-      {right && <span className="absolute right-3 top-1/2 -translate-y-1/2">{right}</span>}
+        {...props}
+        className="w-full h-12 pl-11 pr-10 text-sm border bg-white text-[#1A0810] placeholder:text-[#94A3B8] focus:outline-none transition-colors rounded-xl"
+        style={{
+          borderColor: BORDER
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = MAROON;
+          e.currentTarget.style.boxShadow = `0 0 0 2px rgba(123,21,53,0.12)`;
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = BORDER;
+          e.currentTarget.style.boxShadow = "none";
+          props.onBlur?.(e);
+        }}
+      />
+      {right && <span className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center">{right}</span>}
     </div>;
 }
 export default function App() {
@@ -370,7 +342,7 @@ export default function App() {
   const primaryBtn = (label, onClick, icon, disabled = false) => <button
     onClick={onClick}
     disabled={disabled}
-    className="w-full h-11 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    className="w-full h-12 flex items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed tracking-wide"
     style={{ backgroundColor: disabled ? "#7B153580" : MAROON }}
     onMouseEnter={(e) => {
       if (!disabled) e.currentTarget.style.backgroundColor = MAROON_HOVER;
@@ -386,62 +358,63 @@ export default function App() {
     return <AuthCard>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              Email Address
+            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-gray-700">
+              EMAIL ADDRESS
             </label>
             <IconInput
-      type="email"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      placeholder="e.g. admin@school.edu"
-      icon={<Mail size={14} />}
-      onKeyDown={(e) => e.key === "Enter" && goToDashboard()}
-    />
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. admin@school.edu"
+              icon={<Mail size={16} />}
+              onKeyDown={(e) => e.key === "Enter" && goToDashboard()}
+            />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              Password
+            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-gray-700">
+              PASSWORD
             </label>
             <IconInput
-      type={showPassword ? "text" : "password"}
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      placeholder="••••••••"
-      icon={<Lock size={14} />}
-      right={<button
-        type="button"
-        onClick={() => setShowPassword(!showPassword)}
-        className="transition-colors"
-        style={{ color: "#94A3B8" }}
-      >
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              icon={<Lock size={16} />}
+              right={<button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="transition-colors flex items-center justify-center text-gray-400 hover:text-gray-600"
+              >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>}
-      onKeyDown={(e) => e.key === "Enter" && goToDashboard()}
-    />
+              onKeyDown={(e) => e.key === "Enter" && goToDashboard()}
+            />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-1">
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
-      type="checkbox"
-      checked={rememberMe}
-      onChange={(e) => setRememberMe(e.target.checked)}
-      className="w-4 h-4 rounded border cursor-pointer"
-      style={{ accentColor: MAROON }}
-    />
-              <span className="text-sm text-[#7A6068]">Remember Me</span>
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                style={{ accentColor: MAROON }}
+              />
+              <span className="text-xs text-gray-500 font-medium">Remember Me</span>
             </label>
             <button
-      onClick={() => setScreen("forgot-step1")}
-      className="text-sm font-medium transition-colors hover:underline"
-      style={{ color: MAROON }}
-    >
+              onClick={() => setScreen("forgot-step1")}
+              className="text-xs font-semibold transition-colors hover:underline"
+              style={{ color: MAROON }}
+            >
               Forgot Password?
             </button>
           </div>
 
-          {primaryBtn("Log in", goToDashboard, <LogIn size={15} />)}
+          <div className="pt-2">
+            {primaryBtn("Log in", goToDashboard, <LogIn size={16} />)}
+          </div>
         </div>
       </AuthCard>;
   }
