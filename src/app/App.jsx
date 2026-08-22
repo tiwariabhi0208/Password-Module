@@ -14,11 +14,149 @@ import {
   LogIn
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
+import schoolLogo from "../../images(1).webp";
+import campusBg from "../../school_campus.jpg";
 const MAROON = "#7B1535";
 const GOLD = "#C9A227";
 const GOLD_LIGHT = "#F5E9BE";
 const MAROON_HOVER = "#661128";
 const BORDER = "rgba(123,21,53,0.16)";
+
+const T = {
+  primary: "#7B1535",
+  primaryDark: "#4c0519",
+  accent: "#C9A227",
+  surface: "#ffffff",
+  red: "#DC2626",
+  redLight: "#FDF2F2",
+  green: "#16A34A",
+  greenLight: "#F0FDF4",
+  ink: "#1A0810",
+  inkLight: "#7A6068"
+};
+
+const font = {
+  body: "inherit"
+};
+
+const radius = {
+  md: "8px"
+};
+
+const shadow = "0 20px 50px rgba(0, 0, 0, 0.35)";
+
+function FormLabel({ text }) {
+  return (
+    <label style={{
+      fontSize: 11,
+      fontWeight: "800",
+      color: "#374151",
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      marginBottom: 5,
+      display: "block",
+    }}>
+      {text}
+    </label>
+  );
+}
+
+function CustomInput({
+  icon,
+  type = "text",
+  name,
+  id,
+  autoComplete,
+  placeholder,
+  value,
+  onChange,
+  required,
+  showPasswordToggle,
+  onToggleShowPassword,
+  onFocus,
+  onBlur
+}) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      border: `1.5px solid #d1d5db`,
+      borderRadius: 12,
+      background: "#fff",
+      overflow: "hidden",
+      transition: "border-color 0.2s",
+      width: "100%",
+    }}
+      className="input-focus-container"
+    >
+      <div style={{
+        width: 38,
+        height: 36,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRight: "1.5px solid #e5e7eb",
+        color: T.primary,
+        background: "rgba(114, 16, 42, 0.02)",
+        flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+      <input
+        type={type}
+        name={name}
+        id={id}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        style={{
+          flex: 1,
+          border: "none",
+          outline: "none",
+          padding: "8px 12px",
+          fontSize: 14,
+          fontFamily: font.body,
+          color: T.ink,
+          background: "transparent",
+          width: "100%",
+        }}
+      />
+      {showPasswordToggle && (
+        <button
+          type="button"
+          onClick={onToggleShowPassword}
+          style={{
+            background: "none",
+            border: "none",
+            padding: "0 12px",
+            cursor: "pointer",
+            color: "#6B6B6B",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {type === "password" ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", color: "#1E3A5F" },
   { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", color: "#7A4C1A" },
@@ -42,37 +180,37 @@ function getInitials(name) {
 function SchoolCrest({ size = 60 }) {
   const h = size * 1.12;
   return <svg width={size} height={h} viewBox="0 0 60 67" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Shield body */}
-      <path
-        d="M30 3L4 14V35C4 49 16 60 30 64C44 60 56 49 56 35V14L30 3Z"
-        fill={MAROON}
-        stroke={GOLD}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* Inner shield ring */}
-      <path
-        d="M30 9L9 18V35C9 47 19 56 30 60C41 56 51 47 51 35V18L30 9Z"
-        fill="none"
-        stroke={GOLD}
-        strokeWidth="1"
-        opacity="0.5"
-      />
-      {/* Gold Star */}
-      <path
-        d="M 30 19 L 33.5 27 L 42 27 L 35 32 L 37.5 40 L 30 35 L 22.5 40 L 25 32 L 18 27 L 26.5 27 Z"
-        fill={GOLD}
-      />
-      {/* Torch flame (burgundy/maroon) inside the star */}
-      <path
-        d="M30 22C30 22 26.5 25.5 26.5 29C26.5 31.8 28 33.5 30 34.2C32 33.5 33.5 31.8 33.5 29C33.5 25.5 30 22 30 22Z"
-        fill={MAROON}
-      />
-      {/* Torch handle */}
-      <rect x="28" y="36" width="4" height="12" rx="2" fill={GOLD} />
-      {/* Torch base */}
-      <rect x="24.5" y="47" width="11" height="3" rx="1.5" fill={GOLD} />
-    </svg>;
+    {/* Shield body */}
+    <path
+      d="M30 3L4 14V35C4 49 16 60 30 64C44 60 56 49 56 35V14L30 3Z"
+      fill={MAROON}
+      stroke={GOLD}
+      strokeWidth="2.5"
+      strokeLinejoin="round"
+    />
+    {/* Inner shield ring */}
+    <path
+      d="M30 9L9 18V35C9 47 19 56 30 60C41 56 51 47 51 35V18L30 9Z"
+      fill="none"
+      stroke={GOLD}
+      strokeWidth="1"
+      opacity="0.5"
+    />
+    {/* Gold Star */}
+    <path
+      d="M 30 19 L 33.5 27 L 42 27 L 35 32 L 37.5 40 L 30 35 L 22.5 40 L 25 32 L 18 27 L 26.5 27 Z"
+      fill={GOLD}
+    />
+    {/* Torch flame (burgundy/maroon) inside the star */}
+    <path
+      d="M30 22C30 22 26.5 25.5 26.5 29C26.5 31.8 28 33.5 30 34.2C32 33.5 33.5 31.8 33.5 29C33.5 25.5 30 22 30 22Z"
+      fill={MAROON}
+    />
+    {/* Torch handle */}
+    <rect x="28" y="36" width="4" height="12" rx="2" fill={GOLD} />
+    {/* Torch base */}
+    <rect x="24.5" y="47" width="11" height="3" rx="1.5" fill={GOLD} />
+  </svg>;
 }
 const WHISTLE_STYLES = `
 @keyframes whistleFloat1 {
@@ -297,7 +435,7 @@ function BoyCharacter({ state }) {
         {/* --- LEGS CROSSED --- */}
         {/* Under leg (left leg standing straight/slightly tilted) */}
         <path d="M 86 230 L 132 325 L 148 325 L 110 230 Z" fill="#151d2a" />
-        
+
         {/* Over leg (right leg crossed in front, bent at knee) */}
         <path d="M 116 230 C 110 260, 90 290, 110 325 L 128 325 C 115 295, 130 260, 154 230 Z" fill={suitColor} stroke={lapelColor} strokeWidth="0.5" />
 
@@ -317,8 +455,22 @@ function BoyCharacter({ state }) {
 }
 
 function AuthCard({ children, sideElement }) {
-  return <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-8" style={{ backgroundColor: "#500a19" }}>
-      {/* Layout wrapper */}
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundImage: `linear-gradient(135deg, rgba(92, 12, 33, 0.55) 0%, rgba(30, 3, 10, 0.75) 100%), url(${campusBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        padding: "32px 16px",
+        fontFamily: font.body,
+        boxSizing: "border-box",
+      }}
+    >
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[420px]">
         {sideElement && (
           <div className="md:absolute md:-right-[140px] md:bottom-[20px] md:z-20 mb-4 md:mb-0 transform md:-rotate-[3deg] origin-bottom transition-all duration-300">
@@ -327,37 +479,76 @@ function AuthCard({ children, sideElement }) {
         )}
 
         {/* Card */}
-        <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl border-2 border-white bg-white z-10">
-          {/* Maroon header */}
+        <div
+          className="animate-fade-in-up"
+          style={{
+            position: "relative",
+            width: "100%",
+            background: T.surface,
+            borderRadius: 24,
+            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.35)",
+            overflow: "hidden",
+            border: `1.5px solid ${T.accent}44`,
+            zIndex: 10,
+          }}
+        >
+          {/* Brand Header */}
           <div
-            className="flex flex-col items-center py-7 px-6"
-            style={{ backgroundColor: MAROON }}
+            style={{
+              background: `linear-gradient(135deg, ${T.primary} 0%, ${T.primaryDark} 100%)`,
+              padding: "20px 24px 16px",
+              textAlign: "center",
+              borderBottom: `2.5px solid ${T.accent}`,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+            }}
           >
-            <SchoolCrest size={58} />
-            <h1
-              className="mt-2.5 text-xl font-bold tracking-wide text-center font-serif"
-              style={{ color: GOLD }}
-            >
-              South Point School
-            </h1>
-            <div className="flex items-center gap-1.5 mt-1.5 w-full justify-center">
-              <span style={{ color: GOLD, opacity: 0.8 }} className="text-[10px] font-bold">—</span>
-              <p
-                className="text-[9px] font-bold tracking-[0.16em] uppercase text-center"
-                style={{ color: GOLD }}
+            <img
+              src={schoolLogo}
+              alt="South Point School Logo"
+              style={{ height: 48, width: "auto", objectFit: "contain" }}
+            />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  fontFamily: "Georgia, serif",
+                  color: T.accent,
+                  letterSpacing: "0.01em",
+                }}
               >
-                Management Information System
-              </p>
-              <span style={{ color: GOLD, opacity: 0.8 }} className="text-[10px] font-bold">—</span>
+                South Point School
+              </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <div style={{ width: 16, height: 1, background: "rgba(255, 255, 255, 0.3)" }} />
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "rgba(255,255,255,0.85)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.15em",
+                  }}
+                >
+                  Password Module
+                </p>
+                <div style={{ width: 16, height: 1, background: "rgba(255, 255, 255, 0.3)" }} />
+              </div>
+              <div style={{ fontSize: 8, color: T.accent, marginTop: 3, lineHeight: 1 }}>◆</div>
             </div>
-            <div className="text-[10px] leading-none mt-1" style={{ color: GOLD }}>•</div>
           </div>
 
           {/* White form body */}
-          <div className="bg-white px-8 py-7">{children}</div>
+          <div style={{ padding: "20px 24px 18px" }}>{children}</div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }
 function AccountModal({ bank, onClose }) {
   const [reveal, setReveal] = useState(false);
@@ -375,124 +566,124 @@ function AccountModal({ bank, onClose }) {
       if (e.target === e.currentTarget) onClose();
     }}
   >
-      <div className="w-[520px] rounded-xl overflow-hidden shadow-2xl border" style={{ borderColor: BORDER }}>
-        {
-    /* Maroon modal header */
-  }
-        <div
-    className="flex items-center justify-between px-5 py-4"
-    style={{ backgroundColor: MAROON }}
-  >
-          <div className="flex items-center gap-3">
-            <div
-    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-    style={{ backgroundColor: bank.color }}
-  >
-              <span className="text-white text-[10px] font-bold leading-none">{bank.initial}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-white text-[15px] font-semibold">{bank.name}</span>
-              <button className="transition-colors" style={{ color: GOLD }} title="Open bank portal">
-                <ExternalLink size={12} />
-              </button>
-            </div>
+    <div className="w-[520px] rounded-xl overflow-hidden shadow-2xl border" style={{ borderColor: BORDER }}>
+      {
+        /* Maroon modal header */
+      }
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ backgroundColor: MAROON }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: bank.color }}
+          >
+            <span className="text-white text-[10px] font-bold leading-none">{bank.initial}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-    className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-white/10"
-    style={{ color: GOLD }}
-    title="Edit"
-  >
-              <Edit2 size={13} />
-            </button>
-            <button
-    onClick={onClose}
-    className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-white/10 text-white"
-    title="Close"
-  >
-              <X size={15} />
+          <div className="flex items-center gap-1.5">
+            <span className="text-white text-[15px] font-semibold">{bank.name}</span>
+            <button className="transition-colors" style={{ color: GOLD }} title="Open bank portal">
+              <ExternalLink size={12} />
             </button>
           </div>
         </div>
-
-        {
-    /* Body */
-  }
-        <div className="bg-white px-5 py-5">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-                Account Number
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-[#1A0810] text-sm font-mono">
-                  {reveal ? formatAccount(bank.accountNumber) : maskAccount(bank.accountNumber)}
-                </span>
-                <button
-    onClick={() => setReveal(!reveal)}
-    className="transition-colors flex-shrink-0"
-    style={{ color: GOLD }}
-  >
-                  {reveal ? <EyeOff size={13} /> : <Eye size={13} />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-                IFSC Code
-              </p>
-              <span className="text-[#1A0810] text-sm font-mono">{bank.ifsc}</span>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-                Account Holder
-              </p>
-              <span className="text-[#1A0810] text-sm">{bank.holder}</span>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-                Account Type
-              </p>
-              <span className="text-[#1A0810] text-sm">Current Account</span>
-            </div>
-          </div>
-        </div>
-
-        {
-    /* Footer */
-  }
-        <div className="flex gap-3 px-5 py-4 border-t" style={{ borderColor: BORDER, backgroundColor: "#FDFAFB" }}>
+        <div className="flex items-center gap-1">
           <button
-    className="flex-1 h-9 border-2 text-sm font-semibold rounded-lg transition-colors hover:text-white"
-    style={{ borderColor: MAROON, color: MAROON }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = MAROON;
-      e.currentTarget.style.color = "#fff";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.backgroundColor = "transparent";
-      e.currentTarget.style.color = MAROON;
-    }}
-  >
-            Corporate Login
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-white/10"
+            style={{ color: GOLD }}
+            title="Edit"
+          >
+            <Edit2 size={13} />
           </button>
           <button
-    className="flex-1 h-9 border-2 text-sm font-semibold rounded-lg transition-colors hover:text-white"
-    style={{ borderColor: MAROON, color: MAROON }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = MAROON;
-      e.currentTarget.style.color = "#fff";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.backgroundColor = "transparent";
-      e.currentTarget.style.color = MAROON;
-    }}
-  >
-            Personal Login
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-white/10 text-white"
+            title="Close"
+          >
+            <X size={15} />
           </button>
         </div>
       </div>
-    </div>;
+
+      {
+        /* Body */
+      }
+      <div className="bg-white px-5 py-5">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
+              Account Number
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[#1A0810] text-sm font-mono">
+                {reveal ? formatAccount(bank.accountNumber) : maskAccount(bank.accountNumber)}
+              </span>
+              <button
+                onClick={() => setReveal(!reveal)}
+                className="transition-colors flex-shrink-0"
+                style={{ color: GOLD }}
+              >
+                {reveal ? <EyeOff size={13} /> : <Eye size={13} />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
+              IFSC Code
+            </p>
+            <span className="text-[#1A0810] text-sm font-mono">{bank.ifsc}</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
+              Account Holder
+            </p>
+            <span className="text-[#1A0810] text-sm">{bank.holder}</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
+              Account Type
+            </p>
+            <span className="text-[#1A0810] text-sm">Current Account</span>
+          </div>
+        </div>
+      </div>
+
+      {
+        /* Footer */
+      }
+      <div className="flex gap-3 px-5 py-4 border-t" style={{ borderColor: BORDER, backgroundColor: "#FDFAFB" }}>
+        <button
+          className="flex-1 h-9 border-2 text-sm font-semibold rounded-lg transition-colors hover:text-white"
+          style={{ borderColor: MAROON, color: MAROON }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = MAROON;
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = MAROON;
+          }}
+        >
+          Corporate Login
+        </button>
+        <button
+          className="flex-1 h-9 border-2 text-sm font-semibold rounded-lg transition-colors hover:text-white"
+          style={{ borderColor: MAROON, color: MAROON }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = MAROON;
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = MAROON;
+          }}
+        >
+          Personal Login
+        </button>
+      </div>
+    </div>
+  </div>;
 }
 function IconInput({
   icon,
@@ -500,28 +691,28 @@ function IconInput({
   ...props
 }) {
   return <div className="relative">
-      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center" style={{ color: MAROON }}>
-        {icon}
-      </span>
-      <input
-        {...props}
-        className="w-full h-12 pl-11 pr-10 text-sm border bg-white text-[#1A0810] placeholder:text-[#94A3B8] focus:outline-none transition-colors rounded-xl"
-        style={{
-          borderColor: BORDER
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = MAROON;
-          e.currentTarget.style.boxShadow = `0 0 0 2px rgba(123,21,53,0.12)`;
-          props.onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = BORDER;
-          e.currentTarget.style.boxShadow = "none";
-          props.onBlur?.(e);
-        }}
-      />
-      {right && <span className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center">{right}</span>}
-    </div>;
+    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center" style={{ color: MAROON }}>
+      {icon}
+    </span>
+    <input
+      {...props}
+      className="w-full h-12 pl-11 pr-10 text-sm border bg-white text-[#1A0810] placeholder:text-[#94A3B8] focus:outline-none transition-colors rounded-xl"
+      style={{
+        borderColor: BORDER
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = MAROON;
+        e.currentTarget.style.boxShadow = `0 0 0 2px rgba(123,21,53,0.12)`;
+        props.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = BORDER;
+        e.currentTarget.style.boxShadow = "none";
+        props.onBlur?.(e);
+      }}
+    />
+    {right && <span className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center">{right}</span>}
+  </div>;
 }
 export default function App() {
   const [screen, setScreen] = useState("login");
@@ -538,9 +729,22 @@ export default function App() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const otpRefs = useRef([]);
   useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("remembered_email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch (e) { }
+  }, []);
+  useEffect(() => {
     if (screen !== "forgot-step2" || resendTimer <= 0) return;
+
     const id = setInterval(() => {
       setResendTimer((t) => {
         if (t <= 1) {
@@ -571,6 +775,39 @@ export default function App() {
     setCanResend(false);
     setTimeout(() => otpRefs.current[0]?.focus(), 50);
   };
+  const handleSignIn = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!email.trim() || !password.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      try {
+        if (rememberMe) {
+          localStorage.setItem("remembered_email", email.trim());
+        } else {
+          localStorage.removeItem("remembered_email");
+        }
+      } catch (err) { }
+
+      setSuccess("Login successful!");
+      setTimeout(() => {
+        goToDashboard();
+        setSuccess("");
+      }, 400);
+    } catch (err) {
+      setError("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
   const goToDashboard = () => {
     setScreen("dashboard");
     setSelectedBank(null);
@@ -593,354 +830,453 @@ export default function App() {
       if (!disabled) e.currentTarget.style.backgroundColor = MAROON;
     }}
   >
-      {icon}
-      {label}
-    </button>;
+    {icon}
+    {label}
+  </button>;
   if (screen === "login") {
     return <AuthCard sideElement={<BoyCharacter state={focusField} />}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-gray-700">
-              EMAIL ADDRESS
-            </label>
-            <IconInput
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. admin@school.edu"
-              icon={<Mail size={16} />}
-              onKeyDown={(e) => e.key === "Enter" && goToDashboard()}
-              onFocus={() => setFocusField("email")}
-              onBlur={() => setFocusField(null)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-gray-700">
-              PASSWORD
-            </label>
-            <IconInput
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              icon={<Lock size={16} />}
-              right={<button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="transition-colors flex items-center justify-center text-gray-400 hover:text-gray-600"
-              >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>}
-              onKeyDown={(e) => e.key === "Enter" && goToDashboard()}
-              onFocus={() => setFocusField("password")}
-              onBlur={() => setFocusField(null)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                style={{ accentColor: MAROON }}
-              />
-              <span className="text-xs text-gray-500 font-medium">Remember Me</span>
-            </label>
-            <button
-              onClick={() => setScreen("forgot-step1")}
-              className="text-xs font-semibold transition-colors hover:underline"
-              style={{ color: MAROON }}
-            >
-              Forgot Password?
-            </button>
-          </div>
-
-          <div className="pt-2">
-            {primaryBtn("Log in", goToDashboard, <LogIn size={16} />)}
-          </div>
+      {error && (
+        <div
+          style={{
+            background: T.redLight,
+            border: `1px solid ${T.red}33`,
+            color: T.red,
+            padding: "8px 12px",
+            borderRadius: radius.md,
+            fontSize: 12,
+            fontWeight: 600,
+            marginBottom: 14,
+            lineHeight: 1.4,
+          }}
+        >
+          ⚠️ {error}
         </div>
-      </AuthCard>;
+      )}
+
+      {success && (
+        <div
+          style={{
+            background: T.greenLight,
+            border: `1px solid ${T.green}33`,
+            color: T.green,
+            padding: "8px 12px",
+            borderRadius: radius.md,
+            fontSize: 12,
+            fontWeight: 600,
+            marginBottom: 14,
+            lineHeight: 1.4,
+          }}
+        >
+          ✓ {success}
+        </div>
+      )}
+
+      <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: 14 }} method="POST" action="#">
+        <div>
+          <FormLabel text="Email Address" />
+          <CustomInput
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            }
+            type="email"
+            name="username"
+            id="admin-email"
+            autoComplete="username"
+            placeholder="e.g. admin@school.edu"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onFocus={() => setFocusField("email")}
+            onBlur={() => setFocusField(null)}
+            required
+          />
+        </div>
+
+        <div>
+          <FormLabel text="Password" />
+          <CustomInput
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            }
+            type={showPassword ? "text" : "password"}
+            name="password"
+            id="admin-password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            showPasswordToggle={true}
+            onToggleShowPassword={() => setShowPassword(!showPassword)}
+            onFocus={() => setFocusField("password")}
+            onBlur={() => setFocusField(null)}
+            required
+          />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: -6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{
+                width: 16,
+                height: 16,
+                cursor: "pointer",
+                accentColor: T.primary,
+              }}
+            />
+            <label
+              htmlFor="rememberMe"
+              style={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: T.inkLight,
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+            >
+              Remember Me
+            </label>
+          </div>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setScreen("forgot-step1");
+            }}
+            style={{
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: T.primary,
+              textDecoration: "none",
+              cursor: "pointer",
+            }}
+          >
+            Forgot Password?
+          </a>
+        </div>
+
+        <button
+          type="submit"
+          className="btn-hover"
+          disabled={loading}
+          style={{
+            background: `linear-gradient(135deg, ${T.primary} 0%, #4c0519 100%)`,
+            border: "none",
+            borderRadius: 99,
+            padding: "10px 0",
+            width: "100%",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 14,
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 10px 20px rgba(114, 16, 42, 0.2)",
+            marginTop: 4,
+            transition: "all 0.2s"
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}>
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          <span>{loading ? "Logging in…" : "Log in"}</span>
+        </button>
+      </form>
+    </AuthCard>;
   }
   if (screen === "forgot-step1") {
     return <AuthCard>
-        <button
-      onClick={() => setScreen("login")}
-      className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70"
-      style={{ color: MAROON }}
-    >
-          <ArrowLeft size={13} />
-          Back to login
-        </button>
-        <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>Reset Password</h2>
-        <p className="text-sm text-[#7A6068] mb-4">
-          We&apos;ll send a one-time code to your work email.
-        </p>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              Work Email
-            </label>
-            <IconInput
-      type="email"
-      value={forgotEmail}
-      onChange={(e) => setForgotEmail(e.target.value)}
-      placeholder="e.g. admin@school.edu"
-      icon={<Mail size={14} />}
-      autoFocus
-      onKeyDown={(e) => e.key === "Enter" && sendOtp()}
-    />
-          </div>
-          {primaryBtn("Send OTP", sendOtp)}
+      <button
+        onClick={() => setScreen("login")}
+        className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70"
+        style={{ color: MAROON }}
+      >
+        <ArrowLeft size={13} />
+        Back to login
+      </button>
+      <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>Reset Password</h2>
+      <p className="text-sm text-[#7A6068] mb-4">
+        We&apos;ll send a one-time code to your work email.
+      </p>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
+            Work Email
+          </label>
+          <IconInput
+            type="email"
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+            placeholder="e.g. admin@school.edu"
+            icon={<Mail size={14} />}
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && sendOtp()}
+          />
         </div>
-      </AuthCard>;
+        {primaryBtn("Send OTP", sendOtp)}
+      </div>
+    </AuthCard>;
   }
   if (screen === "forgot-step2") {
     const otpComplete = otpValues.every((v) => v !== "");
     return <AuthCard>
-        <button
-      onClick={() => setScreen("forgot-step1")}
-      className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70"
-      style={{ color: MAROON }}
-    >
-          <ArrowLeft size={13} />
-          Back
-        </button>
-        <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>Verify Identity</h2>
-        <p className="text-sm text-[#7A6068] mb-5">
-          6-digit code sent to{" "}
-          <span className="font-medium text-[#1A0810]">{forgotEmail || "your email"}</span>
-        </p>
+      <button
+        onClick={() => setScreen("forgot-step1")}
+        className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70"
+        style={{ color: MAROON }}
+      >
+        <ArrowLeft size={13} />
+        Back
+      </button>
+      <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>Verify Identity</h2>
+      <p className="text-sm text-[#7A6068] mb-5">
+        6-digit code sent to{" "}
+        <span className="font-medium text-[#1A0810]">{forgotEmail || "your email"}</span>
+      </p>
 
-        {
-      /* OTP boxes */
-    }
-        <div className="flex gap-2 mb-4">
-          {otpValues.map((val, i) => <input
-      key={i}
-      ref={(el) => {
-        otpRefs.current[i] = el;
-      }}
-      type="text"
-      inputMode="numeric"
-      maxLength={1}
-      value={val}
-      onChange={(e) => handleOtpChange(i, e.target.value)}
-      onKeyDown={(e) => handleOtpKeyDown(i, e)}
-      className="flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
-      style={{
-        borderColor: val ? MAROON : BORDER,
-        backgroundColor: val ? GOLD_LIGHT : "#fff"
-      }}
-    />)}
-        </div>
+      {
+        /* OTP boxes */
+      }
+      <div className="flex gap-2 mb-4">
+        {otpValues.map((val, i) => <input
+          key={i}
+          ref={(el) => {
+            otpRefs.current[i] = el;
+          }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={val}
+          onChange={(e) => handleOtpChange(i, e.target.value)}
+          onKeyDown={(e) => handleOtpKeyDown(i, e)}
+          className="flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
+          style={{
+            borderColor: val ? MAROON : BORDER,
+            backgroundColor: val ? GOLD_LIGHT : "#fff"
+          }}
+        />)}
+      </div>
 
-        {
-      /* Resend */
-    }
-        <div className="mb-4 h-5 flex items-center">
-          {canResend ? <button
-      onClick={handleResend}
-      className="text-sm font-semibold hover:underline"
-      style={{ color: MAROON }}
-    >
-              Resend code
-            </button> : <span className="text-sm text-[#7A6068]">
-              Resend in{" "}
-              <span className="font-mono font-semibold" style={{ color: MAROON }}>
-                0:{String(resendTimer).padStart(2, "0")}
-              </span>
-            </span>}
-        </div>
+      {
+        /* Resend */
+      }
+      <div className="mb-4 h-5 flex items-center">
+        {canResend ? <button
+          onClick={handleResend}
+          className="text-sm font-semibold hover:underline"
+          style={{ color: MAROON }}
+        >
+          Resend code
+        </button> : <span className="text-sm text-[#7A6068]">
+          Resend in{" "}
+          <span className="font-mono font-semibold" style={{ color: MAROON }}>
+            0:{String(resendTimer).padStart(2, "0")}
+          </span>
+        </span>}
+      </div>
 
-        {primaryBtn("Verify & Reset Password", goToDashboard, void 0, !otpComplete)}
-      </AuthCard>;
+      {primaryBtn("Verify & Reset Password", goToDashboard, void 0, !otpComplete)}
+    </AuthCard>;
   }
   return <div className="min-h-screen bg-[#FAFAFA]">
+    {
+      /* Nav — maroon */
+    }
+    <nav
+      className="h-14 flex items-center px-6 justify-between sticky top-0 z-20"
+      style={{ backgroundColor: MAROON, borderBottom: `1px solid rgba(255,255,255,0.08)` }}
+    >
       {
-    /* Nav — maroon */
-  }
-      <nav
-    className="h-14 flex items-center px-6 justify-between sticky top-0 z-20"
-    style={{ backgroundColor: MAROON, borderBottom: `1px solid rgba(255,255,255,0.08)` }}
-  >
-        {
-    /* Brand */
-  }
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <SchoolCrest size={22} />
-            <span className="text-white text-sm font-bold tracking-tight">Credential Vault</span>
+        /* Brand */
+      }
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2">
+          <img
+            src={schoolLogo}
+            alt="South Point School Logo"
+            style={{ height: 22, width: "auto", objectFit: "contain" }}
+          />
+          <span className="text-white text-sm font-bold tracking-tight">Credential Vault</span>
+        </div>
+        <span
+          className="text-[9px] font-semibold tracking-[0.18em] uppercase ml-6 -mt-0.5"
+          style={{ color: GOLD, opacity: 0.8 }}
+        >
+          South Point School, Guwahati
+        </span>
+      </div>
+
+      {
+        /* Avatar menu */
+      }
+      <div className="relative">
+        <button
+          onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+          className="flex items-center gap-2 h-8 px-2 rounded-lg transition-colors hover:bg-white/10"
+        >
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center border-2"
+            style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
+          >
+            <span className="text-[10px] font-bold" style={{ color: GOLD }}>
+              {getInitials(selectedUser)}
+            </span>
           </div>
-          <span
-    className="text-[9px] font-semibold tracking-[0.18em] uppercase ml-6 -mt-0.5"
-    style={{ color: GOLD, opacity: 0.8 }}
-  >
-            South Point School, Guwahati
-          </span>
+          <span className="text-sm text-white font-medium">{selectedUser}</span>
+          <ChevronDown size={13} className="text-white/60" />
+        </button>
+
+        {avatarMenuOpen && <>
+          <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
+          <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl z-30 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
+            <div className="px-3 py-2.5 border-b" style={{ borderColor: BORDER, backgroundColor: "#FBF3F5" }}>
+              <p className="text-sm font-semibold" style={{ color: MAROON }}>{selectedUser}</p>
+              <p className="text-xs text-[#7A6068] mt-0.5">admin@southpoint.edu.in</p>
+            </div>
+            <button className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors">
+              <Settings size={13} style={{ color: MAROON }} />
+              Settings
+            </button>
+            <button
+              onClick={() => {
+                setAvatarMenuOpen(false);
+                setScreen("login");
+              }}
+              className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors"
+            >
+              <LogOut size={13} style={{ color: MAROON }} />
+              Sign out
+            </button>
+          </div>
+        </>}
+      </div>
+    </nav>
+
+    {
+      /* Page content */
+    }
+    <main className="max-w-[1200px] mx-auto px-8 py-8">
+      {
+        /* Header row */
+      }
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: MAROON }}>Account Vault</h1>
+          <p className="text-sm text-[#7A6068] mt-1">
+            Linked bank accounts — South Point School, Guwahati
+          </p>
         </div>
 
         {
-    /* Avatar menu */
-  }
-        <div className="relative">
+          /* User selector */
+        }
+        <div className="relative flex items-center gap-2">
+          <span className="text-sm text-[#7A6068]">Viewing:</span>
           <button
-    onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
-    className="flex items-center gap-2 h-8 px-2 rounded-lg transition-colors hover:bg-white/10"
-  >
-            <div
-    className="w-7 h-7 rounded-full flex items-center justify-center border-2"
-    style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
-  >
-              <span className="text-[10px] font-bold" style={{ color: GOLD }}>
-                {getInitials(selectedUser)}
-              </span>
-            </div>
-            <span className="text-sm text-white font-medium">{selectedUser}</span>
-            <ChevronDown size={13} className="text-white/60" />
+            onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+            className="flex items-center gap-2 h-8 pl-3 pr-2.5 rounded-lg border text-sm font-medium transition-colors bg-white"
+            style={{ borderColor: BORDER, color: MAROON }}
+          >
+            {selectedUser}
+            <ChevronDown size={13} style={{ color: GOLD }} />
           </button>
 
-          {avatarMenuOpen && <>
-              <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl z-30 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
-                <div className="px-3 py-2.5 border-b" style={{ borderColor: BORDER, backgroundColor: "#FBF3F5" }}>
-                  <p className="text-sm font-semibold" style={{ color: MAROON }}>{selectedUser}</p>
-                  <p className="text-xs text-[#7A6068] mt-0.5">admin@southpoint.edu.in</p>
-                </div>
-                <button className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors">
-                  <Settings size={13} style={{ color: MAROON }} />
-                  Settings
-                </button>
-                <button
-    onClick={() => {
-      setAvatarMenuOpen(false);
-      setScreen("login");
-    }}
-    className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors"
-  >
-                  <LogOut size={13} style={{ color: MAROON }} />
-                  Sign out
-                </button>
-              </div>
-            </>}
+          {userDropdownOpen && <>
+            <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
+            <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
+              {USERS.map((user) => <button
+                key={user}
+                onClick={() => {
+                  setSelectedUser(user);
+                  setUserDropdownOpen(false);
+                }}
+                className="w-full text-left px-3 py-2.5 text-sm transition-colors"
+                style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 600 } : { color: "#1A0810" }}
+              >
+                {user}
+              </button>)}
+            </div>
+          </>}
         </div>
-      </nav>
+      </div>
 
       {
-    /* Page content */
-  }
-      <main className="max-w-[1200px] mx-auto px-8 py-8">
-        {
-    /* Header row */
-  }
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: MAROON }}>Account Vault</h1>
-            <p className="text-sm text-[#7A6068] mt-1">
-              Linked bank accounts — South Point School, Guwahati
-            </p>
-          </div>
+        /* Divider */
+      }
+      <div className="h-px mb-6" style={{ backgroundColor: BORDER }} />
 
+      {
+        /* Count badge */
+      }
+      <div className="flex items-center justify-between mb-4">
+        <span
+          className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
+          style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
+        >
+          {BANKS.length} Accounts
+        </span>
+      </div>
+
+      {
+        /* Account grid */
+      }
+      <div className="grid grid-cols-4 gap-3">
+        {BANKS.map((bank) => <button
+          key={bank.id}
+          onClick={() => setSelectedBank(bank)}
+          className="group bg-white rounded-xl p-4 text-left transition-all duration-150 focus:outline-none border"
+          style={{ borderColor: BORDER }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = MAROON;
+            e.currentTarget.style.backgroundColor = "#FBF3F5";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = BORDER;
+            e.currentTarget.style.backgroundColor = "#FFFFFF";
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: bank.color }}
+            >
+              <span className="text-white text-[10px] font-bold leading-none">{bank.initial}</span>
+            </div>
+            <div className="min-w-0 flex-1 mt-0.5">
+              <p className="text-sm font-semibold truncate" style={{ color: MAROON }}>
+                {bank.name}
+              </p>
+              <p className="text-[11px] font-mono mt-1 text-[#7A6068]">
+                {maskAccount(bank.accountNumber)}
+              </p>
+            </div>
+          </div>
           {
-    /* User selector */
-  }
-          <div className="relative flex items-center gap-2">
-            <span className="text-sm text-[#7A6068]">Viewing:</span>
-            <button
-    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-    className="flex items-center gap-2 h-8 pl-3 pr-2.5 rounded-lg border text-sm font-medium transition-colors bg-white"
-    style={{ borderColor: BORDER, color: MAROON }}
-  >
-              {selectedUser}
-              <ChevronDown size={13} style={{ color: GOLD }} />
-            </button>
+            /* Gold accent bottom bar on hover */
+          }
+          <div
+            className="mt-3 h-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: GOLD }}
+          />
+        </button>)}
+      </div>
+    </main>
 
-            {userDropdownOpen && <>
-                <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
-                  {USERS.map((user) => <button
-    key={user}
-    onClick={() => {
-      setSelectedUser(user);
-      setUserDropdownOpen(false);
-    }}
-    className="w-full text-left px-3 py-2.5 text-sm transition-colors"
-    style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 600 } : { color: "#1A0810" }}
-  >
-                      {user}
-                    </button>)}
-                </div>
-              </>}
-          </div>
-        </div>
-
-        {
-    /* Divider */
-  }
-        <div className="h-px mb-6" style={{ backgroundColor: BORDER }} />
-
-        {
-    /* Count badge */
-  }
-        <div className="flex items-center justify-between mb-4">
-          <span
-    className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
-    style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
-  >
-            {BANKS.length} Accounts
-          </span>
-        </div>
-
-        {
-    /* Account grid */
-  }
-        <div className="grid grid-cols-4 gap-3">
-          {BANKS.map((bank) => <button
-    key={bank.id}
-    onClick={() => setSelectedBank(bank)}
-    className="group bg-white rounded-xl p-4 text-left transition-all duration-150 focus:outline-none border"
-    style={{ borderColor: BORDER }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.borderColor = MAROON;
-      e.currentTarget.style.backgroundColor = "#FBF3F5";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.borderColor = BORDER;
-      e.currentTarget.style.backgroundColor = "#FFFFFF";
-    }}
-  >
-              <div className="flex items-start gap-3">
-                <div
-    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-    style={{ backgroundColor: bank.color }}
-  >
-                  <span className="text-white text-[10px] font-bold leading-none">{bank.initial}</span>
-                </div>
-                <div className="min-w-0 flex-1 mt-0.5">
-                  <p className="text-sm font-semibold truncate" style={{ color: MAROON }}>
-                    {bank.name}
-                  </p>
-                  <p className="text-[11px] font-mono mt-1 text-[#7A6068]">
-                    {maskAccount(bank.accountNumber)}
-                  </p>
-                </div>
-              </div>
-              {
-    /* Gold accent bottom bar on hover */
-  }
-              <div
-    className="mt-3 h-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-    style={{ backgroundColor: GOLD }}
-  />
-            </button>)}
-        </div>
-      </main>
-
-      {
-    /* Modal */
-  }
-      {selectedBank && <AccountModal bank={selectedBank} onClose={() => setSelectedBank(null)} />}
-    </div>;
+    {
+      /* Modal */
+    }
+    {selectedBank && <AccountModal bank={selectedBank} onClose={() => setSelectedBank(null)} />}
+  </div>;
 }
