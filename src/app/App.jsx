@@ -11,6 +11,7 @@ import { Header, USERS } from "./components/Header";
 import { StealthLockScreen } from "./components/StealthLockScreen";
 import { BankCard } from "./components/BankCard";
 import { Footer } from "./components/Footer";
+import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
@@ -39,6 +40,7 @@ export default function App() {
   const [selectedBank, setSelectedBank] = useState(null);
   const [banks, setBanks] = useState(BANKS);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [deleteBank, setDeleteBank] = useState(null);
   const [stealthMode, setStealthMode] = useState(false);
   const [stealthPassword, setStealthPassword] = useState("");
   const [stealthError, setStealthError] = useState("");
@@ -520,7 +522,7 @@ export default function App() {
               key={bank.id}
               bank={bank}
               onClick={() => setSelectedBank(bank)}
-              onConfirmDelete={(id) => setBanks(banks.filter((b) => b.id !== id))}
+              onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
             />
           ))}
         </div>
@@ -530,8 +532,10 @@ export default function App() {
         <AccountModal
           bank={selectedBank}
           onClose={() => setSelectedBank(null)}
-          banks={banks}
-          setBanks={setBanks}
+          onDelete={(bankObj) => {
+            setDeleteBank(bankObj);
+            setSelectedBank(null);
+          }}
         />
       )}
       
@@ -540,6 +544,17 @@ export default function App() {
         onClose={() => setAddModalOpen(false)}
         onAdd={(newBank) => setBanks([...banks, newBank])}
       />
+
+      {deleteBank && (
+        <DeleteConfirmModal
+          bank={deleteBank}
+          onClose={() => setDeleteBank(null)}
+          onConfirm={() => {
+            setBanks(banks.filter((b) => b.id !== deleteBank.id));
+            setDeleteBank(null);
+          }}
+        />
+      )}
 
       <Footer />
     </div>

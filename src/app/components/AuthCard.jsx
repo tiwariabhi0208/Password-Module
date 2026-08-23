@@ -2,7 +2,6 @@ import React from "react";
 import schoolLogo from "../../../images(1).png";
 import campusBg from "../../../school_campus.jpg";
 import { T, font } from "./theme";
-import { Footer } from "./Footer";
 
 export function AuthCard({ children, sideElement }) {
   return (
@@ -103,9 +102,6 @@ export function AuthCard({ children, sideElement }) {
 
       {/* Spacer to center card vertically */}
       <div className="flex-grow" />
-
-      {/* Maroon branded Footer at the bottom of the screen */}
-      <Footer />
     </div>
   );
 }

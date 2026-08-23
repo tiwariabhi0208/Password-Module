@@ -28,9 +28,7 @@ export function BankCard({ bank, onClick, onConfirmDelete }) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (window.confirm(`Are you sure you want to delete ${bank.name}?`)) {
-                  onConfirmDelete(bank.id);
-                }
+                onConfirmDelete(bank);
               }}
               className="text-slate-400 hover:text-red-600 transition-colors p-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 duration-200"
               title="Delete Bank Account"

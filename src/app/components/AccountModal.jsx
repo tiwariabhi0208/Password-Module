@@ -3,7 +3,7 @@ import { X, ExternalLink, Edit2 } from "lucide-react";
 import { ModalDetailRow } from "./ModalDetailRow";
 import { MAROON, GOLD, BORDER } from "./theme";
 
-export function AccountModal({ bank, onClose, banks, setBanks }) {
+export function AccountModal({ bank, onClose, onDelete }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -40,10 +40,7 @@ export function AccountModal({ bank, onClose, banks, setBanks }) {
               </button>
               <button
                 onClick={() => {
-                  if (window.confirm(`Are you sure you want to delete ${bank.name}?`)) {
-                    setBanks(banks.filter((b) => b.id !== bank.id));
-                    onClose();
-                  }
+                  onDelete(bank);
                 }}
                 className="text-white/60 hover:text-red-400 transition-colors p-0.5 ml-1"
                 title="Delete Account"
