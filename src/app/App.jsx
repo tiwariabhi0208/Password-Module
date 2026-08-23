@@ -12,6 +12,7 @@ import { StealthLockScreen } from "./components/StealthLockScreen";
 import { BankCard } from "./components/BankCard";
 import { Footer } from "./components/Footer";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
+import { Sidebar } from "./components/Sidebar";
 
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
@@ -41,6 +42,7 @@ export default function App() {
   const [banks, setBanks] = useState(BANKS);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteBank, setDeleteBank] = useState(null);
+  const [activeTab, setActiveTab] = useState("vault");
   const [stealthMode, setStealthMode] = useState(false);
   const [stealthPassword, setStealthPassword] = useState("");
   const [stealthError, setStealthError] = useState("");
@@ -449,84 +451,277 @@ export default function App() {
         setStealthMode={setStealthMode}
       />
 
-      <main className="flex-grow max-w-[1200px] w-full mx-auto px-8 py-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: MAROON }}>Account Vault</h1>
-            <p className="text-sm text-[#7A6068] mt-1">
-              Linked bank accounts — South Point School, Guwahati
-            </p>
-          </div>
+      <div className="flex-grow flex w-full">
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onLogout={() => {
+            setScreen("login");
+            setActiveTab("vault");
+          }}
+        />
 
-          <div className="relative flex items-center gap-2">
-            <span className="text-sm text-[#7A6068]">Viewing:</span>
-            <button
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center gap-2 h-8 pl-3 pr-2.5 rounded-lg border text-sm font-medium transition-colors bg-white"
-              style={{ borderColor: BORDER, color: MAROON }}
-            >
-              {selectedUser}
-              <ChevronDown size={13} style={{ color: GOLD }} />
-            </button>
-
-            {userDropdownOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
-                  {USERS.map((user) => (
-                    <button
-                      key={user}
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setUserDropdownOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-2.5 text-sm transition-colors"
-                      style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 600 } : { color: "#1A0810" }}
-                    >
-                      {user}
-                    </button>
-                  ))}
+        <main className="flex-grow min-w-0 px-8 py-5">
+          {activeTab === "vault" && (
+            <>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h1 className="text-xl font-bold" style={{ color: MAROON }}>Account Vault</h1>
+                  <p className="text-sm text-[#7A6068] mt-1">
+                    Linked bank accounts — South Point School, Guwahati
+                  </p>
                 </div>
-              </>
-            )}
-          </div>
-        </div>
 
-        <div className="h-px mb-6" style={{ backgroundColor: BORDER }} />
+                <div className="relative flex items-center gap-2">
+                  <span className="text-sm text-[#7A6068]">Viewing:</span>
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2 h-8 pl-3 pr-2.5 rounded-lg border text-sm font-medium transition-colors bg-white"
+                    style={{ borderColor: BORDER, color: MAROON }}
+                  >
+                    {selectedUser}
+                    <ChevronDown size={13} style={{ color: GOLD }} />
+                  </button>
 
-        <div className="flex items-center justify-between mb-4">
-          <span
-            className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
-            style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
-          >
-            {banks.length} Accounts
-          </span>
-          <button
-            onClick={() => setAddModalOpen(true)}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white transition-colors shadow-sm hover:shadow cursor-pointer"
-            style={{ backgroundColor: MAROON }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Add Bank Account
-          </button>
-        </div>
+                  {userDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
+                      <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
+                        {USERS.map((user) => (
+                          <button
+                            key={user}
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setUserDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-3 py-2.5 text-sm transition-colors"
+                            style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 600 } : { color: "#1A0810" }}
+                          >
+                            {user}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {banks.map((bank) => (
-            <BankCard
-              key={bank.id}
-              bank={bank}
-              onClick={() => setSelectedBank(bank)}
-              onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
-            />
-          ))}
-        </div>
-      </main>
+              <div className="h-px mb-4" style={{ backgroundColor: BORDER }} />
+
+              <div className="flex items-center justify-between mb-3.5">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
+                  style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
+                >
+                  {banks.length} Accounts
+                </span>
+                <button
+                  onClick={() => setAddModalOpen(true)}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white transition-colors shadow-sm hover:shadow cursor-pointer"
+                  style={{ backgroundColor: MAROON }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Bank Account
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 w-full">
+                {banks.map((bank) => (
+                  <BankCard
+                    key={bank.id}
+                    bank={bank}
+                    onClick={() => setSelectedBank(bank)}
+                    onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {activeTab === "activity" && (
+            <>
+              <div>
+                <h1 className="text-xl font-bold" style={{ color: MAROON }}>Activity Log</h1>
+                <p className="text-sm text-[#7A6068] mt-1">
+                  Recent actions and security events on the vault
+                </p>
+              </div>
+              <div className="h-px mb-6 mt-6" style={{ backgroundColor: BORDER }} />
+
+              <div className="bg-white rounded-2xl border overflow-hidden shadow-sm" style={{ borderColor: BORDER }}>
+                <div className="divide-y divide-slate-100">
+                  {[
+                    { id: 1, time: "Today, 12:05 PM", action: "Credential Accessed", details: "Viewed password details for HDFC Bank", user: selectedUser, type: "success", ip: "192.168.1.45" },
+                    { id: 2, time: "Today, 11:32 AM", action: "Lock Screen Triggered", details: "Stealth mode manual activation", user: selectedUser, type: "info", ip: "192.168.1.45" },
+                    { id: 3, time: "Yesterday, 04:10 PM", action: "Account Added", details: "Added Kotak Mahindra Bank account", user: "Rahul Verma", type: "success", ip: "192.168.1.98" },
+                    { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid stealth password entered", user: "System", type: "error", ip: "172.56.21.9" },
+                    { id: 5, time: "18 Aug, 02:40 PM", action: "Account Deleted", details: "Deleted Yes Bank account details", user: "Anita Nair", type: "warning", ip: "192.168.1.14" }
+                  ].map((log) => {
+                    const badgeStyles = {
+                      success: { text: "#16A34A", bg: "#F0FDF4" },
+                      info: { text: "#1E3A5F", bg: "#E8F0F8" },
+                      warning: { text: "#C9A227", bg: "#FDF8E8" },
+                      error: { text: "#DC2626", bg: "#FDF2F2" }
+                    }[log.type];
+
+                    return (
+                      <div key={log.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span 
+                              className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                              style={{ color: badgeStyles.text, backgroundColor: badgeStyles.bg }}
+                            >
+                              {log.action}
+                            </span>
+                            <span className="text-xs text-[#7A6068] font-medium">{log.time}</span>
+                          </div>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{log.details}</p>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs font-medium text-[#7A6068] sm:text-right">
+                          <div>
+                            <span className="block text-slate-900 font-semibold">{log.user}</span>
+                            <span className="block text-[10px] text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "profile" && (
+            <>
+              <div>
+                <h1 className="text-xl font-bold" style={{ color: MAROON }}>Profile Details</h1>
+                <p className="text-sm text-[#7A6068] mt-1">
+                  Your administrator security credentials and role
+                </p>
+              </div>
+              <div className="h-px mb-6 mt-6" style={{ backgroundColor: BORDER }} />
+
+              <div className="bg-white rounded-2xl border p-6 max-w-xl shadow-sm" style={{ borderColor: BORDER }}>
+                <div className="flex items-center gap-5 mb-6">
+                  <div 
+                    className="w-16 h-16 rounded-full border-2 flex items-center justify-center text-xl font-extrabold shadow-sm"
+                    style={{ backgroundColor: "#FBF3F5", borderColor: GOLD, color: MAROON }}
+                  >
+                    {selectedUser.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">{selectedUser}</h2>
+                    <span 
+                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mt-1.5 inline-block"
+                      style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
+                    >
+                      Administrator
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-px bg-slate-100 mb-6" />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 text-sm">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Email Address</span>
+                    <span className="text-slate-900 font-semibold mt-1 block">priya.sharma@southpoint.edu.in</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Department</span>
+                    <span className="text-slate-900 font-semibold mt-1 block">Accounts & Finance Division</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Vault Access Clearance</span>
+                    <span className="text-red-700 font-bold mt-1 block flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                      Level 3 Credentials
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Assigned Campus</span>
+                    <span className="text-slate-900 font-semibold mt-1 block">Guwahati Main, Assam</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "password" && (
+            <>
+              <div>
+                <h1 className="text-xl font-bold" style={{ color: MAROON }}>Change Password</h1>
+                <p className="text-sm text-[#7A6068] mt-1">
+                  Update your vault master password for enhanced security
+                </p>
+              </div>
+              <div className="h-px mb-6 mt-6" style={{ backgroundColor: BORDER }} />
+
+              <form 
+                onSubmit={(e) => { 
+                  e.preventDefault(); 
+                  alert("Master password updated successfully!"); 
+                  e.target.reset();
+                }} 
+                className="bg-white rounded-2xl border p-6 max-w-md shadow-sm space-y-4" 
+                style={{ borderColor: BORDER }}
+              >
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                    Current Master Password
+                  </label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]" 
+                    style={{ borderColor: BORDER }} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                    New Master Password
+                  </label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]" 
+                    style={{ borderColor: BORDER }} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                    Confirm New Password
+                  </label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]" 
+                    style={{ borderColor: BORDER }} 
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  className="w-full h-10 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-sm mt-2 flex items-center justify-center gap-1.5"
+                  style={{ backgroundColor: MAROON }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                >
+                  Update Master Password
+                </button>
+              </form>
+            </>
+          )}
+        </main>
+      </div>
 
       {selectedBank && (
         <AccountModal

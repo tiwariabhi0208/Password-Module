@@ -14,25 +14,38 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
 
   return (
     <nav
-      className="h-20 flex items-center px-8 justify-between sticky top-0 z-20 shadow-md"
+      className="h-20 flex items-center px-6 justify-between sticky top-0 z-20 shadow-md"
       style={{ backgroundColor: MAROON, borderBottom: `2.5px solid ${GOLD}` }}
     >
       {/* Brand */}
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between w-52 flex-shrink-0">
+        <div className="flex items-center gap-3">
           <img
             src={schoolLogo}
             alt="South Point School Logo"
-            style={{ height: 32, width: "auto", objectFit: "contain" }}
+            style={{ height: 36, width: "auto", objectFit: "contain" }}
           />
-          <span className="text-white text-base font-bold tracking-tight">South Point School - Password</span>
+          <div className="flex flex-col">
+            <span className="text-white text-sm font-bold leading-tight">South Point School</span>
+            <span
+              className="text-[10px] font-bold tracking-wider uppercase mt-0.5"
+              style={{ color: GOLD }}
+            >
+              GUWAHATI
+            </span>
+          </div>
         </div>
-        <span
-          className="text-[9px] font-semibold tracking-[0.18em] uppercase ml-10 -mt-0.5"
-          style={{ color: GOLD, opacity: 0.8 }}
+        <button 
+          className="text-white/80 hover:text-white p-1 rounded transition-colors ml-2 cursor-pointer"
+          title="Menu"
+          style={{ border: "none", background: "none" }}
         >
-          South Point School, Guwahati
-        </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
       {/* Actions (Stealth Button & Avatar Menu) */}
@@ -40,11 +53,11 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
         {/* Stealth Mode Button */}
         <button
           onClick={() => setStealthMode(true)}
-          className="flex items-center gap-2 h-9 px-3.5 rounded-lg border text-xs font-bold transition-all hover:bg-white/10 text-white"
-          style={{ borderColor: "rgba(255,255,255,0.25)", cursor: "pointer", letterSpacing: "0.02em" }}
+          className="flex items-center gap-2 h-11 px-5 rounded-lg border text-sm font-bold transition-all hover:bg-white/10 text-white shadow-sm hover:shadow"
+          style={{ borderColor: "rgba(255,255,255,0.35)", cursor: "pointer", letterSpacing: "0.02em" }}
           title="Activate Stealth Mode (Quick Lock)"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
