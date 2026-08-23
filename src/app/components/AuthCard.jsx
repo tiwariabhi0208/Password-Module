@@ -2,6 +2,7 @@ import React from "react";
 import schoolLogo from "../../../images(1).png";
 import campusBg from "../../../school_campus.jpg";
 import { T, font } from "./theme";
+import { Footer } from "./Footer";
 
 export function AuthCard({ children, sideElement }) {
   return (
@@ -9,19 +10,22 @@ export function AuthCard({ children, sideElement }) {
       style={{
         minHeight: "100vh",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         backgroundImage: `linear-gradient(135deg, rgba(92, 12, 33, 0.55) 0%, rgba(30, 3, 10, 0.75) 100%), url(${campusBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundPadding: "32px 16px",
-        padding: "32px 16px",
         fontFamily: font.body,
         boxSizing: "border-box",
       }}
     >
-      <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[420px]">
+      {/* Spacer to center card vertically */}
+      <div className="flex-grow" />
+
+      {/* Card Wrapper */}
+      <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[420px] px-4">
         {sideElement && (
           <div className="md:absolute md:-right-[140px] md:bottom-[20px] md:z-20 mb-4 md:mb-0 transform md:-rotate-[3deg] origin-bottom transition-all duration-300">
             {sideElement}
@@ -30,10 +34,9 @@ export function AuthCard({ children, sideElement }) {
 
         {/* Card */}
         <div
-          className="animate-fade-in-up"
+          className="animate-fade-in-up w-full"
           style={{
             position: "relative",
-            width: "100%",
             background: T.surface,
             borderRadius: 24,
             boxShadow: "0 20px 50px rgba(0, 0, 0, 0.35)",
@@ -97,6 +100,12 @@ export function AuthCard({ children, sideElement }) {
           <div style={{ padding: "20px 24px 18px" }}>{children}</div>
         </div>
       </div>
+
+      {/* Spacer to center card vertically */}
+      <div className="flex-grow" />
+
+      {/* Maroon branded Footer at the bottom of the screen */}
+      <Footer />
     </div>
   );
 }

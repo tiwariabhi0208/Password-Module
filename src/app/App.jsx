@@ -10,6 +10,7 @@ import { AddBankModal } from "./components/AddBankModal";
 import { Header, USERS } from "./components/Header";
 import { StealthLockScreen } from "./components/StealthLockScreen";
 import { BankCard } from "./components/BankCard";
+import { Footer } from "./components/Footer";
 
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
@@ -438,7 +439,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
       <Header
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
@@ -446,7 +447,7 @@ export default function App() {
         setStealthMode={setStealthMode}
       />
 
-      <main className="max-w-[1200px] mx-auto px-8 py-8">
+      <main className="flex-grow max-w-[1200px] w-full mx-auto px-8 py-8">
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold" style={{ color: MAROON }}>Account Vault</h1>
@@ -539,6 +540,8 @@ export default function App() {
         onClose={() => setAddModalOpen(false)}
         onAdd={(newBank) => setBanks([...banks, newBank])}
       />
+
+      <Footer />
     </div>
   );
 }
