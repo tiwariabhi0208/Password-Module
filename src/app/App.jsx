@@ -11,10 +11,12 @@ import {
   ArrowLeft,
   Mail,
   Lock,
-  LogIn
+  LogIn,
+  Copy,
+  Check
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
-import schoolLogo from "../../images(1).webp";
+import schoolLogo from "../../images(1).png";
 import campusBg from "../../school_campus.jpg";
 const MAROON = "#7B1535";
 const GOLD = "#C9A227";
@@ -158,14 +160,14 @@ function CustomInput({
 }
 
 const BANKS = [
-  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", color: "#1E3A5F" },
-  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", color: "#7A4C1A" },
-  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", color: "#1B3F5C" },
-  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", color: "#5C2E6B" },
-  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", color: "#7A1A1A" },
-  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", color: "#1A3F6B" },
-  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", color: "#2C1A5F" },
-  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", color: "#5F3A0A" }
+  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
+  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A" },
+  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", branchName: "Dispur", username: "sps_sbi_vault", password: "SbiPassphrase*12", color: "#1B3F5C" },
+  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", branchName: "Ganeshguri", username: "sps_axis_pay", password: "AxisKey#Secure1", color: "#5C2E6B" },
+  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A" },
+  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B" },
+  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F" },
+  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A" }
 ];
 const USERS = ["Priya Sharma", "Rahul Verma", "Anita Nair", "Deepak Mehta"];
 function maskAccount(num) {
@@ -550,8 +552,267 @@ function AuthCard({ children, sideElement }) {
     </div>
   );
 }
-function AccountModal({ bank, onClose }) {
-  const [reveal, setReveal] = useState(false);
+
+function CopyButton({ value, label }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="p-1 rounded hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
+      style={{ border: "none", background: "none", cursor: "pointer", color: "#94A3B8" }}
+      title={`Copy ${label}`}
+    >
+      {copied ? (
+        <Check size={12} style={{ color: "#16A34A" }} />
+      ) : (
+        <Copy size={12} />
+      )}
+    </button>
+  );
+}
+
+function ModalDetailRow({ label, value, isMonospaced = false, isPassword = false }) {
+  const [showValue, setShowValue] = useState(!isPassword);
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
+        {label}
+      </p>
+      <div className="flex items-center gap-2">
+        <span className={`text-[#1A0810] text-sm font-medium ${isMonospaced ? "font-mono" : ""}`}>
+          {isPassword && !showValue ? "••••••••" : value}
+        </span>
+        <div className="flex items-center gap-1">
+          {isPassword && (
+            <button
+              onClick={() => setShowValue(!showValue)}
+              className="p-1 rounded hover:bg-black/5 text-slate-400 hover:text-slate-700 transition-colors flex-shrink-0"
+              style={{ border: "none", background: "none", cursor: "pointer" }}
+              title={showValue ? "Hide Password" : "Show Password"}
+            >
+              {showValue ? <EyeOff size={13} /> : <Eye size={13} />}
+            </button>
+          )}
+          <CopyButton value={value} label={label} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddBankModal({ isOpen, onClose, onAdd }) {
+  const [name, setName] = useState("");
+  const [holder, setHolder] = useState("South Point School, Guwahati");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifsc, setIfsc] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name || !holder || !accountNumber || !ifsc || !branchName || !username || !password) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    const initial = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    const colors = ["#1E3A5F", "#7A4C1A", "#1B3F5C", "#5C2E6B", "#7A1A1A", "#1A3F6B", "#2C1A5F", "#5F3A0A"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    onAdd({
+      id: Date.now(),
+      name,
+      initial,
+      accountNumber,
+      ifsc,
+      holder,
+      branchName,
+      username,
+      password,
+      color
+    });
+
+    setName("");
+    setAccountNumber("");
+    setIfsc("");
+    setBranchName("");
+    setUsername("");
+    setPassword("");
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: "rgba(80,10,25,0.5)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-[450px] bg-white rounded-xl overflow-hidden shadow-2xl border" style={{ borderColor: BORDER }}>
+        <div
+          className="flex items-center justify-between px-5 py-4"
+          style={{ backgroundColor: MAROON }}
+        >
+          <span className="text-white text-[15px] font-semibold">Add New Bank Account</span>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-white/10 text-white"
+            title="Close"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              Bank Name
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. HDFC Bank"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
+              style={{ borderColor: BORDER }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              Account Holder
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Account Holder's Name"
+              value={holder}
+              onChange={(e) => setHolder(e.target.value)}
+              className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
+              style={{ borderColor: BORDER }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                Account Number
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="A/C Number"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535] font-mono"
+                style={{ borderColor: BORDER }}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                IFSC Code
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="IFSC Code"
+                value={ifsc}
+                onChange={(e) => setIfsc(e.target.value)}
+                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535] font-mono"
+                style={{ borderColor: BORDER }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              Branch Name
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Guwahati Main"
+              value={branchName}
+              onChange={(e) => setBranchName(e.target.value)}
+              className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
+              style={{ borderColor: BORDER }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                Username
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Corporate Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
+                style={{ borderColor: BORDER }}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                Password
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Portal Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
+                style={{ borderColor: BORDER }}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-3 border-t" style={{ borderColor: BORDER }}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 h-10 border text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              style={{ borderColor: BORDER, color: "#6B7280" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 h-10 text-sm font-semibold rounded-lg text-white transition-colors"
+              style={{ backgroundColor: MAROON }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+            >
+              Add Account
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AccountModal({ bank, onClose, banks, setBanks }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -586,6 +847,22 @@ function AccountModal({ bank, onClose }) {
             <button className="transition-colors" style={{ color: GOLD }} title="Open bank portal">
               <ExternalLink size={12} />
             </button>
+            <button
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete ${bank.name}?`)) {
+                  setBanks(banks.filter((b) => b.id !== bank.id));
+                  onClose();
+                }
+              }}
+              className="text-white/60 hover:text-red-400 transition-colors p-0.5 ml-1"
+              title="Delete Account"
+              style={{ border: "none", background: "none", cursor: "pointer" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -611,41 +888,12 @@ function AccountModal({ bank, onClose }) {
       }
       <div className="bg-white px-5 py-5">
         <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              Account Number
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="text-[#1A0810] text-sm font-mono">
-                {reveal ? formatAccount(bank.accountNumber) : maskAccount(bank.accountNumber)}
-              </span>
-              <button
-                onClick={() => setReveal(!reveal)}
-                className="transition-colors flex-shrink-0"
-                style={{ color: GOLD }}
-              >
-                {reveal ? <EyeOff size={13} /> : <Eye size={13} />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              IFSC Code
-            </p>
-            <span className="text-[#1A0810] text-sm font-mono">{bank.ifsc}</span>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              Account Holder
-            </p>
-            <span className="text-[#1A0810] text-sm">{bank.holder}</span>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: MAROON }}>
-              Account Type
-            </p>
-            <span className="text-[#1A0810] text-sm">Current Account</span>
-          </div>
+          <ModalDetailRow label="Account Holder" value={bank.holder} />
+          <ModalDetailRow label="Account Number" value={bank.accountNumber} isMonospaced={true} />
+          <ModalDetailRow label="IFSC Code" value={bank.ifsc} isMonospaced={true} />
+          <ModalDetailRow label="Branch Name" value={bank.branchName} />
+          <ModalDetailRow label="Username" value={bank.username} isMonospaced={true} />
+          <ModalDetailRow label="Password" value={bank.password} isMonospaced={true} isPassword={true} />
         </div>
       </div>
 
@@ -729,6 +977,8 @@ export default function App() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
+  const [banks, setBanks] = useState(BANKS);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1108,7 +1358,7 @@ export default function App() {
             alt="South Point School Logo"
             style={{ height: 22, width: "auto", objectFit: "contain" }}
           />
-          <span className="text-white text-sm font-bold tracking-tight">Credential Vault</span>
+          <span className="text-white text-sm font-bold tracking-tight">South Point School - Password</span>
         </div>
         <span
           className="text-[9px] font-semibold tracking-[0.18em] uppercase ml-6 -mt-0.5"
@@ -1218,25 +1468,38 @@ export default function App() {
       <div className="h-px mb-6" style={{ backgroundColor: BORDER }} />
 
       {
-        /* Count badge */
+        /* Count badge & Add Bank Button */
       }
       <div className="flex items-center justify-between mb-4">
         <span
           className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
           style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
         >
-          {BANKS.length} Accounts
+          {banks.length} Accounts
         </span>
+        <button
+          onClick={() => setAddModalOpen(true)}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white transition-colors shadow-sm hover:shadow cursor-pointer"
+          style={{ backgroundColor: MAROON }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Bank Account
+        </button>
       </div>
 
       {
         /* Account grid */
       }
-      <div className="grid grid-cols-4 gap-3">
-        {BANKS.map((bank) => <button
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {banks.map((bank) => <div
           key={bank.id}
           onClick={() => setSelectedBank(bank)}
-          className="group bg-white rounded-xl p-4 text-left transition-all duration-150 focus:outline-none border"
+          className="group bg-white rounded-2xl p-6 text-center transition-all duration-300 border flex flex-col items-center justify-between aspect-square shadow-sm hover:shadow-md cursor-pointer"
           style={{ borderColor: BORDER }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = MAROON;
@@ -1247,36 +1510,53 @@ export default function App() {
             e.currentTarget.style.backgroundColor = "#FFFFFF";
           }}
         >
-          <div className="flex items-start gap-3">
+          <div className="flex flex-col items-center gap-4 w-full my-auto">
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-110"
               style={{ backgroundColor: bank.color }}
             >
-              <span className="text-white text-[10px] font-bold leading-none">{bank.initial}</span>
+              <span className="text-white text-sm font-extrabold tracking-wider leading-none">{bank.initial}</span>
             </div>
-            <div className="min-w-0 flex-1 mt-0.5">
-              <p className="text-sm font-semibold truncate" style={{ color: MAROON }}>
-                {bank.name}
-              </p>
-              <p className="text-[11px] font-mono mt-1 text-[#7A6068]">
+            <div className="min-w-0 w-full">
+              {/* Account name row with delete button */}
+              <div className="flex items-center justify-center gap-1.5 min-w-0">
+                <p className="text-base font-bold truncate" style={{ color: MAROON }}>
+                  {bank.name}
+                </p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Are you sure you want to delete ${bank.name}?`)) {
+                      setBanks(banks.filter((b) => b.id !== bank.id));
+                    }
+                  }}
+                  className="text-slate-400 hover:text-red-600 transition-colors p-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 duration-200"
+                  title="Delete Bank Account"
+                  style={{ border: "none", background: "none", cursor: "pointer" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+              <p className="text-xs font-mono mt-1.5 text-[#7A6068]">
                 {maskAccount(bank.accountNumber)}
               </p>
             </div>
           </div>
-          {
-            /* Gold accent bottom bar on hover */
-          }
           <div
-            className="mt-3 h-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="w-10 h-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-x-50 group-hover:scale-x-100"
             style={{ backgroundColor: GOLD }}
           />
-        </button>)}
+        </div>)}
       </div>
     </main>
 
     {
       /* Modal */
     }
-    {selectedBank && <AccountModal bank={selectedBank} onClose={() => setSelectedBank(null)} />}
+    {selectedBank && <AccountModal bank={selectedBank} onClose={() => setSelectedBank(null)} banks={banks} setBanks={setBanks} />}
+    <AddBankModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={(newBank) => setBanks([...banks, newBank])} />
   </div>;
 }
