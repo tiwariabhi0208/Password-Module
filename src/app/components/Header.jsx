@@ -1,0 +1,99 @@
+import React, { useState } from "react";
+import { ChevronDown, Settings, LogOut } from "lucide-react";
+import schoolLogo from "../../../images(1).png";
+import { MAROON, GOLD, BORDER } from "./theme";
+
+export const USERS = ["Priya Sharma", "Rahul Verma", "Anita Nair", "Deepak Mehta"];
+
+function getInitials(name) {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}
+
+export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMode }) {
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+
+  return (
+    <nav
+      className="h-20 flex items-center px-8 justify-between sticky top-0 z-20 shadow-md"
+      style={{ backgroundColor: MAROON, borderBottom: `2.5px solid ${GOLD}` }}
+    >
+      {/* Brand */}
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2">
+          <img
+            src={schoolLogo}
+            alt="South Point School Logo"
+            style={{ height: 32, width: "auto", objectFit: "contain" }}
+          />
+          <span className="text-white text-base font-bold tracking-tight">South Point School - Password</span>
+        </div>
+        <span
+          className="text-[9px] font-semibold tracking-[0.18em] uppercase ml-10 -mt-0.5"
+          style={{ color: GOLD, opacity: 0.8 }}
+        >
+          South Point School, Guwahati
+        </span>
+      </div>
+
+      {/* Actions (Stealth Button & Avatar Menu) */}
+      <div className="flex items-center gap-4">
+        {/* Stealth Mode Button */}
+        <button
+          onClick={() => setStealthMode(true)}
+          className="flex items-center gap-2 h-9 px-3.5 rounded-lg border text-xs font-bold transition-all hover:bg-white/10 text-white"
+          style={{ borderColor: "rgba(255,255,255,0.25)", cursor: "pointer", letterSpacing: "0.02em" }}
+          title="Activate Stealth Mode (Quick Lock)"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Stealth Mode
+        </button>
+
+        {/* Avatar menu */}
+        <div className="relative">
+          <button
+            onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+            className="flex items-center gap-2 h-9 px-2 rounded-lg transition-colors hover:bg-white/10"
+          >
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center border-2"
+              style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
+            >
+              <span className="text-[10px] font-bold" style={{ color: GOLD }}>
+                {getInitials(selectedUser)}
+              </span>
+            </div>
+            <span className="text-sm text-white font-medium">{selectedUser}</span>
+            <ChevronDown size={13} className="text-white/60" />
+          </button>
+
+          {avatarMenuOpen && <>
+            <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl z-30 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
+              <div className="px-3 py-2.5 border-b" style={{ borderColor: BORDER, backgroundColor: "#FBF3F5" }}>
+                <p className="text-sm font-semibold" style={{ color: MAROON }}>{selectedUser}</p>
+                <p className="text-xs text-[#7A6068] mt-0.5">admin@southpoint.edu.in</p>
+              </div>
+              <button className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors">
+                <Settings size={13} style={{ color: MAROON }} />
+                Settings
+              </button>
+              <button
+                onClick={() => {
+                  setAvatarMenuOpen(false);
+                  setScreen("login");
+                }}
+                className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors"
+              >
+                <LogOut size={13} style={{ color: MAROON }} />
+                Sign out
+              </button>
+            </div>
+          </>}
+        </div>
+      </div>
+    </nav>
+  );
+}
