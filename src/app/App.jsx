@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus } from "lucide-react";
 
 import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius } from "./components/theme";
 import { BoyCharacter } from "./components/BoyCharacter";
@@ -47,10 +47,16 @@ export default function App() {
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [selectedUser, setSelectedUser] = useState(USERS[0]);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(true);
   const [selectedBank, setSelectedBank] = useState(null);
   const [banks, setBanks] = useState(BANKS);
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
+  const [entities, setEntities] = useState([
+    { id: 1, name: "Priya Sharma", phone: "+91 98450 12345", email: "priya.sharma@southpoint.edu.in" },
+    { id: 2, name: "Rahul Verma", phone: "+91 97060 54321", email: "rahul.verma@southpoint.edu.in" },
+    { id: 3, name: "Anita Nair", phone: "+91 88760 98765", email: "anita.nair@southpoint.edu.in" },
+    { id: 4, name: "Deepak Mehta", phone: "+91 94350 55667", email: "deepak.mehta@southpoint.edu.in" }
+  ]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteBank, setDeleteBank] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
@@ -810,6 +816,156 @@ export default function App() {
             </>
           )}
 
+          {activeTab === "entities" && (() => {
+            return (
+              <div className="w-full text-left animate-fade-in">
+                <div className="mb-5">
+                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Register Entity</h1>
+                  <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
+                    Manage and register authorized school branches, administrators, or contact nodes
+                  </p>
+                </div>
+                <div className="h-px mb-8" style={{ backgroundColor: BORDER }} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Left: Entities List */}
+                  <div className="lg:col-span-2 space-y-4">
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">
+                      Registered Entities ({entities.length})
+                    </h3>
+
+                    {entities.length === 0 ? (
+                      <div className="text-center py-12 bg-white dark:bg-[#101010] border border-dashed rounded-2xl p-6 text-slate-400" style={{ borderColor: BORDER }}>
+                        No registered entities found. Use the form to add one.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {entities.map((entity) => (
+                          <div
+                            key={entity.id}
+                            className="bg-white dark:bg-[#101010] p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 relative group overflow-hidden"
+                            style={{ borderColor: BORDER }}
+                          >
+                            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: MAROON }} />
+                            
+                            <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 truncate pr-6">{entity.name}</h4>
+                            <div className="mt-3 space-y-1.5 text-xs text-[#7A6068] dark:text-slate-400 font-semibold">
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400">✉</span>
+                                <span className="font-mono">{entity.email}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400">📞</span>
+                                <span className="font-mono">{entity.phone}</span>
+                              </div>
+                            </div>
+                            
+                            <button
+                              onClick={() => {
+                                setEntities(entities.filter(e => e.id !== entity.id));
+                                logActivity("Entity Removed", `Removed entity: ${entity.name}`, "warning");
+                              }}
+                              className="absolute top-3.5 right-3.5 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-655 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
+                              title="Remove Entity"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Add Entity Form */}
+                  <div className="lg:col-span-1 bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl h-fit shadow-sm" style={{ borderColor: BORDER }}>
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">
+                      Add New Entity
+                    </h3>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.target);
+                        const name = formData.get("entityName").trim();
+                        const email = formData.get("entityEmail").trim();
+                        const phone = formData.get("entityPhone").trim();
+
+                        if (!name || !email || !phone) {
+                          alert("All fields are required.");
+                          return;
+                        }
+
+                        const newEntity = {
+                          id: Date.now(),
+                          name,
+                          email,
+                          phone
+                        };
+
+                        setEntities([...entities, newEntity]);
+                        logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
+                        e.target.reset();
+                      }}
+                      className="space-y-4 text-left"
+                    >
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Full Name / Entity Name
+                        </label>
+                        <input
+                          type="text"
+                          name="entityName"
+                          required
+                          placeholder="e.g. Guwahati North Campus"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Email ID
+                        </label>
+                        <input
+                          type="email"
+                          name="entityEmail"
+                          required
+                          placeholder="e.g. north.campus@school.edu"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          name="entityPhone"
+                          required
+                          placeholder="e.g. +91 94350 55667"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
+                        style={{ backgroundColor: MAROON }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                      >
+                        Register Entity
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {activeTab === "activity" && (() => {
             const filteredActivities = activities.filter((act) => {
               const q = logSearchQuery.toLowerCase().trim();
@@ -1336,6 +1492,16 @@ export default function App() {
         >
           <Landmark size={20} />
           <span className="text-[10px] font-bold">Vault</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("entities")}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+            activeTab === "entities" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+          }`}
+        >
+          <UserPlus size={20} />
+          <span className="text-[10px] font-bold">Entities</span>
         </button>
 
         <button

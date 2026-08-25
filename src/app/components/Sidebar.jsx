@@ -1,5 +1,5 @@
 import React from "react";
-import { Landmark, History, User, Lock, LogOut, ShieldCheck, Settings } from "lucide-react";
+import { Landmark, History, User, Lock, LogOut, ShieldCheck, Settings, UserPlus } from "lucide-react";
 import { GOLD, BORDER } from "./theme";
 
 export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
@@ -8,6 +8,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
       title: "MAIN",
       items: [
         { id: "vault", label: "Account Vault", icon: Landmark },
+        { id: "entities", label: "Register Entity", icon: UserPlus },
         { id: "activity", label: "Activity Log", icon: History }
       ]
     },
