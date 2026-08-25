@@ -57,7 +57,28 @@ export default function App() {
     { id: 2, name: "Guwahati East Branch", phone: "+91 97060 88888", email: "east.branch@southpoint.edu.in" },
     { id: 3, name: "Guwahati South Campus", phone: "+91 88760 77777", email: "south.campus@southpoint.edu.in" }
   ]);
+  const [admins, setAdmins] = useState([
+    {
+      name: "Abhishek Tiwari",
+      email: "admin@southpoint.edu.in",
+      password: "admin",
+      level: 3,
+      dept: "Information Security & IT Administration",
+      campus: "Guwahati Central Campus, Assam",
+      clearance: "Level 3 - System Super Administrator",
+      designation: "Director of IT Infrastructure",
+      session_id: "SPS-ADM-001-ABHISHEK",
+      auth_time: "25 Aug 2026, 09:30 AM",
+      ip: "192.168.1.1",
+      publicKey: "sha256:abhishektiwari7b1535b4a9b227cf842d0c321e6d7821c3b5f842d0",
+      status: "Active / Administrator Verified"
+    }
+  ]);
+  const [currentAdmin, setCurrentAdmin] = useState(null);
+  const activeAdmin = currentAdmin || admins[0];
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [emailOtpState, setEmailOtpState] = useState(null);
   const [deleteBank, setDeleteBank] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
@@ -184,6 +205,35 @@ export default function App() {
         }
       } catch (err) { }
 
+      let foundAdmin = admins.find(a => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password.trim());
+      if (!foundAdmin) {
+        // Automatically look up by email, otherwise dynamically create a temporary admin profile
+        foundAdmin = admins.find(a => a.email.toLowerCase() === email.trim().toLowerCase());
+        if (!foundAdmin) {
+          const namePrefix = email.split("@")[0];
+          const nameParts = namePrefix.split(/[._-]/).map(part => part.charAt(0).toUpperCase() + part.slice(1));
+          const derivedName = nameParts.join(" ") || "External Admin";
+
+          foundAdmin = {
+            name: derivedName,
+            email: email.trim(),
+            password: password.trim(),
+            level: 3,
+            dept: "Information Security & IT Administration",
+            campus: "Guwahati Central Campus, Assam",
+            clearance: "Level 3 - System Super Administrator",
+            designation: "Director of IT Infrastructure",
+            session_id: `SPS-ADM-TEMP-${namePrefix.toUpperCase()}`,
+            auth_time: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) + ", " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+            ip: "192.168.1.100",
+            publicKey: `sha256:temp${namePrefix.toLowerCase()}${Date.now().toString().slice(-6)}`,
+            status: "Active / Temporary Administrator Session"
+          };
+          setAdmins(prev => [...prev, foundAdmin]);
+        }
+      }
+
+      setCurrentAdmin(foundAdmin);
       setSuccess("Login successful!");
       setTimeout(() => {
         goToDashboard();
@@ -522,6 +572,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] dark:bg-[#080808] text-slate-800 dark:text-slate-200 transition-colors duration-200">
       <Header
+        activeAdmin={activeAdmin}
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
         setScreen={setScreen}
@@ -1194,157 +1245,499 @@ export default function App() {
           })()}
 
           {activeTab === "profile" && (() => {
-            const profile = {
-              name: "Abhishek Tiwari",
-              email: "admin@southpoint.edu.in",
-              phone: "+91 98765 43210",
-              dept: "Information Security & IT Administration",
-              campus: "Guwahati Central Campus, Assam",
-              clearance: "Level 3 - System Super Administrator",
-              designation: "Director of IT Infrastructure",
-              session_id: "SPS-ADM-001-ABHISHEK",
-              auth_time: "25 Aug 2026, 09:30 AM",
-              ip: "192.168.1.1",
-              publicKey: "sha256:abhishektiwari7b1535b4a9b227cf842d0c321e6d7821c3b5f842d0",
-              status: "Active / Administrator Verified"
-            };
+            const profile = activeAdmin;
 
             return (
               <div className="w-full text-left animate-fade-in">
-                <div className="mb-5">
-                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Profile Details</h1>
-                  <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
-                    Your administrator security credentials and role assignment
-                  </p>
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Profile Details</h1>
+                    <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
+                      Your administrator security credentials and role assignment
+                    </p>
+                  </div>
+                  {!isEditingProfile && (
+                    <button
+                      onClick={() => setIsEditingProfile(true)}
+                      className="px-4.5 h-11 text-xs font-black text-white rounded-xl shadow-sm hover:shadow-md cursor-pointer border-none transition-all"
+                      style={{ backgroundColor: MAROON }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                    >
+                      ✏️ Edit Profile
+                    </button>
+                  )}
                 </div>
 
                 <div className="h-px mb-8" style={{ backgroundColor: BORDER }} />
 
-                {/* Profile Main Header Information Panel */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-8 border-b border-slate-200/60 dark:border-slate-800/80">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
-                      style={{ color: MAROON }}
-                    >
-                      AT
+                {isEditingProfile ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      const designation = formData.get("profileDesignation").trim();
+                      const dept = formData.get("profileDept").trim();
+                      const phone = formData.get("profilePhone").trim();
+                      const campus = formData.get("profileCampus").trim();
+
+                      if (!designation || !dept || !phone || !campus) {
+                        alert("Designation, Department, Phone Number, and Assigned Campus are required.");
+                        return;
+                      }
+
+                      // Check phone number length validation
+                      const isTenDigits = /^\d{10}$/.test(phone.replace(/\D/g, ""));
+                      if (!isTenDigits) {
+                        alert("Error: Phone number must be exactly 10 digits.");
+                        return;
+                      }
+
+                      // Update the active admin profile
+                      const updatedAdmins = admins.map(a => {
+                        if (a.email.toLowerCase() === profile.email.toLowerCase()) {
+                          return {
+                            ...a,
+                            designation,
+                            dept,
+                            phone,
+                            campus
+                          };
+                        }
+                        return a;
+                      });
+                      setAdmins(updatedAdmins);
+                      if (currentAdmin && currentAdmin.email.toLowerCase() === profile.email.toLowerCase()) {
+                        setCurrentAdmin({
+                          ...currentAdmin,
+                          designation,
+                          dept,
+                          phone,
+                          campus
+                        });
+                      }
+
+                      logActivity("Profile Updated", "Updated designation, department, phone, and campus details", "updated");
+                      setIsEditingProfile(false);
+                    }}
+                    className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full space-y-6"
+                    style={{ borderColor: BORDER }}
+                  >
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                      Edit Administrator Profile
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Full Name (Read Only)
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={profile.name}
+                          className="w-full h-11 px-3.5 text-sm border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-850 text-slate-450 rounded-xl cursor-not-allowed font-semibold"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Email Address (Change via OTP below)
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            disabled
+                            value={profile.email}
+                            className="w-full h-11 px-3.5 text-sm border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-850 text-slate-450 rounded-xl cursor-not-allowed font-semibold font-mono flex-grow"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEmailOtpState({ newEmail: "", otpCode: "", otpSent: false, userCode: "" })}
+                            className="px-3.5 h-11 text-[10px] font-black text-white rounded-xl cursor-pointer bg-[#C9A227] hover:bg-[#b08d20] border-none uppercase tracking-widest shrink-0 transition-colors"
+                          >
+                            Change Email
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">Abhishek Tiwari</h2>
-                      <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                        <span
-                          className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Designation
+                        </label>
+                        <input
+                          type="text"
+                          name="profileDesignation"
+                          required
+                          defaultValue={profile.designation}
+                          placeholder="e.g. Director of IT Infrastructure"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Department
+                        </label>
+                        <input
+                          type="text"
+                          name="profileDept"
+                          required
+                          defaultValue={profile.dept}
+                          placeholder="e.g. Information Security"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Phone Number
+                        </label>
+                        <input
+                          type="text"
+                          name="profilePhone"
+                          required
+                          maxLength={10}
+                          onInput={(e) => {
+                            e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                          }}
+                          defaultValue={profile.phone ? profile.phone.replace(/\D/g, "").slice(-10) : "9876543210"}
+                          placeholder="e.g. 9876543210"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Assigned Campus
+                        </label>
+                        <input
+                          type="text"
+                          name="profileCampus"
+                          required
+                          defaultValue={profile.campus}
+                          placeholder="e.g. Guwahati Central Campus, Assam"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(false)}
+                        className="flex-1 h-11 border border-slate-200 dark:border-slate-800 text-xs font-black rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer bg-transparent"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+                        style={{ backgroundColor: MAROON }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    {/* Profile Main Header Information Panel */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-8 border-b border-slate-200/60 dark:border-slate-800/80">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                        <div
+                          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
                           style={{ color: MAROON }}
                         >
-                          {profile.designation}
+                          {profile.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{profile.name}</h2>
+                          <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                            <span
+                              className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
+                              style={{ color: MAROON }}
+                            >
+                              {profile.designation}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                              Dept: {profile.dept}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Indicator */}
+                      <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-2xl">
+                        <div className="relative flex items-center justify-center w-2.5 h-2.5">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75 animate-ping" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#16A34A]" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wide">STATUS</span>
+                          <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider">{profile.status}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Profile Grid Information Panel */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {/* Card 1: Account Information */}
+                      <div className="space-y-6">
+                        <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                          Personal & Role Info
+                        </h3>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Full Name</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.name}</span>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Designation</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.designation}</span>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Department</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.dept}</span>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Contact & Location */}
+                      <div className="space-y-6">
+                        <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                          Contact & Assignment
+                        </h3>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Email Address</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">{profile.email}</span>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Phone Number</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">
+                            {profile.phone ? (profile.phone.startsWith("+91") ? profile.phone : `+91 ${profile.phone.slice(0,5)} ${profile.phone.slice(5)}`) : "+91 98765 43210"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned Campus</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.campus}</span>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Security & Session Credentials */}
+                      <div className="space-y-6">
+                        <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                          Security Credentials
+                        </h3>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Security Clearance</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.clearance}</span>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Session Token ID</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm truncate" title={profile.session_id}>
+                            {profile.session_id}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned IP Address</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm">{profile.ip}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Row: Encryption Details covering wide screen */}
+                    <div className="mt-10 p-5 bg-slate-50 dark:bg-[#101010] border border-slate-200 dark:border-slate-800 rounded-2xl">
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
+                        Cryptographic Public Signature Token
+                      </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <span className="text-[11px] font-mono text-slate-650 dark:text-slate-400 break-all select-all font-semibold">
+                          {profile.publicKey}
                         </span>
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                          Dept: {profile.dept}
+                        <span className="text-[9px] font-extrabold text-[#7B1535] dark:text-[#E27D9B] bg-[#FBF3F5] dark:bg-[#221015] border border-[#7B1535]/14 dark:border-[#E27D9B]/15 px-3 py-1 rounded-lg shrink-0 uppercase tracking-widest">
+                          AES-256 Verified
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
-                  {/* Status Indicator */}
-                  <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-2xl">
-                    <div className="relative flex items-center justify-center w-2.5 h-2.5">
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75 animate-ping" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#16A34A]" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wide">STATUS</span>
-                      <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider">{profile.status}</span>
-                    </div>
-                  </div>
+          {activeTab === "register-admin" && (() => {
+            return (
+              <div className="w-full text-left animate-fade-in space-y-8">
+                {/* Header */}
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Register Admin</h1>
+                  <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
+                    Create a new system administrator and assign database access clearance levels
+                  </p>
                 </div>
+                <div className="h-px" style={{ backgroundColor: BORDER }} />
 
-                {/* Profile Grid Information Panel */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {/* Card 1: Account Information */}
-                  <div className="space-y-6">
-                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                      Personal & Role Info
-                    </h3>
+                <div className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full" style={{ borderColor: BORDER }}>
+                  <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-5">
+                    Administrator Details
+                  </h3>
 
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Full Name</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">Abhishek Tiwari</span>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      const name = formData.get("adminName").trim();
+                      const email = formData.get("adminEmail").trim();
+                      const passVal = formData.get("adminPassword").trim();
+                      const levelVal = parseInt(formData.get("adminLevel"), 10);
+
+                      if (!name || !email || !passVal || !levelVal) {
+                        alert("All fields are required.");
+                        return;
+                      }
+
+                      // Check if email already exists
+                      const emailExists = admins.some(a => a.email.toLowerCase() === email.toLowerCase());
+                      if (emailExists) {
+                        alert(`Error: Administrator with email "${email}" is already registered.`);
+                        return;
+                      }
+
+                      const targetForm = e.target;
+                      setEntityConfirmModal({
+                        title: "Confirm Admin Registration",
+                        message: `Are you sure you want to register "${name}" as a new Level ${levelVal} Administrator?`,
+                        onConfirm: () => {
+                          const departments = {
+                            1: "General Administration",
+                            2: "Audit & Risk Compliance",
+                            3: "Information Security & IT Administration"
+                          };
+                          const clearances = {
+                            1: "Level 1 - Read-Only Access",
+                            2: "Level 2 - Operator Manager Access",
+                            3: "Level 3 - System Super Administrator"
+                          };
+                          const designations = {
+                            1: "Accounts Assistant",
+                            2: "Senior Compliance Auditor",
+                            3: "Director of IT Infrastructure"
+                          };
+
+                          const newAdmin = {
+                            name,
+                            email,
+                            password: passVal,
+                            level: levelVal,
+                            dept: departments[levelVal],
+                            campus: "Guwahati Central Campus, Assam",
+                            clearance: clearances[levelVal],
+                            designation: designations[levelVal],
+                            session_id: `SPS-ADM-00${admins.length + 1}-${name.split(" ")[0].toUpperCase()}`,
+                            auth_time: "Just registered",
+                            ip: "192.168.1.1",
+                            publicKey: `sha256:${name.toLowerCase().replace(/\s/g, "")}${Date.now().toString().slice(-6)}`,
+                            status: "Active / Administrator Verified"
+                          };
+
+                          setAdmins([...admins, newAdmin]);
+                          logActivity("Admin Registered", `Registered new administrator: ${name} (Level ${levelVal})`, "updated");
+                          targetForm.reset();
+                          alert(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
+                        }
+                      });
+                    }}
+                    className="space-y-4 text-left"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          name="adminName"
+                          required
+                          placeholder="e.g. Rahul Verma"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Access Level Clearance
+                        </label>
+                        <select
+                          name="adminLevel"
+                          required
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        >
+                          <option value="1">Level 1 - Read-Only Clerk</option>
+                          <option value="2">Level 2 - Operator Manager</option>
+                          <option value="3">Level 3 - System Super Administrator</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Designation</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.designation}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          name="adminEmail"
+                          required
+                          placeholder="e.g. rahul.verma@southpoint.edu.in"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                          Account Password
+                        </label>
+                        <input
+                          type="password"
+                          name="adminPassword"
+                          required
+                          placeholder="••••••••"
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                          style={{ borderColor: BORDER }}
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Department</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.dept}</span>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Contact & Location */}
-                  <div className="space-y-6">
-                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                      Contact & Assignment
-                    </h3>
-
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Email Address</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">{profile.email}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Phone Number</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">{profile.phone}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned Campus</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.campus}</span>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Security & Session Credentials */}
-                  <div className="space-y-6">
-                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                      Security Clearance
-                    </h3>
-
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Vault Access Clearance</span>
-                      <span className="text-red-700 dark:text-red-500 font-extrabold mt-1.5 block text-base flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
-                        {profile.clearance}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Session Token ID</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm truncate" title={profile.session_id}>
-                        {profile.session_id}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned IP Address</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm">{profile.ip}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Row: Encryption Details covering wide screen */}
-                <div className="mt-10 p-5 bg-slate-50 dark:bg-[#101010] border border-slate-200 dark:border-slate-800 rounded-2xl">
-                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
-                    Cryptographic Public Signature Token
-                  </span>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <span className="text-[11px] font-mono text-slate-650 dark:text-slate-400 break-all select-all font-semibold">
-                      {profile.publicKey}
-                    </span>
-                    <span className="text-[9px] font-extrabold text-[#7B1535] dark:text-[#E27D9B] bg-[#FBF3F5] dark:bg-[#221015] border border-[#7B1535]/14 dark:border-[#E27D9B]/15 px-3 py-1 rounded-lg shrink-0 uppercase tracking-widest">
-                      AES-256 Verified
-                    </span>
-                  </div>
+                    <button
+                      type="submit"
+                      className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
+                      style={{ backgroundColor: MAROON }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                    >
+                      Register Admin
+                    </button>
+                  </form>
                 </div>
               </div>
             );
@@ -1574,6 +1967,131 @@ export default function App() {
               >
                 Yes, Proceed
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {emailOtpState && (
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-[440px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up" style={{ borderColor: BORDER }}>
+            <div
+              className="px-6 py-5 text-white"
+              style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
+            >
+              <h3 className="text-base font-black tracking-wide uppercase">Email Change Verification</h3>
+              <p className="text-[10px] text-white/65 tracking-widest uppercase font-bold mt-1">OTP Authentication Process</p>
+            </div>
+
+            <div className="p-6 space-y-5 text-left bg-slate-50/20 dark:bg-[#101010]/20">
+              {!emailOtpState.otpSent ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                      New Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={emailOtpState.newEmail}
+                      onChange={(e) => setEmailOtpState({ ...emailOtpState, newEmail: e.target.value })}
+                      placeholder="e.g. new.email@gmail.com"
+                      className="w-full h-11 px-3.5 text-sm border bg-white dark:bg-[#181818] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEmailOtpState(null)}
+                      className="flex-1 h-11 border border-slate-200 dark:border-slate-800 text-xs font-black rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer bg-transparent"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!emailOtpState.newEmail.trim() || !emailOtpState.newEmail.includes("@")) {
+                          alert("Please enter a valid email address.");
+                          return;
+                        }
+                        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+                        setEmailOtpState({
+                          ...emailOtpState,
+                          otpSent: true,
+                          otpCode: generatedCode
+                        });
+                        alert(`Simulated OTP Code sent to "${emailOtpState.newEmail}": ${generatedCode}\n\nPlease enter this code on the next screen.`);
+                      }}
+                      className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+                      style={{ backgroundColor: MAROON }}
+                    >
+                      Send OTP Code
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-3 bg-amber-50 dark:bg-amber-955/20 border border-amber-200 dark:border-amber-900/60 rounded-xl text-center">
+                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-widest block mb-1">Simulated OTP Sent</span>
+                    <span className="text-lg font-mono font-black tracking-widest text-[#7B1535] dark:text-[#E27D9B] block">{emailOtpState.otpCode}</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                      Enter 6-Digit OTP Code
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={emailOtpState.userCode || ""}
+                      onChange={(e) => setEmailOtpState({ ...emailOtpState, userCode: e.target.value.replace(/\D/g, "") })}
+                      placeholder="e.g. 123456"
+                      className="w-full h-11 px-3.5 text-center text-lg tracking-widest font-mono border bg-white dark:bg-[#181818] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-bold"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEmailOtpState({ ...emailOtpState, otpSent: false })}
+                      className="flex-1 h-11 border border-slate-200 dark:border-slate-800 text-xs font-black rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer bg-transparent"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (emailOtpState.userCode !== emailOtpState.otpCode) {
+                          alert("Error: Invalid OTP code. Please enter the correct 6-digit code shown above.");
+                          return;
+                        }
+                        // Update in state!
+                        const targetEmail = activeAdmin.email;
+                        const newEmail = emailOtpState.newEmail.trim();
+
+                        const updatedAdmins = admins.map(a => {
+                          if (a.email.toLowerCase() === targetEmail.toLowerCase()) {
+                            return { ...a, email: newEmail };
+                          }
+                          return a;
+                        });
+                        setAdmins(updatedAdmins);
+                        if (currentAdmin && currentAdmin.email.toLowerCase() === targetEmail.toLowerCase()) {
+                          setCurrentAdmin({ ...currentAdmin, email: newEmail });
+                        }
+
+                        logActivity("Email Updated", `Updated administrator email to: ${newEmail}`, "updated");
+                        setEmailOtpState(null);
+                        alert(`Email successfully updated to ${newEmail}!`);
+                      }}
+                      className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+                      style={{ backgroundColor: MAROON }}
+                    >
+                      Verify & Update
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

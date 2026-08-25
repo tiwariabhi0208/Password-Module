@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, Settings, LogOut } from "lucide-react";
+import { ChevronDown, Settings, LogOut, ShieldCheck } from "lucide-react";
 import schoolLogo from "../../../images(1).png";
 import { MAROON, GOLD, BORDER } from "./theme";
 
@@ -9,7 +9,7 @@ function getInitials(name) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen }) {
+export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen }) {
 
   return (
     <nav
@@ -67,10 +67,10 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
               style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
             >
               <span className="text-xs font-black" style={{ color: GOLD }}>
-                AT
+                {getInitials(activeAdmin?.name || "Abhishek Tiwari")}
               </span>
             </div>
-            <span className="text-base text-white font-extrabold tracking-wide hidden sm:inline">Abhishek Tiwari</span>
+            <span className="text-base text-white font-extrabold tracking-wide hidden sm:inline">{activeAdmin?.name || "Abhishek Tiwari"}</span>
             <ChevronDown size={14} className="text-white/60" />
           </button>
 
@@ -78,9 +78,19 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
             <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
             <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-30 py-1 overflow-hidden border border-slate-100 dark:border-slate-800" style={{ borderColor: BORDER }}>
               <div className="px-3.5 py-3 border-b bg-[#FBF3F5] dark:bg-[#221015]" style={{ borderColor: BORDER }}>
-                <p className="text-base font-bold text-[#7B1535] dark:text-[#E27D9B]">Abhishek Tiwari</p>
-                <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5">admin@southpoint.edu.in</p>
+                <p className="text-base font-bold text-[#7B1535] dark:text-[#E27D9B]">{activeAdmin?.name || "Abhishek Tiwari"}</p>
+                <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5">{activeAdmin?.email || "admin@southpoint.edu.in"}</p>
               </div>
+              <button
+                onClick={() => {
+                  setAvatarMenuOpen(false);
+                  if (onNavigate) onNavigate("register-admin");
+                }}
+                className="w-full text-left px-3.5 py-3 text-base text-[#1A0810] dark:text-slate-200 hover:bg-[#FBF3F5] dark:hover:bg-[#221015] flex items-center gap-2.5 transition-colors cursor-pointer"
+              >
+                <ShieldCheck size={14} className="text-[#7B1535] dark:text-[#E27D9B]" />
+                Register Admin
+              </button>
               <button
                 onClick={() => {
                   setAvatarMenuOpen(false);
