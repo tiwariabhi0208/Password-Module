@@ -854,8 +854,8 @@ export default function App() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     {[
                       { id: "all", label: "All Logs", color: "bg-slate-500" },
-                      { id: "success", label: "Success", color: "bg-[#16A34A]" },
-                      { id: "info", label: "Info", color: "bg-[#1E3A5F]" },
+                      { id: "success", label: "Viewed", color: "bg-[#16A34A]" },
+                      { id: "info", label: "Updated", color: "bg-[#1E3A5F]" },
                       { id: "warning", label: "Warning", color: "bg-[#C9A227]" },
                       { id: "error", label: "Error", color: "bg-[#DC2626]" }
                     ].map((sev) => {
