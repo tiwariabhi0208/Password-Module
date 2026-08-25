@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon } from "lucide-react";
 
 import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius } from "./components/theme";
 import { BoyCharacter } from "./components/BoyCharacter";
@@ -190,6 +190,7 @@ export default function App() {
   const goToDashboard = () => {
     setScreen("dashboard");
     setSelectedBank(null);
+    setUserDropdownOpen(true);
   };
 
   const sendOtp = () => {
@@ -530,16 +531,55 @@ export default function App() {
           vaultCount={banks.length}
         />
 
-        <main className="flex-grow min-w-0 px-8 py-5">
+        <main className="flex-grow min-w-0 px-4 sm:px-8 py-5 pb-24 md:pb-5">
           {activeTab === "vault" && (
             <>
               {/* Header Title section */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-slate-800" style={{ borderColor: BORDER }}>
                 <div>
                   <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Account Vault</h1>
                   <p className="text-sm text-[#7A6068] mt-0.5 font-medium">
                     Linked bank credentials — South Point School, Guwahati
                   </p>
+                </div>
+
+                {/* Highly Visible Active User Indicator */}
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[11px] font-extrabold text-[#7A6068] dark:text-slate-400 uppercase tracking-widest shrink-0">Active Session:</span>
+                  <div className="relative">
+                    <button
+                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
+                    >
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                      </span>
+                      Viewing: {selectedUser}
+                      <ChevronDown size={15} style={{ color: GOLD }} />
+                    </button>
+
+                    {userDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
+                          {USERS.map((user) => (
+                            <button
+                              key={user}
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setUserDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${user === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
+                              style={user === selectedUser ? { color: MAROON } : { color: "#1A0810" }}
+                            >
+                              <span className="dark:text-slate-200">{user}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -551,7 +591,7 @@ export default function App() {
                     <Users size={20} />
                   </div>
                   <div className="flex-grow">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Vault Accounts</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Bank Accounts</span>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">{banks.length}</span>
                       <span className="text-xs font-semibold text-[#16A34A] dark:text-[#18c459]">Monitored</span>
@@ -583,8 +623,8 @@ export default function App() {
 
                 {/* Stats Card 3: Active Session Info */}
                 <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800" 
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800"
                     style={{ color: MAROON }}
                   >
                     {selectedUser.split(" ").map(n => n[0]).join("")}
@@ -592,7 +632,7 @@ export default function App() {
                   <div className="flex-grow min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Administrator</span>
                     <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-tight">{selectedUser}</h3>
-                    <span 
+                    <span
                       className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5 border border-slate-200 dark:border-slate-800 bg-[#FBF3F5] dark:bg-[#221015]/60 text-[#7B1535] dark:text-[#E27D9B]"
                     >
                       Access Level 3
@@ -634,39 +674,6 @@ export default function App() {
                     >
                       <List size={15} />
                     </button>
-                  </div>
-
-                  {/* Admin dropdown selection */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                      className="flex items-center gap-2 h-9 pl-3 pr-2.5 rounded-xl border border-slate-200 dark:border-slate-850 text-xs font-semibold transition-colors bg-white dark:bg-[#121212] hover:bg-slate-50 dark:hover:bg-[#1c1c1c] cursor-pointer"
-                      style={{ borderColor: BORDER, color: MAROON }}
-                    >
-                      Viewing: {selectedUser}
-                      <ChevronDown size={12} style={{ color: GOLD }} />
-                    </button>
-
-                    {userDropdownOpen && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                        <div className="absolute right-0 top-full mt-1.5 w-48 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
-                          {USERS.map((user) => (
-                            <button
-                              key={user}
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setUserDropdownOpen(false);
-                              }}
-                              className={`w-full text-left px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${user === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
-                              style={user === selectedUser ? { color: MAROON, fontWeight: 700 } : { color: "#1A0810" }}
-                            >
-                              <span className="dark:text-slate-200">{user}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
                   </div>
 
                   {/* Add Account Button */}
@@ -735,26 +742,26 @@ export default function App() {
                             <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                               <div className="flex items-center gap-2.5">
                                 {getBankLogo(bank.name) ? (
-                                  <img 
-                                    src={getBankLogo(bank.name)} 
-                                    alt={bank.name} 
-                                    className="w-8 h-8 rounded-lg object-contain bg-white p-1 border border-slate-200/60 dark:border-slate-850 shrink-0" 
+                                  <img
+                                    src={getBankLogo(bank.name)}
+                                    alt={bank.name}
+                                    className="w-8 h-8 rounded-lg object-contain bg-white p-1 border border-slate-200/60 dark:border-slate-850 shrink-0"
                                   />
                                 ) : (
-                                  <div 
-                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0" 
+                                  <div
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0"
                                     style={{ backgroundColor: bank.color }}
                                   >
-                                    {bank.initial || bank.name.slice(0,2).toUpperCase()}
+                                    {bank.initial || bank.name.slice(0, 2).toUpperCase()}
                                   </div>
                                 )}
                                 <span>{bank.name}</span>
                               </div>
                             </td>
-                            
+
                             {/* Account Holder */}
                             <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-semibold">{bank.holder ? bank.holder.split(",")[0] : "SOUTH POINT SCHOOL"}</td>
-                            
+
                             {/* Account Number */}
                             <td className="py-3.5 px-5 font-mono text-slate-600 dark:text-slate-400 text-xs">
                               <div className="flex items-center gap-1.5">
@@ -762,7 +769,7 @@ export default function App() {
                                 <CopyButton value={bank.accountNumber} label="Account Number" />
                               </div>
                             </td>
-                            
+
                             {/* IFSC Code */}
                             <td className="py-3.5 px-5 font-mono text-slate-600 dark:text-slate-400 text-xs">
                               <div className="flex items-center gap-1.5">
@@ -770,10 +777,10 @@ export default function App() {
                                 <CopyButton value={bank.ifsc} label="IFSC Code" />
                               </div>
                             </td>
-                            
+
                             {/* Branch */}
                             <td className="py-3.5 px-5 text-slate-500 dark:text-slate-400 font-semibold">{bank.branchName}</td>
-                            
+
                             {/* Actions */}
                             <td className="py-3.5 px-5 text-right pr-6">
                               <div className="flex items-center justify-end gap-2">
@@ -806,14 +813,14 @@ export default function App() {
           {activeTab === "activity" && (() => {
             const filteredActivities = activities.filter((act) => {
               const q = logSearchQuery.toLowerCase().trim();
-              const matchesQuery = !q || 
+              const matchesQuery = !q ||
                 act.action.toLowerCase().includes(q) ||
                 act.details.toLowerCase().includes(q) ||
                 act.user.toLowerCase().includes(q) ||
                 act.ip.toLowerCase().includes(q);
-                
+
               const matchesSeverity = logFilterSeverity === "all" || act.type === logFilterSeverity;
-              
+
               return matchesQuery && matchesSeverity;
             });
 
@@ -853,19 +860,18 @@ export default function App() {
                       { id: "error", label: "Error", color: "bg-[#DC2626]" }
                     ].map((sev) => {
                       const isActive = logFilterSeverity === sev.id;
-                      const count = sev.id === "all" 
-                        ? activities.length 
+                      const count = sev.id === "all"
+                        ? activities.length
                         : activities.filter(a => a.type === sev.id).length;
-                        
+
                       return (
                         <button
                           key={sev.id}
                           onClick={() => setLogFilterSeverity(sev.id)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border ${
-                            isActive 
-                              ? "bg-[#7B1535] text-white shadow-sm border-transparent" 
-                              : "bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
-                          }`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border ${isActive
+                            ? "bg-[#7B1535] text-white shadow-sm border-transparent"
+                            : "bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
+                            }`}
                           style={!isActive ? { borderColor: BORDER } : {}}
                         >
                           {sev.id !== "all" && <span className={`w-1.5 h-1.5 rounded-full ${sev.color}`} />}
@@ -898,13 +904,13 @@ export default function App() {
                         }[log.type] || { text: "#7A6068", bg: "#F5ECEE", darkBg: "#221a1a", border: "border-l-slate-300" };
 
                         return (
-                          <div 
-                            key={log.id} 
+                          <div
+                            key={log.id}
                             className={`p-4 pl-5 border-l-4 ${badgeStyles.border} flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-[#1a1a1a]/30 transition-colors`}
                           >
                             <div className="flex flex-col gap-1.5 text-left">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span 
+                                <span
                                   className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full dark:bg-opacity-30"
                                   style={{ color: badgeStyles.text, backgroundColor: document.documentElement.classList.contains("dark") ? badgeStyles.darkBg : badgeStyles.bg }}
                                 >
@@ -1001,7 +1007,7 @@ export default function App() {
                 {/* Profile Main Header Information Panel */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-8 border-b border-slate-200/60 dark:border-slate-800/80">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                    <div 
+                    <div
                       className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
                       style={{ color: MAROON }}
                     >
@@ -1010,7 +1016,7 @@ export default function App() {
                     <div>
                       <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{selectedUser}</h2>
                       <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                        <span 
+                        <span
                           className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
                           style={{ color: MAROON }}
                         >
@@ -1043,12 +1049,12 @@ export default function App() {
                     <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
                       Personal & Role Info
                     </h3>
-                    
+
                     <div>
                       <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Full Name</span>
                       <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{selectedUser}</span>
                     </div>
-                    
+
                     <div>
                       <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Designation</span>
                       <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.designation}</span>
@@ -1137,7 +1143,7 @@ export default function App() {
               if (/[0-9]/.test(pass)) score += 1;
               if (/[A-Z]/.test(pass)) score += 1;
               if (/[^A-Za-z0-9]/.test(pass)) score += 1;
-              
+
               if (score <= 2) return { score, label: "Weak", color: "bg-red-500", width: "33%" };
               if (score <= 4) return { score, label: "Medium", color: "bg-amber-500", width: "66%" };
               return { score, label: "Strong", color: "bg-green-500", width: "100%" };
@@ -1157,57 +1163,57 @@ export default function App() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Left: Form Inputs */}
-                  <form 
-                    onSubmit={(e) => { 
-                      e.preventDefault(); 
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
                       setPassword(newPasswordVal);
                       logActivity("Security Alert", "Master password updated successfully", "warning");
-                      alert("Master password updated successfully!"); 
+                      alert("Master password updated successfully!");
                       setNewPasswordVal("");
                       e.target.reset();
-                    }} 
+                    }}
                     className="lg:col-span-2 space-y-5"
                   >
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                         Current Master Password
                       </label>
-                      <input 
-                        type="password" 
-                        required 
+                      <input
+                        type="password"
+                        required
                         placeholder="••••••••"
-                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
-                        style={{ borderColor: BORDER }} 
+                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
+                        style={{ borderColor: BORDER }}
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                         New Master Password
                       </label>
-                      <input 
-                        type="password" 
-                        required 
+                      <input
+                        type="password"
+                        required
                         placeholder="••••••••"
                         value={newPasswordVal}
                         onChange={(e) => setNewPasswordVal(e.target.value)}
-                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
-                        style={{ borderColor: BORDER }} 
+                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
+                        style={{ borderColor: BORDER }}
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                         Confirm New Password
                       </label>
-                      <input 
-                        type="password" 
-                        required 
+                      <input
+                        type="password"
+                        required
                         placeholder="••••••••"
-                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
-                        style={{ borderColor: BORDER }} 
+                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
+                        style={{ borderColor: BORDER }}
                       />
                     </div>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
                       style={{ backgroundColor: MAROON }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
@@ -1223,23 +1229,23 @@ export default function App() {
                       <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 pb-2 mb-4">
                         Complexity Audit
                       </h3>
-                      
+
                       {newPasswordVal ? (
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-xs font-bold">
                             <span className="text-[#7A6068] dark:text-slate-400">Strength:</span>
-                            <span 
-                              style={{ 
-                                color: strength.score <= 2 ? "#DC2626" : strength.score <= 4 ? "#D97706" : "#16A34A" 
+                            <span
+                              style={{
+                                color: strength.score <= 2 ? "#DC2626" : strength.score <= 4 ? "#D97706" : "#16A34A"
                               }}
                             >
                               {strength.label}
                             </span>
                           </div>
                           <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full transition-all duration-300 ${strength.color}`} 
-                              style={{ width: strength.width }} 
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${strength.color}`}
+                              style={{ width: strength.width }}
                             />
                           </div>
                         </div>
@@ -1298,7 +1304,7 @@ export default function App() {
           }}
         />
       )}
-      
+
       <AddBankModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
@@ -1319,6 +1325,52 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#101010] border-t border-slate-200 dark:border-[#222222] flex justify-around items-center h-16 md:hidden px-4 shadow-lg">
+        <button
+          onClick={() => setActiveTab("vault")}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+            activeTab === "vault" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+          }`}
+        >
+          <Landmark size={20} />
+          <span className="text-[10px] font-bold">Vault</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("activity")}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative ${
+            activeTab === "activity" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+          }`}
+        >
+          <History size={20} />
+          <span className="text-[10px] font-bold">Logs</span>
+          {activities.length > 0 && (
+            <span className="absolute top-1.5 right-[35%] w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("profile")}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+            activeTab === "profile" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+          }`}
+        >
+          <User size={20} />
+          <span className="text-[10px] font-bold">Profile</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("settings")}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+            activeTab === "settings" || activeTab === "password" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+          }`}
+        >
+          <SettingsIcon size={20} />
+          <span className="text-[10px] font-bold">Settings</span>
+        </button>
+      </div>
 
       <Footer />
     </div>

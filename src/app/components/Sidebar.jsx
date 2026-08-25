@@ -32,13 +32,13 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
             <span className="text-[9px] font-bold tracking-widest text-[#7A6068] dark:text-slate-500 px-4 mb-3">
               {group.title}
             </span>
- 
+
             {/* Group Items */}
             <div className="flex flex-col gap-1.5">
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
-                
+
                 return (
                   <button
                     key={item.id}
@@ -49,29 +49,27 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
                         onTabChange(item.id);
                       }
                     }}
-                    className={`flex items-center gap-3.5 h-11 px-4 rounded-xl text-[13.5px] font-bold transition-all duration-200 cursor-pointer border-l-4 ${
-                      isActive
+                    className={`flex items-center gap-3.5 h-11 px-4 rounded-xl text-[13.5px] font-bold transition-all duration-200 cursor-pointer border-l-4 ${isActive
                         ? "bg-[#FBF3F5] dark:bg-[#221015] text-[#7B1535] dark:text-[#E27D9B] border-[#7B1535] dark:border-[#E27D9B] shadow-sm translate-x-1"
                         : "text-[#7A6068] dark:text-slate-400 hover:text-[#7B1535] dark:hover:text-[#E27D9B] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] border-transparent hover:translate-x-0.5"
-                    }`}
+                      }`}
                   >
                     <Icon
                       size={16}
                       className={isActive ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068]/80 dark:text-slate-400 group-hover:text-[#7B1535] dark:group-hover:text-[#E27D9B]"}
                     />
                     <span>{item.label}</span>
-                    
+
                     {/* Vault account count bubble */}
                     {item.id === "vault" && vaultCount !== undefined && (
-                      <span className={`ml-auto text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
-                        isActive 
-                          ? "bg-[#7B1535] dark:bg-[#E27D9B] text-white dark:text-[#111111]" 
+                      <span className={`ml-auto text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isActive
+                          ? "bg-[#7B1535] dark:bg-[#E27D9B] text-white dark:text-[#111111]"
                           : "bg-[#FBF3F5] dark:bg-[#221015] text-[#7B1535] dark:text-[#E27D9B]"
-                      }`}>
+                        }`}>
                         {vaultCount}
                       </span>
                     )}
- 
+
                     {/* Activity log alert indicator */}
                     {item.id === "activity" && (
                       <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
@@ -83,18 +81,18 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
           </div>
         ))}
       </div>
- 
+
       {/* Bottom Secure & Private Box */}
       <div className="mt-8">
-        <div 
+        <div
           className="rounded-2xl p-4.5 border flex flex-col gap-2.5 shadow-sm relative overflow-hidden transition-all hover:shadow-md bg-[#FDF6F7] dark:bg-[#221015]/60"
-          style={{ 
-            borderColor: "rgba(123, 21, 53, 0.12)" 
+          style={{
+            borderColor: "rgba(123, 21, 53, 0.12)"
           }}
         >
           {/* Specular sheen decorative overlay */}
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#7B1535]/5 to-transparent rounded-full blur-xl pointer-events-none" />
-          
+
           <div className="flex items-center gap-2">
             <ShieldCheck size={17} className="text-[#7B1535] dark:text-[#E27D9B] flex-shrink-0" />
             <span className="text-[10px] font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-wide">
@@ -104,7 +102,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
           <span className="text-[10px] text-[#7A6068] dark:text-slate-400 leading-relaxed font-semibold">
             Data encryption active. All actions are logged under strict audit rules.
           </span>
-          
+
           {/* Status indicator: System Online */}
           <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#7B1535]/5 dark:border-[#E27D9B]/5 mt-0.5">
             <div className="relative flex items-center justify-center w-2 h-2">

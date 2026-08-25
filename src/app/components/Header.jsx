@@ -76,7 +76,7 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
                 <p className="text-base font-bold text-[#7B1535] dark:text-[#E27D9B]">{selectedUser}</p>
                 <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5">admin@southpoint.edu.in</p>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setAvatarMenuOpen(false);
                   if (onNavigate) onNavigate("settings");
