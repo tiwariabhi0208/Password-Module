@@ -97,6 +97,9 @@ export function AccountModal({ bank, onClose, onDelete }) {
             <ModalDetailRow label="Branch Name" value={bank.branchName} />
             <ModalDetailRow label="Username" value={bank.username} isMonospaced={true} />
             <ModalDetailRow label="Password" value={bank.password} isMonospaced={true} isPassword={true} />
+            {bank.transactionPassword && (
+              <ModalDetailRow label="Transaction Password" value={bank.transactionPassword} isMonospaced={true} isPassword={true} />
+            )}
           </div>
         </div>
 

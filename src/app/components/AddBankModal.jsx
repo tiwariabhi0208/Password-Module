@@ -10,6 +10,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
   const [branchName, setBranchName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [transactionPassword, setTransactionPassword] = useState("");
 
   if (!isOpen) return null;
 
@@ -34,6 +35,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
       branchName,
       username,
       password,
+      transactionPassword,
       color
     });
 
@@ -43,6 +45,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
     setBranchName("");
     setUsername("");
     setPassword("");
+    setTransactionPassword("");
     onClose();
   };
 
@@ -199,6 +202,19 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
                   className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                Transaction Password <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Transaction Password (if any)"
+                value={transactionPassword}
+                onChange={(e) => setTransactionPassword(e.target.value)}
+                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+              />
             </div>
           </div>
 
