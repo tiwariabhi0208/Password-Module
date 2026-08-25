@@ -46,8 +46,9 @@ export default function App() {
   const [focusField, setFocusField] = useState(null);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(USERS[0]);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(true);
+  const [selectedUser, setSelectedUser] = useState("Guwahati Central Campus");
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
   const [banks, setBanks] = useState(BANKS);
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
@@ -58,6 +59,7 @@ export default function App() {
   ]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteBank, setDeleteBank] = useState(null);
+  const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
@@ -71,6 +73,8 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
   });
+
+  const entitiesCarouselRef = useRef(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -195,7 +199,7 @@ export default function App() {
   const goToDashboard = () => {
     setScreen("dashboard");
     setSelectedBank(null);
-    setUserDropdownOpen(true);
+    setUserDropdownOpen(false);
   };
 
   const sendOtp = () => {
@@ -523,6 +527,9 @@ export default function App() {
         setScreen={setScreen}
         setStealthMode={setStealthMode}
         onNavigate={setActiveTab}
+        avatarMenuOpen={avatarMenuOpen}
+        setAvatarMenuOpen={setAvatarMenuOpen}
+        setUserDropdownOpen={setUserDropdownOpen}
       />
 
       <div className="flex-grow flex w-full">
@@ -553,7 +560,13 @@ export default function App() {
                   <span className="text-[11px] font-extrabold text-[#7A6068] dark:text-slate-400 uppercase tracking-widest shrink-0">Active Session:</span>
                   <div className="relative">
                     <button
-                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      onClick={() => {
+                        const nextVal = !userDropdownOpen;
+                        setUserDropdownOpen(nextVal);
+                        if (nextVal) {
+                          setAvatarMenuOpen(false);
+                        }
+                      }}
                       className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
                     >
                       <span className="relative flex h-2.5 w-2.5">
@@ -568,17 +581,17 @@ export default function App() {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
                         <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
-                          {USERS.map((user) => (
+                          {entities.map((entity) => (
                             <button
-                              key={user}
+                              key={entity.id}
                               onClick={() => {
-                                setSelectedUser(user);
+                                setSelectedUser(entity.name);
                                 setUserDropdownOpen(false);
                               }}
-                              className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${user === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
-                              style={user === selectedUser ? { color: MAROON } : { color: "#1A0810" }}
+                              className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${entity.name === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
+                              style={entity.name === selectedUser ? { color: MAROON } : { color: "#1A0810" }}
                             >
-                              <span className="dark:text-slate-200">{user}</span>
+                              <span className="dark:text-slate-200">{entity.name}</span>
                             </button>
                           ))}
                         </div>
@@ -632,11 +645,11 @@ export default function App() {
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800"
                     style={{ color: MAROON }}
                   >
-                    {selectedUser.split(" ").map(n => n[0]).join("")}
+                    AT
                   </div>
                   <div className="flex-grow min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Administrator</span>
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-tight">{selectedUser}</h3>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-tight">Abhishek Tiwari</h3>
                     <span
                       className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5 border border-slate-200 dark:border-slate-800 bg-[#FBF3F5] dark:bg-[#221015]/60 text-[#7B1535] dark:text-[#E27D9B]"
                     >
@@ -817,54 +830,98 @@ export default function App() {
 
           {activeTab === "entities" && (() => {
             return (
-              <div className="w-full text-left animate-fade-in">
-                <div className="mb-5">
+              <div className="w-full text-left animate-fade-in space-y-8">
+                {/* Header */}
+                <div>
                   <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Register Entity</h1>
                   <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
                     Manage and register authorized school branches, administrators, or contact nodes
                   </p>
                 </div>
-                <div className="h-px mb-8" style={{ backgroundColor: BORDER }} />
+                <div className="h-px" style={{ backgroundColor: BORDER }} />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Left: Entities List */}
-                  <div className="lg:col-span-2 space-y-4">
-                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">
+                {/* Top Section: Registered Entities (Carousel) */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest">
                       Registered Entities ({entities.length})
                     </h3>
+                    {entities.length > 0 && (
+                      <span className="text-xs font-bold text-slate-450 dark:text-slate-500 animate-pulse">
+                        Scroll horizontally →
+                      </span>
+                    )}
+                  </div>
 
-                    {entities.length === 0 ? (
-                      <div className="text-center py-12 bg-white dark:bg-[#101010] border border-dashed rounded-2xl p-6 text-slate-400" style={{ borderColor: BORDER }}>
-                        No registered entities found. Use the form to add one.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {entities.length === 0 ? (
+                    <div className="text-center py-12 bg-white dark:bg-[#101010] border border-dashed rounded-2xl p-6 text-slate-400" style={{ borderColor: BORDER }}>
+                      No registered entities found. Use the form below to add one.
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      {/* Horizontal Scrolling Carousel wrapper */}
+                      <div
+                        ref={entitiesCarouselRef}
+                        onMouseDown={(e) => {
+                          const slider = entitiesCarouselRef.current;
+                          if (!slider) return;
+                          slider.isDown = true;
+                          slider.startX = e.pageX - slider.offsetLeft;
+                          slider.scrollStartLeft = slider.scrollLeft;
+                        }}
+                        onMouseLeave={() => {
+                          const slider = entitiesCarouselRef.current;
+                          if (!slider) return;
+                          slider.isDown = false;
+                        }}
+                        onMouseUp={() => {
+                          const slider = entitiesCarouselRef.current;
+                          if (!slider) return;
+                          slider.isDown = false;
+                        }}
+                        onMouseMove={(e) => {
+                          const slider = entitiesCarouselRef.current;
+                          if (!slider || !slider.isDown) return;
+                          e.preventDefault();
+                          const x = e.pageX - slider.offsetLeft;
+                          const walk = (x - slider.startX) * 1.5;
+                          slider.scrollLeft = slider.scrollStartLeft - walk;
+                        }}
+                        className="flex overflow-x-auto gap-4 pb-5 pt-1 snap-x snap-mandatory scroll-smooth no-scrollbar select-none cursor-grab active:cursor-grabbing"
+                        style={{ scrollbarWidth: "none" }}
+                      >
                         {entities.map((entity) => (
                           <div
                             key={entity.id}
-                            className="bg-white dark:bg-[#101010] p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 relative group overflow-hidden"
+                            className="snap-start shrink-0 w-[280px] sm:w-[320px] lg:w-[calc((100%-48px)/4)] lg:min-w-[calc((100%-48px)/4)] lg:max-w-[calc((100%-48px)/4)] bg-white dark:bg-[#101010] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 relative group overflow-hidden"
                             style={{ borderColor: BORDER }}
                           >
                             <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: MAROON }} />
                             
                             <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 truncate pr-6">{entity.name}</h4>
-                            <div className="mt-3 space-y-1.5 text-xs text-[#7A6068] dark:text-slate-400 font-semibold">
+                            <div className="mt-3.5 space-y-2 text-xs text-[#7A6068] dark:text-slate-400 font-semibold">
                               <div className="flex items-center gap-2">
-                                <span className="text-slate-400">✉</span>
+                                <span className="text-slate-400 text-sm">✉</span>
                                 <span className="font-mono">{entity.email}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-slate-400">📞</span>
+                                <span className="text-slate-400 text-sm">📞</span>
                                 <span className="font-mono">{entity.phone}</span>
                               </div>
                             </div>
                             
                             <button
                               onClick={() => {
-                                setEntities(entities.filter(e => e.id !== entity.id));
-                                logActivity("Entity Removed", `Removed entity: ${entity.name}`, "warning");
+                                setEntityConfirmModal({
+                                  title: "Delete Entity Confirmation",
+                                  message: `Are you sure you want to delete and unregister "${entity.name}" from the system database?`,
+                                  onConfirm: () => {
+                                    setEntities(entities.filter(e => e.id !== entity.id));
+                                    logActivity("Entity Removed", `Removed entity: ${entity.name}`, "warning");
+                                  }
+                                });
                               }}
-                              className="absolute top-3.5 right-3.5 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-655 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
+                              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-655 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
                               title="Remove Entity"
                             >
                               <Trash2 size={13} />
@@ -872,61 +929,82 @@ export default function App() {
                           </div>
                         ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Right: Add Entity Form */}
-                  <div className="lg:col-span-1 bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl h-fit shadow-sm" style={{ borderColor: BORDER }}>
-                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">
-                      Add New Entity
-                    </h3>
+                {/* Bottom Section: Add Entity Form */}
+                <div className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full" style={{ borderColor: BORDER }}>
+                  <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-5">
+                    Add New Entity
+                  </h3>
 
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.target);
-                        const name = formData.get("entityName").trim();
-                        const email = formData.get("entityEmail").trim();
-                        const phone = formData.get("entityPhone").trim();
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      const name = formData.get("entityName").trim();
+                      const email = formData.get("entityEmail").trim();
+                      const phone = formData.get("entityPhone").trim();
 
-                        if (!name || !email || !phone) {
-                          alert("All fields are required.");
-                          return;
+                      if (!name || !email || !phone) {
+                        alert("All fields are required.");
+                        return;
+                      }
+
+                      // Validate that entity name does not equal any admin user (case-insensitive)
+                      const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
+                      if (isAdminUser) {
+                        alert(`Error: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
+                        return;
+                      }
+
+                      // Validate that entity email does not equal any admin user email
+                      const ADMIN_EMAILS = [
+                        "priya.sharma@southpoint.edu.in",
+                        "rahul.verma@southpoint.edu.in",
+                        "anita.nair@southpoint.edu.in",
+                        "deepak.mehta@southpoint.edu.in"
+                      ];
+                      const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
+                      if (isAdminEmail) {
+                        alert(`Error: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
+                        return;
+                      }
+
+                      // Validate email contains @gmail.com
+                      if (!email.toLowerCase().endsWith("@gmail.com")) {
+                        alert("Error: Email must be a valid @gmail.com address.");
+                        return;
+                      }
+
+                      // Validate phone is exactly 10 digits
+                      const isTenDigits = /^\d{10}$/.test(phone);
+                      if (!isTenDigits) {
+                        alert("Error: Phone number must be exactly 10 digits (e.g. 9876543210).");
+                        return;
+                      }
+
+                      const targetForm = e.target;
+                      setEntityConfirmModal({
+                        title: "Confirm Registration",
+                        message: `Are you sure you want to register "${name}" as a new school entity?`,
+                        onConfirm: () => {
+                          const newEntity = {
+                            id: Date.now(),
+                            name,
+                            email,
+                            phone
+                          };
+                          setEntities([...entities, newEntity]);
+                          logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
+                          targetForm.reset();
                         }
-
-                        // Validate that entity name does not equal any admin user (case-insensitive)
-                        const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
-                        if (isAdminUser) {
-                          alert(`Error: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
-                          return;
-                        }
-
-                        // Validate that entity email does not equal any admin user email
-                        const ADMIN_EMAILS = [
-                          "priya.sharma@southpoint.edu.in",
-                          "rahul.verma@southpoint.edu.in",
-                          "anita.nair@southpoint.edu.in",
-                          "deepak.mehta@southpoint.edu.in"
-                        ];
-                        const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
-                        if (isAdminEmail) {
-                          alert(`Error: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
-                          return;
-                        }
-
-                        const newEntity = {
-                          id: Date.now(),
-                          name,
-                          email,
-                          phone
-                        };
-
-                        setEntities([...entities, newEntity]);
-                        logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
-                        e.target.reset();
-                      }}
-                      className="space-y-4 text-left"
-                    >
+                      });
+                    }}
+                    className="space-y-4 text-left"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                           Full Name / Entity Name
@@ -943,43 +1021,47 @@ export default function App() {
 
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                          Email ID
-                        </label>
-                        <input
-                          type="email"
-                          name="entityEmail"
-                          required
-                          placeholder="e.g. north.campus@school.edu"
-                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
-                          style={{ borderColor: BORDER }}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                           Phone Number
                         </label>
                         <input
                           type="tel"
                           name="entityPhone"
                           required
-                          placeholder="e.g. +91 94350 55667"
+                          maxLength={10}
+                          onInput={(e) => {
+                            e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                          }}
+                          placeholder="e.g. 9876543210"
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
                           style={{ borderColor: BORDER }}
                         />
                       </div>
+                    </div>
 
-                      <button
-                        type="submit"
-                        className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
-                        style={{ backgroundColor: MAROON }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-                      >
-                        Register Entity
-                      </button>
-                    </form>
-                  </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                        Email ID
+                      </label>
+                      <input
+                        type="email"
+                        name="entityEmail"
+                        required
+                        placeholder="e.g. branch.name@gmail.com"
+                        className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                        style={{ borderColor: BORDER }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
+                      style={{ backgroundColor: MAROON }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                    >
+                      Register Entity
+                    </button>
+                  </form>
                 </div>
               </div>
             );
@@ -1112,61 +1194,20 @@ export default function App() {
           })()}
 
           {activeTab === "profile" && (() => {
-            const USER_PROFILES = {
-              "Priya Sharma": {
-                email: "priya.sharma@southpoint.edu.in",
-                phone: "+91 98450 12345",
-                dept: "Accounts & Finance Division",
-                campus: "Guwahati Main Campus, Assam",
-                clearance: "Level 3 - Super Administrator",
-                designation: "Chief Accounts Officer (CAO)",
-                session_id: "SPS-ADM-301-PRIYA",
-                auth_time: "25 Aug 2026, 09:30 AM",
-                ip: "192.168.1.12",
-                publicKey: "sha256:f7b1535b4a9b227cf842d0c321e6d7821c3b5f842d0c321e6d7821c3b5f842d0",
-                status: "Active / Encrypted Session"
-              },
-              "Rahul Verma": {
-                email: "rahul.verma@southpoint.edu.in",
-                phone: "+91 97060 54321",
-                dept: "General Administration",
-                campus: "Guwahati East Branch, Assam",
-                clearance: "Level 1 - Read-Only Clerk",
-                designation: "Accounts Assistant",
-                session_id: "SPS-ADM-104-RAHUL",
-                auth_time: "25 Aug 2026, 08:45 AM",
-                ip: "192.168.1.45",
-                publicKey: "sha256:d8c1928ab02b189cd458b1a1a1a1a1a1d8c1928ab02b189cd458b1a1a1a1a1d8",
-                status: "Active / Encrypted Session"
-              },
-              "Anita Nair": {
-                email: "anita.nair@southpoint.edu.in",
-                phone: "+91 88760 98765",
-                dept: "Audit & Risk Compliance",
-                campus: "Guwahati South Campus, Assam",
-                clearance: "Level 2 - Operator Manager",
-                designation: "Senior Compliance Auditor",
-                session_id: "SPS-ADM-205-ANITA",
-                auth_time: "25 Aug 2026, 10:15 AM",
-                ip: "192.168.1.28",
-                publicKey: "sha256:b5c4210e194e354aa907d458b1a1a1a1b5c4210e194e354aa907d458b1a1a1a1",
-                status: "Active / Encrypted Session"
-              },
-              "Deepak Mehta": {
-                email: "deepak.mehta@southpoint.edu.in",
-                phone: "+91 94350 55667",
-                dept: "Information Technology",
-                campus: "Guwahati North Campus, Assam",
-                clearance: "Level 2 - Operator Manager",
-                designation: "Systems IT Coordinator",
-                session_id: "SPS-ADM-209-DEEPAK",
-                auth_time: "25 Aug 2026, 09:10 AM",
-                ip: "192.168.1.34",
-                publicKey: "sha256:e6d7821c3b5f842dc321f842d0c321e6d7821c3b5f842d0c321e6d7821c3b5f8",
-                status: "Active / Encrypted Session"
-              }
+            const profile = {
+              name: "Abhishek Tiwari",
+              email: "admin@southpoint.edu.in",
+              phone: "+91 98765 43210",
+              dept: "Information Security & IT Administration",
+              campus: "Guwahati Central Campus, Assam",
+              clearance: "Level 3 - System Super Administrator",
+              designation: "Director of IT Infrastructure",
+              session_id: "SPS-ADM-001-ABHISHEK",
+              auth_time: "25 Aug 2026, 09:30 AM",
+              ip: "192.168.1.1",
+              publicKey: "sha256:abhishektiwari7b1535b4a9b227cf842d0c321e6d7821c3b5f842d0",
+              status: "Active / Administrator Verified"
             };
-            const profile = USER_PROFILES[selectedUser] || USER_PROFILES["Priya Sharma"];
 
             return (
               <div className="w-full text-left animate-fade-in">
@@ -1186,10 +1227,10 @@ export default function App() {
                       className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
                       style={{ color: MAROON }}
                     >
-                      {selectedUser.split(" ").map(n => n[0]).join("")}
+                      AT
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{selectedUser}</h2>
+                      <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">Abhishek Tiwari</h2>
                       <div className="flex flex-wrap items-center gap-2 mt-2.5">
                         <span
                           className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
@@ -1227,7 +1268,7 @@ export default function App() {
 
                     <div>
                       <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Full Name</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{selectedUser}</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">Abhishek Tiwari</span>
                     </div>
 
                     <div>
@@ -1483,6 +1524,7 @@ export default function App() {
       <AddBankModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
+        entities={entities}
         onAdd={(newBank) => {
           setBanks([...banks, newBank]);
           logActivity("Account Added", `Added ${newBank.name} account details`, "success");
@@ -1499,6 +1541,42 @@ export default function App() {
             setDeleteBank(null);
           }}
         />
+      )}
+
+      {entityConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-[420px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border p-6 text-center animate-fade-in-up" style={{ borderColor: BORDER }}>
+            <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+              ⚠️
+            </div>
+            <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">
+              {entityConfirmModal.title}
+            </h3>
+            <p className="text-sm text-[#7A6068] dark:text-slate-400 mb-6 font-semibold">
+              {entityConfirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEntityConfirmModal(null)}
+                className="flex-1 h-11 border border-slate-200 dark:border-slate-800 text-xs font-black rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer bg-transparent"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  entityConfirmModal.onConfirm();
+                  setEntityConfirmModal(null);
+                }}
+                className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+                style={{ backgroundColor: MAROON }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+              >
+                Yes, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Mobile Bottom Navigation */}
@@ -1557,7 +1635,7 @@ export default function App() {
         </button>
       </div>
 
-      <Footer />
+      {activeTab === "vault" && <Footer />}
     </div>
   );
 }

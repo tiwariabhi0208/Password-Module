@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, Plus, Shield } from "lucide-react";
 import { MAROON, MAROON_HOVER, BORDER } from "./theme";
 
-export function AddBankModal({ isOpen, onClose, onAdd }) {
+export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
   const [name, setName] = useState("");
   const [holder, setHolder] = useState("South Point School, Guwahati");
   const [accountNumber, setAccountNumber] = useState("");
@@ -90,6 +90,29 @@ export function AddBankModal({ isOpen, onClose, onAdd }) {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                Select Registered Entity
+              </label>
+              <select
+                onChange={(e) => {
+                  const selectedName = e.target.value;
+                  if (selectedName) {
+                    setHolder(selectedName);
+                  }
+                }}
+                defaultValue=""
+                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+              >
+                <option value="" disabled>-- Select registered entity to pre-fill --</option>
+                {entities.map((ent) => (
+                  <option key={ent.id} value={ent.name}>
+                    {ent.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

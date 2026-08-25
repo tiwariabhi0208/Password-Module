@@ -9,8 +9,7 @@ function getInitials(name) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate }) {
-  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen }) {
 
   return (
     <nav
@@ -54,7 +53,13 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
         {/* Avatar menu */}
         <div className="relative">
           <button
-            onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+            onClick={() => {
+              const nextVal = !avatarMenuOpen;
+              setAvatarMenuOpen(nextVal);
+              if (nextVal && setUserDropdownOpen) {
+                setUserDropdownOpen(false);
+              }
+            }}
             className="flex items-center gap-2.5 h-11 px-3 rounded-lg transition-colors hover:bg-white/10 active:scale-[0.98]"
           >
             <div
@@ -62,10 +67,10 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
               style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
             >
               <span className="text-xs font-black" style={{ color: GOLD }}>
-                {getInitials(selectedUser)}
+                AT
               </span>
             </div>
-            <span className="text-base text-white font-extrabold tracking-wide">{selectedUser}</span>
+            <span className="text-base text-white font-extrabold tracking-wide hidden sm:inline">Abhishek Tiwari</span>
             <ChevronDown size={14} className="text-white/60" />
           </button>
 
@@ -73,7 +78,7 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
             <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
             <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-30 py-1 overflow-hidden border border-slate-100 dark:border-slate-800" style={{ borderColor: BORDER }}>
               <div className="px-3.5 py-3 border-b bg-[#FBF3F5] dark:bg-[#221015]" style={{ borderColor: BORDER }}>
-                <p className="text-base font-bold text-[#7B1535] dark:text-[#E27D9B]">{selectedUser}</p>
+                <p className="text-base font-bold text-[#7B1535] dark:text-[#E27D9B]">Abhishek Tiwari</p>
                 <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5">admin@southpoint.edu.in</p>
               </div>
               <button
