@@ -4,6 +4,10 @@ import { GOLD } from "./theme";
 import bobLogo from "../../../photos/BOB-Bank.png";
 import hdfcLogo from "../../../photos/HDFC-Bank.png";
 import sbiLogo from "../../../photos/SBI-Bank.png";
+import axisLogo from "../../../photos/AXIS-Bank.png";
+import iciciLogo from "../../../photos/ICICI_Bank.png";
+import kotakLogo from "../../../photos/KOTAK-Bank.png";
+import yesLogo from "../../../photos/YES-Bank.png";
 
 export function getBankLogo(bankName) {
   if (!bankName) return null;
@@ -11,6 +15,10 @@ export function getBankLogo(bankName) {
   if (name.includes("hdfc")) return hdfcLogo;
   if (name.includes("state bank") || name.includes("sbi")) return sbiLogo;
   if (name.includes("baroda") || name.includes("bob")) return bobLogo;
+  if (name.includes("axis")) return axisLogo;
+  if (name.includes("icici")) return iciciLogo;
+  if (name.includes("kotak")) return kotakLogo;
+  if (name.includes("yes")) return yesLogo;
   return null;
 }
 
