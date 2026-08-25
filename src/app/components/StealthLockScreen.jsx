@@ -74,13 +74,14 @@ export function StealthLockScreen({
             </label>
             <div className="relative">
               <input
-                type="password"
+                type="text"
                 required
                 placeholder="••••••••"
                 value={stealthPassword}
                 onChange={(e) => setStealthPassword(e.target.value)}
-                className="w-full h-11 pl-4 pr-10 text-sm border bg-white rounded-xl focus:outline-none focus:border-[#7B1535] font-mono"
-                style={{ borderColor: BORDER }}
+                className="w-full h-11 pl-4 pr-10 text-sm border bg-white rounded-xl focus:outline-none focus:border-[#7B1535]"
+                style={{ borderColor: BORDER, WebkitTextSecurity: "disc" }}
+                autoComplete="new-password"
                 autoFocus
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">

@@ -14,6 +14,7 @@ import { Footer } from "./components/Footer";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { Sidebar } from "./components/Sidebar";
 import { CopyButton } from "./components/CopyButton";
+import { Settings } from "./components/Settings";
 
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
@@ -24,6 +25,14 @@ const BANKS = [
   { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B" },
   { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F" },
   { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A" }
+];
+
+const INITIAL_ACTIVITIES = [
+  { id: 1, time: "Today, 12:05 PM", action: "Credential Accessed", details: "Viewed password details for HDFC Bank", user: "Priya Sharma", type: "success", ip: "192.168.1.45" },
+  { id: 2, time: "Today, 11:32 AM", action: "Lock Screen Triggered", details: "Stealth mode manual activation", user: "Priya Sharma", type: "info", ip: "192.168.1.45" },
+  { id: 3, time: "Yesterday, 04:10 PM", action: "Account Added", details: "Added Kotak Mahindra Bank account", user: "Rahul Verma", type: "success", ip: "192.168.1.98" },
+  { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid stealth password entered", user: "System", type: "error", ip: "172.56.21.9" },
+  { id: 5, time: "18 Aug, 02:40 PM", action: "Account Deleted", details: "Deleted Yes Bank account details", user: "Anita Nair", type: "warning", ip: "192.168.1.14" }
 ];
 
 export default function App() {
@@ -41,12 +50,55 @@ export default function App() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
   const [banks, setBanks] = useState(BANKS);
+  const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteBank, setDeleteBank] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
+  const [logSearchQuery, setLogSearchQuery] = useState("");
+  const [logFilterSeverity, setLogFilterSeverity] = useState("all");
+  const [newPasswordVal, setNewPasswordVal] = useState("");
+  const [tfaEnabled, setTfaEnabled] = useState(false);
+  const [auditEnabled, setAuditEnabled] = useState(true);
+  const [timeoutEnabled, setTimeoutEnabled] = useState(true);
   const [stealthMode, setStealthMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+  const logActivity = (action, details, type) => {
+    setActivities((prev) => [
+      {
+        id: Date.now(),
+        time: "Just now",
+        action,
+        details,
+        user: selectedUser,
+        type,
+        ip: "192.168.1.45"
+      },
+      ...prev
+    ]);
+  };
+
+  const handleViewBank = (bank) => {
+    setSelectedBank(bank);
+    if (bank) {
+      logActivity("Credential Accessed", `Viewed credentials for ${bank.name}`, "success");
+    }
+  };
+
   const [stealthPassword, setStealthPassword] = useState("");
   const [stealthError, setStealthError] = useState("");
   const [error, setError] = useState("");
@@ -458,12 +510,13 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] dark:bg-[#080808] text-slate-800 dark:text-slate-200 transition-colors duration-200">
       <Header
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
         setScreen={setScreen}
         setStealthMode={setStealthMode}
+        onNavigate={setActiveTab}
       />
 
       <div className="flex-grow flex w-full">
@@ -474,6 +527,7 @@ export default function App() {
             setScreen("login");
             setActiveTab("vault");
           }}
+          vaultCount={banks.length}
         />
 
         <main className="flex-grow min-w-0 px-8 py-5">
@@ -492,35 +546,35 @@ export default function App() {
               {/* Stats Grid Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                 {/* Stats Card 1: Total Vault Accounts */}
-                <div className="bg-white rounded-2xl p-4.5 border shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FBF3F5]" style={{ color: MAROON }}>
+                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FBF3F5] dark:bg-[#221015]/60" style={{ color: MAROON }}>
                     <Users size={20} />
                   </div>
                   <div className="flex-grow">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068]">Active Vault Accounts</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Vault Accounts</span>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-2xl font-bold text-slate-800 leading-none">{banks.length}</span>
-                      <span className="text-xs font-semibold text-[#16A34A]">Monitored</span>
+                      <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">{banks.length}</span>
+                      <span className="text-xs font-semibold text-[#16A34A] dark:text-[#18c459]">Monitored</span>
                     </div>
                     {/* Mini Progress Bar */}
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-                      <div className="bg-[#7B1535] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((banks.length / 12) * 100, 100)}%` }} />
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                      <div className="bg-[#7B1535] dark:bg-[#E27D9B] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((banks.length / 12) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>
 
                 {/* Stats Card 2: Security Status */}
-                <div className="bg-white rounded-2xl p-4.5 border shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 text-[#16A34A]">
+                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-950/20 text-[#16A34A]">
                     <ShieldCheck size={20} />
                   </div>
                   <div className="flex-grow">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068]">Security Coverage</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Security Coverage</span>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-2xl font-bold text-slate-800 leading-none">AES-256</span>
+                      <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">AES-256</span>
                       <span className="text-[10px] font-bold text-slate-400 font-mono">ENCRYPTED</span>
                     </div>
-                    <p className="text-[10.5px] text-[#7A6068] mt-2 font-medium leading-none flex items-center gap-1">
+                    <p className="text-[10.5px] text-[#7A6068] dark:text-slate-400 mt-2 font-medium leading-none flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
                       Vault database active & locked
                     </p>
@@ -528,19 +582,18 @@ export default function App() {
                 </div>
 
                 {/* Stats Card 3: Active Session Info */}
-                <div className="bg-white rounded-2xl p-4.5 border shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
                   <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border" 
-                    style={{ backgroundColor: "#FBF3F5", borderColor: GOLD, color: MAROON }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800" 
+                    style={{ color: MAROON }}
                   >
                     {selectedUser.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div className="flex-grow min-w-0">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068]">Active Administrator</span>
-                    <h3 className="text-sm font-bold text-slate-800 truncate mt-1 leading-tight">{selectedUser}</h3>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Administrator</span>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-tight">{selectedUser}</h3>
                     <span 
-                      className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5"
-                      style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
+                      className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5 border border-slate-200 dark:border-slate-800 bg-[#FBF3F5] dark:bg-[#221015]/60 text-[#7B1535] dark:text-[#E27D9B]"
                     >
                       Access Level 3
                     </span>
@@ -549,7 +602,7 @@ export default function App() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 p-4 bg-white rounded-2xl border shadow-sm" style={{ borderColor: BORDER }}>
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 p-4 bg-white dark:bg-[#101010] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm" style={{ borderColor: BORDER }}>
                 {/* Left: Search input */}
                 <div className="relative flex-grow max-w-md">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -558,7 +611,7 @@ export default function App() {
                     placeholder="Search by bank name, cardholder, account #..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-10 pl-10 pr-4 text-sm border bg-white rounded-xl focus:outline-none focus:border-[#7B1535] transition-colors"
+                    className="w-full h-10 pl-10 pr-4 text-sm border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-colors"
                     style={{ borderColor: BORDER }}
                   />
                 </div>
@@ -566,17 +619,17 @@ export default function App() {
                 {/* Right: Layout Switcher, View State, and Add Button */}
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Grid / List View Toggle */}
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
                     <button
                       onClick={() => setViewMode("grid")}
-                      className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "grid" ? "bg-white text-[#7B1535] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                      className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "grid" ? "bg-white dark:bg-[#1c1c1c] text-[#7B1535] dark:text-[#E27D9B] shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
                       title="Grid View"
                     >
                       <Grid size={15} />
                     </button>
                     <button
                       onClick={() => setViewMode("list")}
-                      className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "list" ? "bg-white text-[#7B1535] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                      className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "list" ? "bg-white dark:bg-[#1c1c1c] text-[#7B1535] dark:text-[#E27D9B] shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
                       title="List View"
                     >
                       <List size={15} />
@@ -587,7 +640,7 @@ export default function App() {
                   <div className="relative">
                     <button
                       onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                      className="flex items-center gap-2 h-9 pl-3 pr-2.5 rounded-xl border text-xs font-semibold transition-colors bg-white hover:bg-slate-50 cursor-pointer"
+                      className="flex items-center gap-2 h-9 pl-3 pr-2.5 rounded-xl border border-slate-200 dark:border-slate-850 text-xs font-semibold transition-colors bg-white dark:bg-[#121212] hover:bg-slate-50 dark:hover:bg-[#1c1c1c] cursor-pointer"
                       style={{ borderColor: BORDER, color: MAROON }}
                     >
                       Viewing: {selectedUser}
@@ -597,7 +650,7 @@ export default function App() {
                     {userDropdownOpen && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                        <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border animate-fade-in-up" style={{ borderColor: BORDER }}>
+                        <div className="absolute right-0 top-full mt-1.5 w-48 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
                           {USERS.map((user) => (
                             <button
                               key={user}
@@ -605,10 +658,10 @@ export default function App() {
                                 setSelectedUser(user);
                                 setUserDropdownOpen(false);
                               }}
-                              className="w-full text-left px-3 py-2 text-xs font-semibold transition-colors cursor-pointer"
-                              style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 700 } : { color: "#1A0810" }}
+                              className={`w-full text-left px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${user === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
+                              style={user === selectedUser ? { color: MAROON, fontWeight: 700 } : { color: "#1A0810" }}
                             >
-                              {user}
+                              <span className="dark:text-slate-200">{user}</span>
                             </button>
                           ))}
                         </div>
@@ -655,18 +708,18 @@ export default function App() {
                     <BankCard
                       key={bank.id}
                       bank={bank}
-                      onClick={() => setSelectedBank(bank)}
+                      onClick={() => handleViewBank(bank)}
                       onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
                     />
                   ))}
                 </div>
               ) : (
                 /* List View (Sleek Administrative Table) */
-                <div className="bg-white rounded-2xl border overflow-hidden shadow-sm" style={{ borderColor: BORDER }}>
+                <div className="bg-white dark:bg-[#101010] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm" style={{ borderColor: BORDER }}>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-[#7A6068]" style={{ borderColor: BORDER }}>
+                        <tr className="border-b bg-slate-50/50 dark:bg-slate-900/40 text-[10px] font-bold uppercase tracking-widest text-[#7A6068] dark:text-slate-400 border-slate-200 dark:border-slate-800" style={{ borderColor: BORDER }}>
                           <th className="py-3.5 px-5">Bank</th>
                           <th className="py-3.5 px-5">Account Holder</th>
                           <th className="py-3.5 px-5">Account Number</th>
@@ -675,11 +728,11 @@ export default function App() {
                           <th className="py-3.5 px-5 text-right pr-6">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 text-sm">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
                         {filteredBanks.map((bank) => (
-                          <tr key={bank.id} className="hover:bg-slate-50/70 transition-colors group">
+                          <tr key={bank.id} className="hover:bg-slate-50/70 dark:hover:bg-[#1c1c1c]/40 transition-colors group">
                             {/* Bank Name */}
-                            <td className="py-3.5 px-5 font-semibold text-slate-800">
+                            <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                               <div className="flex items-center gap-2.5">
                                 <div 
                                   className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-black text-white" 
@@ -692,10 +745,10 @@ export default function App() {
                             </td>
                             
                             {/* Account Holder */}
-                            <td className="py-3.5 px-5 text-slate-600 font-semibold">{bank.holder ? bank.holder.split(",")[0] : "SOUTH POINT SCHOOL"}</td>
+                            <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-semibold">{bank.holder ? bank.holder.split(",")[0] : "SOUTH POINT SCHOOL"}</td>
                             
                             {/* Account Number */}
-                            <td className="py-3.5 px-5 font-mono text-slate-600 text-xs">
+                            <td className="py-3.5 px-5 font-mono text-slate-600 dark:text-slate-400 text-xs">
                               <div className="flex items-center gap-1.5">
                                 <span>{`•••• •••• •••• ${bank.accountNumber.slice(-4)}`}</span>
                                 <CopyButton value={bank.accountNumber} label="Account Number" />
@@ -703,7 +756,7 @@ export default function App() {
                             </td>
                             
                             {/* IFSC Code */}
-                            <td className="py-3.5 px-5 font-mono text-slate-600 text-xs">
+                            <td className="py-3.5 px-5 font-mono text-slate-600 dark:text-slate-400 text-xs">
                               <div className="flex items-center gap-1.5">
                                 <span>{bank.ifsc}</span>
                                 <CopyButton value={bank.ifsc} label="IFSC Code" />
@@ -711,14 +764,14 @@ export default function App() {
                             </td>
                             
                             {/* Branch */}
-                            <td className="py-3.5 px-5 text-slate-500 font-semibold">{bank.branchName}</td>
+                            <td className="py-3.5 px-5 text-slate-500 dark:text-slate-400 font-semibold">{bank.branchName}</td>
                             
                             {/* Actions */}
                             <td className="py-3.5 px-5 text-right pr-6">
                               <div className="flex items-center justify-end gap-2">
                                 <button
-                                  onClick={() => setSelectedBank(bank)}
-                                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-[#7B1535] transition-colors cursor-pointer"
+                                  onClick={() => handleViewBank(bank)}
+                                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
                                   title="View Details"
                                 >
                                   <Eye size={15} />
@@ -742,182 +795,334 @@ export default function App() {
             </>
           )}
 
-          {activeTab === "activity" && (
-            <>
-              <div>
-                <h1 className="text-xl font-bold" style={{ color: MAROON }}>Activity Log</h1>
-                <p className="text-sm text-[#7A6068] mt-1">
-                  Recent actions and security events on the vault
-                </p>
-              </div>
-              <div className="h-px mb-6 mt-6" style={{ backgroundColor: BORDER }} />
+          {activeTab === "activity" && (() => {
+            const filteredActivities = activities.filter((act) => {
+              const q = logSearchQuery.toLowerCase().trim();
+              const matchesQuery = !q || 
+                act.action.toLowerCase().includes(q) ||
+                act.details.toLowerCase().includes(q) ||
+                act.user.toLowerCase().includes(q) ||
+                act.ip.toLowerCase().includes(q);
+                
+              const matchesSeverity = logFilterSeverity === "all" || act.type === logFilterSeverity;
+              
+              return matchesQuery && matchesSeverity;
+            });
 
-              <div className="bg-white rounded-2xl border overflow-hidden shadow-sm" style={{ borderColor: BORDER }}>
-                <div className="divide-y divide-slate-100">
-                  {[
-                    { id: 1, time: "Today, 12:05 PM", action: "Credential Accessed", details: "Viewed password details for HDFC Bank", user: selectedUser, type: "success", ip: "192.168.1.45" },
-                    { id: 2, time: "Today, 11:32 AM", action: "Lock Screen Triggered", details: "Stealth mode manual activation", user: selectedUser, type: "info", ip: "192.168.1.45" },
-                    { id: 3, time: "Yesterday, 04:10 PM", action: "Account Added", details: "Added Kotak Mahindra Bank account", user: "Rahul Verma", type: "success", ip: "192.168.1.98" },
-                    { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid stealth password entered", user: "System", type: "error", ip: "172.56.21.9" },
-                    { id: 5, time: "18 Aug, 02:40 PM", action: "Account Deleted", details: "Deleted Yes Bank account details", user: "Anita Nair", type: "warning", ip: "192.168.1.14" }
-                  ].map((log) => {
-                    const badgeStyles = {
-                      success: { text: "#16A34A", bg: "#F0FDF4" },
-                      info: { text: "#1E3A5F", bg: "#E8F0F8" },
-                      warning: { text: "#C9A227", bg: "#FDF8E8" },
-                      error: { text: "#DC2626", bg: "#FDF2F2" }
-                    }[log.type];
-
-                    return (
-                      <div key={log.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span 
-                              className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                              style={{ color: badgeStyles.text, backgroundColor: badgeStyles.bg }}
-                            >
-                              {log.action}
-                            </span>
-                            <span className="text-xs text-[#7A6068] font-medium">{log.time}</span>
-                          </div>
-                          <p className="text-sm font-semibold text-slate-800 mt-1">{log.details}</p>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs font-medium text-[#7A6068] sm:text-right">
-                          <div>
-                            <span className="block text-slate-900 font-semibold">{log.user}</span>
-                            <span className="block text-[10px] text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+            return (
+              <>
+                <div className="mb-5 text-left">
+                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Activity Log</h1>
+                  <p className="text-sm text-[#7A6068] mt-0.5 font-medium">
+                    Audit trail and security events on the vault database
+                  </p>
                 </div>
-              </div>
-            </>
-          )}
 
-          {activeTab === "profile" && (
-            <>
-              <div>
-                <h1 className="text-xl font-bold" style={{ color: MAROON }}>Profile Details</h1>
-                <p className="text-sm text-[#7A6068] mt-1">
-                  Your administrator security credentials and role
-                </p>
-              </div>
-              <div className="h-px mb-6 mt-6" style={{ backgroundColor: BORDER }} />
+                <div className="h-px mb-5" style={{ backgroundColor: BORDER }} />
 
-              <div className="bg-white rounded-2xl border p-6 max-w-xl shadow-sm" style={{ borderColor: BORDER }}>
-                <div className="flex items-center gap-5 mb-6">
+                {/* Filters and Search toolbar */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+                  {/* Search */}
+                  <div className="relative flex-grow max-w-sm">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search logs by action, user, IP..."
+                      value={logSearchQuery}
+                      onChange={(e) => setLogSearchQuery(e.target.value)}
+                      className="w-full h-10 pl-10 pr-4 text-xs font-semibold border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] text-slate-800 dark:text-slate-200 transition-colors"
+                      style={{ borderColor: BORDER }}
+                    />
+                  </div>
+
+                  {/* Severity Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[
+                      { id: "all", label: "All Logs", color: "bg-slate-500" },
+                      { id: "success", label: "Success", color: "bg-[#16A34A]" },
+                      { id: "info", label: "Info", color: "bg-[#1E3A5F]" },
+                      { id: "warning", label: "Warning", color: "bg-[#C9A227]" },
+                      { id: "error", label: "Error", color: "bg-[#DC2626]" }
+                    ].map((sev) => {
+                      const isActive = logFilterSeverity === sev.id;
+                      const count = sev.id === "all" 
+                        ? activities.length 
+                        : activities.filter(a => a.type === sev.id).length;
+                        
+                      return (
+                        <button
+                          key={sev.id}
+                          onClick={() => setLogFilterSeverity(sev.id)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border ${
+                            isActive 
+                              ? "bg-[#7B1535] text-white shadow-sm border-transparent" 
+                              : "bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
+                          }`}
+                          style={!isActive ? { borderColor: BORDER } : {}}
+                        >
+                          {sev.id !== "all" && <span className={`w-1.5 h-1.5 rounded-full ${sev.color}`} />}
+                          {sev.label}
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Audit trail feed */}
+                <div className="bg-white dark:bg-[#101010] rounded-2xl border overflow-hidden shadow-sm" style={{ borderColor: BORDER }}>
+                  {filteredActivities.length === 0 ? (
+                    <div className="p-12 text-center text-slate-500 flex flex-col items-center justify-center">
+                      <AlertCircle size={28} className="text-slate-300 mb-2" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">No logs found matching criteria</span>
+                      <span className="text-[11px] text-[#7A6068] dark:text-slate-400 mt-1 leading-none">Try resetting your filter or search query.</span>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                      {filteredActivities.map((log) => {
+                        const badgeStyles = {
+                          success: { text: "#16A34A", bg: "#F0FDF4", darkBg: "#122a18", border: "border-l-[#16A34A]" },
+                          info: { text: "#1E3A5F", bg: "#E8F0F8", darkBg: "#101f30", border: "border-l-[#1E3A5F]" },
+                          warning: { text: "#C9A227", bg: "#FDF8E8", darkBg: "#2c2512", border: "border-l-[#C9A227]" },
+                          error: { text: "#DC2626", bg: "#FDF2F2", darkBg: "#321515", border: "border-l-[#DC2626]" }
+                        }[log.type] || { text: "#7A6068", bg: "#F5ECEE", darkBg: "#221a1a", border: "border-l-slate-300" };
+
+                        return (
+                          <div 
+                            key={log.id} 
+                            className={`p-4 pl-5 border-l-4 ${badgeStyles.border} flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-[#1a1a1a]/30 transition-colors`}
+                          >
+                            <div className="flex flex-col gap-1 text-left">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span 
+                                  className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full dark:bg-opacity-30"
+                                  style={{ color: badgeStyles.text, backgroundColor: document.documentElement.classList.contains("dark") ? badgeStyles.darkBg : badgeStyles.bg }}
+                                >
+                                  {log.action}
+                                </span>
+                                <span className="text-[11px] text-[#7A6068] dark:text-slate-400 font-semibold">{log.time}</span>
+                              </div>
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">{log.details}</p>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs font-bold text-[#7A6068] sm:text-right">
+                              <div>
+                                <span className="block text-slate-900 font-extrabold">{log.user}</span>
+                                <span className="block text-[10px] text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+
+          {activeTab === "profile" && (() => {
+            const userEmails = {
+              "Priya Sharma": "priya.sharma@southpoint.edu.in",
+              "Rahul Verma": "rahul.verma@southpoint.edu.in",
+              "Anita Nair": "anita.nair@southpoint.edu.in",
+              "Deepak Mehta": "deepak.mehta@southpoint.edu.in"
+            };
+            const emailVal = userEmails[selectedUser] || "admin@southpoint.edu.in";
+
+            return (
+              <div className="max-w-2xl text-left animate-fade-in">
+                <div className="mb-5">
+                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Profile Details</h1>
+                  <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
+                    Your administrator security credentials and role assignment
+                  </p>
+                </div>
+
+                <div className="h-px mb-8" style={{ backgroundColor: BORDER }} />
+
+                {/* Flat Header Layout */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5 mb-8">
                   <div 
-                    className="w-16 h-16 rounded-full border-2 flex items-center justify-center text-xl font-extrabold shadow-sm"
-                    style={{ backgroundColor: "#FBF3F5", borderColor: GOLD, color: MAROON }}
+                    className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60"
+                    style={{ color: MAROON }}
                   >
                     {selectedUser.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">{selectedUser}</h2>
+                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{selectedUser}</h2>
                     <span 
-                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mt-1.5 inline-block"
-                      style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
+                      className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full inline-block mt-2 border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
+                      style={{ color: MAROON }}
                     >
-                      Administrator
+                      System Administrator
                     </span>
                   </div>
                 </div>
 
-                <div className="h-px bg-slate-100 mb-6" />
+                {/* Flat Info Rows */}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6 border-b border-slate-200/60 dark:border-slate-800/80">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Email Address</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-semibold mt-1.5 block text-sm">{emailVal}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Department</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-semibold mt-1.5 block text-sm">Accounts & Finance Division</span>
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 text-sm">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Email Address</span>
-                    <span className="text-slate-900 font-semibold mt-1 block">priya.sharma@southpoint.edu.in</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Department</span>
-                    <span className="text-slate-900 font-semibold mt-1 block">Accounts & Finance Division</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Vault Access Clearance</span>
-                    <span className="text-red-700 font-bold mt-1 block flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-                      Level 3 Credentials
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] block">Assigned Campus</span>
-                    <span className="text-slate-900 font-semibold mt-1 block">Guwahati Main, Assam</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Vault Access Clearance</span>
+                      <span className="text-red-700 dark:text-red-500 font-bold mt-1.5 block text-sm flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse"></span>
+                        Level 3 Credentials
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Assigned Campus</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-semibold mt-1.5 block text-sm">Guwahati Main, Assam</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </>
-          )}
+            );
+          })()}
 
-          {activeTab === "password" && (
-            <>
-              <div>
-                <h1 className="text-xl font-bold" style={{ color: MAROON }}>Change Password</h1>
-                <p className="text-sm text-[#7A6068] mt-1">
-                  Update your vault master password for enhanced security
-                </p>
-              </div>
-              <div className="h-px mb-6 mt-6" style={{ backgroundColor: BORDER }} />
+          {activeTab === "password" && (() => {
+            const getPasswordStrength = (pass) => {
+              if (!pass) return { score: 0, label: "None", color: "bg-slate-200", width: "0%" };
+              let score = 0;
+              if (pass.length >= 6) score += 1;
+              if (pass.length >= 10) score += 1;
+              if (/[0-9]/.test(pass)) score += 1;
+              if (/[A-Z]/.test(pass)) score += 1;
+              if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+              
+              if (score <= 2) return { score, label: "Weak", color: "bg-red-500", width: "33%" };
+              if (score <= 4) return { score, label: "Medium", color: "bg-amber-500", width: "66%" };
+              return { score, label: "Strong", color: "bg-green-500", width: "100%" };
+            };
 
-              <form 
-                onSubmit={(e) => { 
-                  e.preventDefault(); 
-                  alert("Master password updated successfully!"); 
-                  e.target.reset();
-                }} 
-                className="bg-white rounded-2xl border p-6 max-w-md shadow-sm space-y-4" 
-                style={{ borderColor: BORDER }}
-              >
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
-                    Current Master Password
-                  </label>
-                  <input 
-                    type="password" 
-                    required 
-                    placeholder="••••••••"
-                    className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]" 
-                    style={{ borderColor: BORDER }} 
-                  />
+            const strength = getPasswordStrength(newPasswordVal);
+
+            return (
+              <div className="max-w-md text-left animate-fade-in">
+                <div className="mb-5">
+                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Change Password</h1>
+                  <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
+                    Update your vault master password for enhanced security
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
-                    New Master Password
-                  </label>
-                  <input 
-                    type="password" 
-                    required 
-                    placeholder="••••••••"
-                    className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]" 
-                    style={{ borderColor: BORDER }} 
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
-                    Confirm New Password
-                  </label>
-                  <input 
-                    type="password" 
-                    required 
-                    placeholder="••••••••"
-                    className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]" 
-                    style={{ borderColor: BORDER }} 
-                  />
-                </div>
-                <button 
-                  type="submit" 
-                  className="w-full h-10 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-sm mt-2 flex items-center justify-center gap-1.5"
-                  style={{ backgroundColor: MAROON }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                <div className="h-px mb-6" style={{ backgroundColor: BORDER }} />
+
+                <form 
+                  onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    setPassword(newPasswordVal);
+                    logActivity("Security Alert", "Master password updated successfully", "warning");
+                    alert("Master password updated successfully!"); 
+                    setNewPasswordVal("");
+                    e.target.reset();
+                  }} 
+                  className="space-y-4"
                 >
-                  Update Master Password
-                </button>
-              </form>
-            </>
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                      Current Master Password
+                    </label>
+                    <input 
+                      type="password" 
+                      required 
+                      placeholder="••••••••"
+                      className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
+                      style={{ borderColor: BORDER }} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                      New Master Password
+                    </label>
+                    <input 
+                      type="password" 
+                      required 
+                      placeholder="••••••••"
+                      value={newPasswordVal}
+                      onChange={(e) => setNewPasswordVal(e.target.value)}
+                      className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
+                      style={{ borderColor: BORDER }} 
+                    />
+                    
+                    {/* Password Strength Indicator */}
+                    {newPasswordVal && (
+                      <div className="mt-2.5 space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] font-bold">
+                          <span className="text-[#7A6068] dark:text-slate-400">Strength:</span>
+                          <span 
+                            style={{ 
+                              color: strength.score <= 2 ? "#DC2626" : strength.score <= 4 ? "#D97706" : "#16A34A" 
+                            }}
+                          >
+                            {strength.label}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 dark:bg-slate-850 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-300 ${strength.color}`} 
+                            style={{ width: strength.width }} 
+                          />
+                        </div>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-normal">
+                          Password should be at least 10 characters long, and contain numbers, uppercase letters, and symbols.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                      Confirm New Password
+                    </label>
+                    <input 
+                      type="password" 
+                      required 
+                      placeholder="••••••••"
+                      className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
+                      style={{ borderColor: BORDER }} 
+                    />
+                  </div>
+                  <button 
+                    type="submit" 
+                    className="w-full h-10 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
+                    style={{ backgroundColor: MAROON }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                  >
+                    Update Master Password
+                  </button>
+                </form>
+              </div>
+            );
+          })()}
+
+          {activeTab === "settings" && (
+            <Settings
+              banks={banks}
+              setBanks={setBanks}
+              logActivity={logActivity}
+              tfaEnabled={tfaEnabled}
+              setTfaEnabled={setTfaEnabled}
+              auditEnabled={auditEnabled}
+              setAuditEnabled={setAuditEnabled}
+              timeoutEnabled={timeoutEnabled}
+              setTimeoutEnabled={setTimeoutEnabled}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
+              defaultBanks={BANKS}
+              masterPassword={password}
+            />
           )}
         </main>
       </div>
@@ -936,7 +1141,10 @@ export default function App() {
       <AddBankModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onAdd={(newBank) => setBanks([...banks, newBank])}
+        onAdd={(newBank) => {
+          setBanks([...banks, newBank]);
+          logActivity("Account Added", `Added ${newBank.name} account details`, "success");
+        }}
       />
 
       {deleteBank && (
@@ -945,6 +1153,7 @@ export default function App() {
           onClose={() => setDeleteBank(null)}
           onConfirm={() => {
             setBanks(banks.filter((b) => b.id !== deleteBank.id));
+            logActivity("Account Deleted", `Deleted ${deleteBank.name} account details`, "warning");
             setDeleteBank(null);
           }}
         />

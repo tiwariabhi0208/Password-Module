@@ -9,7 +9,7 @@ function getInitials(name) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMode }) {
+export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate }) {
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
 
   return (
@@ -71,13 +71,19 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
 
           {avatarMenuOpen && <>
             <div className="fixed inset-0 z-10" onClick={() => setAvatarMenuOpen(false)} />
-            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl z-30 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
-              <div className="px-3 py-2.5 border-b" style={{ borderColor: BORDER, backgroundColor: "#FBF3F5" }}>
-                <p className="text-sm font-semibold" style={{ color: MAROON }}>{selectedUser}</p>
-                <p className="text-xs text-[#7A6068] mt-0.5">admin@southpoint.edu.in</p>
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-30 py-1 overflow-hidden border border-slate-100 dark:border-slate-800" style={{ borderColor: BORDER }}>
+              <div className="px-3 py-2.5 border-b bg-[#FBF3F5] dark:bg-[#221015]" style={{ borderColor: BORDER }}>
+                <p className="text-sm font-semibold text-[#7B1535] dark:text-[#E27D9B]">{selectedUser}</p>
+                <p className="text-xs text-[#7A6068] dark:text-slate-400 mt-0.5">admin@southpoint.edu.in</p>
               </div>
-              <button className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors">
-                <Settings size={13} style={{ color: MAROON }} />
+              <button 
+                onClick={() => {
+                  setAvatarMenuOpen(false);
+                  if (onNavigate) onNavigate("settings");
+                }}
+                className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] dark:text-slate-200 hover:bg-[#FBF3F5] dark:hover:bg-[#221015] flex items-center gap-2.5 transition-colors cursor-pointer"
+              >
+                <Settings size={13} className="text-[#7B1535] dark:text-[#E27D9B]" />
                 Settings
               </button>
               <button
@@ -85,9 +91,9 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
                   setAvatarMenuOpen(false);
                   setScreen("login");
                 }}
-                className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] hover:bg-[#FBF3F5] flex items-center gap-2.5 transition-colors"
+                className="w-full text-left px-3 py-2.5 text-sm text-[#1A0810] dark:text-slate-200 hover:bg-[#FBF3F5] dark:hover:bg-[#221015] flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <LogOut size={13} style={{ color: MAROON }} />
+                <LogOut size={13} className="text-[#7B1535] dark:text-[#E27D9B]" />
                 Sign out
               </button>
             </div>
