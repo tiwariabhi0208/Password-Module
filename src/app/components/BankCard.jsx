@@ -1,10 +1,23 @@
 import React from "react";
 import { Eye, Trash2, Lock, Wifi } from "lucide-react";
 import { GOLD } from "./theme";
+import bobLogo from "../../../photos/BOB-Bank.png";
+import hdfcLogo from "../../../photos/HDFC-Bank.png";
+import sbiLogo from "../../../photos/SBI-Bank.png";
+
+export function getBankLogo(bankName) {
+  if (!bankName) return null;
+  const name = bankName.toLowerCase();
+  if (name.includes("hdfc")) return hdfcLogo;
+  if (name.includes("state bank") || name.includes("sbi")) return sbiLogo;
+  if (name.includes("baroda") || name.includes("bob")) return bobLogo;
+  return null;
+}
 
 export function BankCard({ bank, onClick, onConfirmDelete }) {
   // Extract initials or use predefined
   const initial = bank.initial || bank.name.slice(0, 2).toUpperCase();
+  const logoUrl = getBankLogo(bank.name);
 
   return (
     <div
@@ -38,25 +51,33 @@ export function BankCard({ bank, onClick, onConfirmDelete }) {
         style={{ backgroundColor: GOLD }} 
       />
 
-      {/* Header Row: Shield & Bank Name */}
+      {/* Header Row: Logo & Bank Name on the Left, Lock Status on the Right */}
       <div className="flex items-center justify-between w-full relative z-10">
-        <div className="flex items-center gap-1.5 opacity-80">
-          <Lock size={11} className="text-white/90" />
-          <span className="text-[8px] font-extrabold tracking-[0.15em] text-white/90 uppercase">SECURE VAULT</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div 
-            className="w-5.5 h-5.5 rounded-full flex items-center justify-center text-[9px] font-black border border-white/20 bg-white/10" 
-            style={{ color: GOLD }}
-          >
-            {initial}
-          </div>
+        <div className="flex items-center gap-2.5 min-w-0">
+          {logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt={bank.name} 
+              className="w-8.5 h-8.5 rounded-lg object-contain bg-white p-1 border border-white/20 shadow-sm shrink-0" 
+            />
+          ) : (
+            <div 
+              className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-[10px] font-black border border-white/20 bg-white/10 shrink-0" 
+              style={{ color: GOLD }}
+            >
+              {initial}
+            </div>
+          )}
           <span 
-            className="text-[11.5px] font-extrabold tracking-wide uppercase max-w-[120px] truncate drop-shadow-sm text-white/95" 
+            className="text-[12.5px] font-black tracking-wide uppercase drop-shadow-sm text-white/95 truncate" 
             title={bank.name}
           >
             {bank.name}
           </span>
+        </div>
+        <div className="flex items-center gap-1 opacity-70 shrink-0 bg-black/20 border border-white/10 px-2 py-1 rounded-lg">
+          <Lock size={10} className="text-white/80" />
+          <span className="text-[7.5px] font-extrabold tracking-wider text-white/80 uppercase">SECURE</span>
         </div>
       </div>
 

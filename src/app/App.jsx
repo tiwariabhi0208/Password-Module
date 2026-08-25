@@ -9,7 +9,7 @@ import { AccountModal } from "./components/AccountModal";
 import { AddBankModal } from "./components/AddBankModal";
 import { Header, USERS } from "./components/Header";
 import { StealthLockScreen } from "./components/StealthLockScreen";
-import { BankCard } from "./components/BankCard";
+import { BankCard, getBankLogo } from "./components/BankCard";
 import { Footer } from "./components/Footer";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { Sidebar } from "./components/Sidebar";
@@ -734,12 +734,20 @@ export default function App() {
                             {/* Bank Name */}
                             <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                               <div className="flex items-center gap-2.5">
-                                <div 
-                                  className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-black text-white" 
-                                  style={{ backgroundColor: bank.color }}
-                                >
-                                  {bank.initial || bank.name.slice(0,2).toUpperCase()}
-                                </div>
+                                {getBankLogo(bank.name) ? (
+                                  <img 
+                                    src={getBankLogo(bank.name)} 
+                                    alt={bank.name} 
+                                    className="w-8 h-8 rounded-lg object-contain bg-white p-1 border border-slate-200/60 dark:border-slate-850 shrink-0" 
+                                  />
+                                ) : (
+                                  <div 
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0" 
+                                    style={{ backgroundColor: bank.color }}
+                                  >
+                                    {bank.initial || bank.name.slice(0,2).toUpperCase()}
+                                  </div>
+                                )}
                                 <span>{bank.name}</span>
                               </div>
                             </td>

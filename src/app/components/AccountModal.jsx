@@ -2,8 +2,10 @@ import React, { useEffect } from "react";
 import { X, ExternalLink, Edit2, Trash2, Globe, Shield } from "lucide-react";
 import { ModalDetailRow } from "./ModalDetailRow";
 import { MAROON, GOLD, BORDER } from "./theme";
+import { getBankLogo } from "./BankCard";
 
 export function AccountModal({ bank, onClose, onDelete }) {
+  const logoUrl = getBankLogo(bank.name);
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -29,14 +31,22 @@ export function AccountModal({ bank, onClose, onDelete }) {
           style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
-              style={{ color: GOLD }}
-            >
-              <span className="text-base font-black tracking-wider leading-none">
-                {bank.initial || bank.name.slice(0, 2).toUpperCase()}
-              </span>
-            </div>
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt={bank.name} 
+                className="w-13 h-13 rounded-2xl object-contain bg-white p-1.5 border border-white/20 shadow-inner shrink-0" 
+              />
+            ) : (
+              <div
+                className="w-13 h-13 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
+                style={{ color: GOLD }}
+              >
+                <span className="text-lg font-black tracking-wider leading-none">
+                  {bank.initial || bank.name.slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
             <div className="flex flex-col text-left">
               <div className="flex items-center gap-2">
                 <span className="text-[17px] font-black tracking-wide leading-none">{bank.name}</span>
