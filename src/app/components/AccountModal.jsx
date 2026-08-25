@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { X, ExternalLink, Edit2, Trash2 } from "lucide-react";
+import { X, ExternalLink, Edit2, Trash2, Globe, Shield } from "lucide-react";
 import { ModalDetailRow } from "./ModalDetailRow";
 import { MAROON, GOLD, BORDER } from "./theme";
 
@@ -14,70 +14,73 @@ export function AccountModal({ bank, onClose, onDelete }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(12,2,5,0.6)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div 
-        className="w-[520px] max-w-full bg-white rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up" 
+        className="w-[540px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up" 
         style={{ borderColor: BORDER }}
       >
-        {/* Maroon modal header with gradient */}
+        {/* Maroon modal header with brand identity gradient */}
         <div
-          className="flex items-center justify-between px-6 py-4.5 text-white"
-          style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4c0519 100%)` }}
+          className="flex items-center justify-between px-6 py-5 text-white"
+          style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
           <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10"
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
               style={{ color: GOLD }}
             >
-              <span className="text-sm font-black tracking-wide leading-none">{bank.initial || bank.name.slice(0, 2).toUpperCase()}</span>
+              <span className="text-base font-black tracking-wider leading-none">
+                {bank.initial || bank.name.slice(0, 2).toUpperCase()}
+              </span>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-extrabold tracking-wide leading-none">{bank.name}</span>
+                <span className="text-[17px] font-black tracking-wide leading-none">{bank.name}</span>
                 <button 
-                  className="text-white/60 hover:text-white transition-colors cursor-pointer" 
-                  title="Open bank portal"
+                  className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5" 
+                  title="Open bank search"
                   onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " corporate login")}`, "_blank")}
                 >
                   <ExternalLink size={12} />
                 </button>
               </div>
-              <span className="text-[8px] uppercase tracking-widest text-white/50 font-bold mt-1">Credentials Access</span>
+              <span className="text-[8.5px] uppercase tracking-widest text-white/50 font-black mt-1 flex items-center gap-1">
+                <Shield size={10} className="text-[#C9A227]" /> Secured Vault Node
+              </span>
             </div>
           </div>
           
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onDelete(bank)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/20 text-white/80 hover:text-red-400 transition-all cursor-pointer border-none"
+              className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
               title="Delete Account"
             >
-              <Trash2 size={13} />
+              <Trash2 size={14} />
             </button>
             <button
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-[#C9A227] hover:text-[#ffd24d] transition-all cursor-pointer border-none"
-              title="Edit"
+              className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
+              title="Edit Account Details"
             >
-              <Edit2 size={13} />
+              <Edit2 size={14} />
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white/85 hover:text-white transition-all cursor-pointer border-none"
-              title="Close"
+              className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-white/85 hover:text-white transition-all cursor-pointer border-none"
+              title="Close modal"
             >
-              <X size={15} />
+              <X size={16} />
             </button>
           </div>
         </div>
 
         {/* Body Container */}
-        <div className="bg-slate-50/50 p-6">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-5 bg-white p-5 rounded-2xl border shadow-sm" style={{ borderColor: BORDER }}>
+        <div className="bg-slate-50/30 dark:bg-[#101010]/30 p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm" style={{ borderColor: BORDER }}>
             <ModalDetailRow label="Account Holder" value={bank.holder} />
             <ModalDetailRow label="Account Number" value={bank.accountNumber} isMonospaced={true} />
             <ModalDetailRow label="IFSC Code" value={bank.ifsc} isMonospaced={true} />
@@ -87,39 +90,21 @@ export function AccountModal({ bank, onClose, onDelete }) {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex gap-3 px-6 py-4.5 border-t bg-slate-50/60" style={{ borderColor: BORDER }}>
+        {/* Footer with high-fidelity portal links */}
+        <div className="flex gap-4 px-6 py-4.5 border-t bg-slate-50/50 dark:bg-[#151515]/80" style={{ borderColor: BORDER }}>
           <button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " corporate banking")}`, "_blank")}
-            className="flex-1 h-9 border-2 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
-            style={{ borderColor: MAROON, color: MAROON }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = MAROON;
-              e.currentTarget.style.color = "#fff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = MAROON;
-            }}
+            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " corporate banking login")}`, "_blank")}
+            className="flex-1 h-10 border border-[#7B1535] dark:border-[#E27D9B] text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2 bg-transparent text-[#7B1535] dark:text-[#E27D9B] hover:bg-[#7B1535] hover:text-white dark:hover:bg-[#E27D9B] dark:hover:text-[#101010] active:scale-[0.98]"
           >
-            <ExternalLink size={12} />
-            Corporate Portal
+            <Globe size={13} />
+            Corporate Login
           </button>
           <button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " login")}`, "_blank")}
-            className="flex-1 h-9 border-2 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
-            style={{ borderColor: MAROON, color: MAROON }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = MAROON;
-              e.currentTarget.style.color = "#fff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = MAROON;
-            }}
+            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " retail banking login")}`, "_blank")}
+            className="flex-1 h-10 border border-[#7B1535] dark:border-[#E27D9B] text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2 bg-transparent text-[#7B1535] dark:text-[#E27D9B] hover:bg-[#7B1535] hover:text-white dark:hover:bg-[#E27D9B] dark:hover:text-[#101010] active:scale-[0.98]"
           >
-            <ExternalLink size={12} />
-            Retail Portal
+            <Globe size={13} />
+            Retail Login
           </button>
         </div>
       </div>

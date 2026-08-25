@@ -894,22 +894,22 @@ export default function App() {
                             key={log.id} 
                             className={`p-4 pl-5 border-l-4 ${badgeStyles.border} flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-[#1a1a1a]/30 transition-colors`}
                           >
-                            <div className="flex flex-col gap-1 text-left">
+                            <div className="flex flex-col gap-1.5 text-left">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span 
-                                  className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full dark:bg-opacity-30"
+                                  className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full dark:bg-opacity-30"
                                   style={{ color: badgeStyles.text, backgroundColor: document.documentElement.classList.contains("dark") ? badgeStyles.darkBg : badgeStyles.bg }}
                                 >
                                   {log.action}
                                 </span>
-                                <span className="text-[11px] text-[#7A6068] dark:text-slate-400 font-semibold">{log.time}</span>
+                                <span className="text-xs text-[#7A6068] dark:text-slate-400 font-semibold">{log.time}</span>
                               </div>
-                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">{log.details}</p>
+                              <p className="text-base font-bold text-slate-800 dark:text-slate-200 mt-1">{log.details}</p>
                             </div>
-                            <div className="flex items-center gap-4 text-xs font-bold text-[#7A6068] sm:text-right">
+                            <div className="flex items-center gap-4 text-sm font-bold text-[#7A6068] sm:text-right">
                               <div>
-                                <span className="block text-slate-900 font-extrabold">{log.user}</span>
-                                <span className="block text-[10px] text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>
+                                <span className="block text-sm text-slate-900 dark:text-slate-200 font-extrabold">{log.user}</span>
+                                <span className="block text-xs text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>
                               </div>
                             </div>
                           </div>
@@ -923,16 +923,64 @@ export default function App() {
           })()}
 
           {activeTab === "profile" && (() => {
-            const userEmails = {
-              "Priya Sharma": "priya.sharma@southpoint.edu.in",
-              "Rahul Verma": "rahul.verma@southpoint.edu.in",
-              "Anita Nair": "anita.nair@southpoint.edu.in",
-              "Deepak Mehta": "deepak.mehta@southpoint.edu.in"
+            const USER_PROFILES = {
+              "Priya Sharma": {
+                email: "priya.sharma@southpoint.edu.in",
+                phone: "+91 98450 12345",
+                dept: "Accounts & Finance Division",
+                campus: "Guwahati Main Campus, Assam",
+                clearance: "Level 3 - Super Administrator",
+                designation: "Chief Accounts Officer (CAO)",
+                session_id: "SPS-ADM-301-PRIYA",
+                auth_time: "25 Aug 2026, 09:30 AM",
+                ip: "192.168.1.12",
+                publicKey: "sha256:f7b1535b4a9b227cf842d0c321e6d7821c3b5f842d0c321e6d7821c3b5f842d0",
+                status: "Active / Encrypted Session"
+              },
+              "Rahul Verma": {
+                email: "rahul.verma@southpoint.edu.in",
+                phone: "+91 97060 54321",
+                dept: "General Administration",
+                campus: "Guwahati East Branch, Assam",
+                clearance: "Level 1 - Read-Only Clerk",
+                designation: "Accounts Assistant",
+                session_id: "SPS-ADM-104-RAHUL",
+                auth_time: "25 Aug 2026, 08:45 AM",
+                ip: "192.168.1.45",
+                publicKey: "sha256:d8c1928ab02b189cd458b1a1a1a1a1a1d8c1928ab02b189cd458b1a1a1a1a1d8",
+                status: "Active / Encrypted Session"
+              },
+              "Anita Nair": {
+                email: "anita.nair@southpoint.edu.in",
+                phone: "+91 88760 98765",
+                dept: "Audit & Risk Compliance",
+                campus: "Guwahati South Campus, Assam",
+                clearance: "Level 2 - Operator Manager",
+                designation: "Senior Compliance Auditor",
+                session_id: "SPS-ADM-205-ANITA",
+                auth_time: "25 Aug 2026, 10:15 AM",
+                ip: "192.168.1.28",
+                publicKey: "sha256:b5c4210e194e354aa907d458b1a1a1a1b5c4210e194e354aa907d458b1a1a1a1",
+                status: "Active / Encrypted Session"
+              },
+              "Deepak Mehta": {
+                email: "deepak.mehta@southpoint.edu.in",
+                phone: "+91 94350 55667",
+                dept: "Information Technology",
+                campus: "Guwahati North Campus, Assam",
+                clearance: "Level 2 - Operator Manager",
+                designation: "Systems IT Coordinator",
+                session_id: "SPS-ADM-209-DEEPAK",
+                auth_time: "25 Aug 2026, 09:10 AM",
+                ip: "192.168.1.34",
+                publicKey: "sha256:e6d7821c3b5f842dc321f842d0c321e6d7821c3b5f842d0c321e6d7821c3b5f8",
+                status: "Active / Encrypted Session"
+              }
             };
-            const emailVal = userEmails[selectedUser] || "admin@southpoint.edu.in";
+            const profile = USER_PROFILES[selectedUser] || USER_PROFILES["Priya Sharma"];
 
             return (
-              <div className="max-w-2xl text-left animate-fade-in">
+              <div className="w-full text-left animate-fade-in">
                 <div className="mb-5">
                   <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Profile Details</h1>
                   <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
@@ -942,50 +990,130 @@ export default function App() {
 
                 <div className="h-px mb-8" style={{ backgroundColor: BORDER }} />
 
-                {/* Flat Header Layout */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5 mb-8">
-                  <div 
-                    className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60"
-                    style={{ color: MAROON }}
-                  >
-                    {selectedUser.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{selectedUser}</h2>
-                    <span 
-                      className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full inline-block mt-2 border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
+                {/* Profile Main Header Information Panel */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-8 border-b border-slate-200/60 dark:border-slate-800/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                    <div 
+                      className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
                       style={{ color: MAROON }}
                     >
-                      System Administrator
-                    </span>
+                      {selectedUser.split(" ").map(n => n[0]).join("")}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{selectedUser}</h2>
+                      <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                        <span 
+                          className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800"
+                          style={{ color: MAROON }}
+                        >
+                          {profile.designation}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          Dept: {profile.dept}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Indicator */}
+                  <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-2xl">
+                    <div className="relative flex items-center justify-center w-2.5 h-2.5">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75 animate-ping" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#16A34A]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wide">STATUS</span>
+                      <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider">{profile.status}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Flat Info Rows */}
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6 border-b border-slate-200/60 dark:border-slate-800/80">
+                {/* Profile Grid Information Panel */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {/* Card 1: Account Information */}
+                  <div className="space-y-6">
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                      Personal & Role Info
+                    </h3>
+                    
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Email Address</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-semibold mt-1.5 block text-sm">{emailVal}</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Full Name</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{selectedUser}</span>
                     </div>
+                    
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Department</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-semibold mt-1.5 block text-sm">Accounts & Finance Division</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Designation</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.designation}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Department</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.dept}</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6">
+                  {/* Card 2: Contact & Location */}
+                  <div className="space-y-6">
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                      Contact & Assignment
+                    </h3>
+
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Vault Access Clearance</span>
-                      <span className="text-red-700 dark:text-red-500 font-bold mt-1.5 block text-sm flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse"></span>
-                        Level 3 Credentials
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Email Address</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">{profile.email}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Phone Number</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">{profile.phone}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned Campus</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.campus}</span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Security & Session Credentials */}
+                  <div className="space-y-6">
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                      Security Clearance
+                    </h3>
+
+                    <div>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Vault Access Clearance</span>
+                      <span className="text-red-700 dark:text-red-500 font-extrabold mt-1.5 block text-base flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
+                        {profile.clearance}
                       </span>
                     </div>
+
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 block">Assigned Campus</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-semibold mt-1.5 block text-sm">Guwahati Main, Assam</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Session Token ID</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm truncate" title={profile.session_id}>
+                        {profile.session_id}
+                      </span>
                     </div>
+
+                    <div>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned IP Address</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm">{profile.ip}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Row: Encryption Details covering wide screen */}
+                <div className="mt-10 p-5 bg-slate-50 dark:bg-[#101010] border border-slate-200 dark:border-slate-800 rounded-2xl">
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
+                    Cryptographic Public Signature Token
+                  </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <span className="text-[11px] font-mono text-slate-650 dark:text-slate-400 break-all select-all font-semibold">
+                      {profile.publicKey}
+                    </span>
+                    <span className="text-[9px] font-extrabold text-[#7B1535] dark:text-[#E27D9B] bg-[#FBF3F5] dark:bg-[#221015] border border-[#7B1535]/14 dark:border-[#E27D9B]/15 px-3 py-1 rounded-lg shrink-0 uppercase tracking-widest">
+                      AES-256 Verified
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1010,99 +1138,124 @@ export default function App() {
             const strength = getPasswordStrength(newPasswordVal);
 
             return (
-              <div className="max-w-md text-left animate-fade-in">
+              <div className="w-full text-left animate-fade-in">
                 <div className="mb-5">
                   <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Change Password</h1>
                   <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
                     Update your vault master password for enhanced security
                   </p>
                 </div>
-                <div className="h-px mb-6" style={{ backgroundColor: BORDER }} />
+                <div className="h-px mb-8" style={{ backgroundColor: BORDER }} />
 
-                <form 
-                  onSubmit={(e) => { 
-                    e.preventDefault(); 
-                    setPassword(newPasswordVal);
-                    logActivity("Security Alert", "Master password updated successfully", "warning");
-                    alert("Master password updated successfully!"); 
-                    setNewPasswordVal("");
-                    e.target.reset();
-                  }} 
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                      Current Master Password
-                    </label>
-                    <input 
-                      type="password" 
-                      required 
-                      placeholder="••••••••"
-                      className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
-                      style={{ borderColor: BORDER }} 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                      New Master Password
-                    </label>
-                    <input 
-                      type="password" 
-                      required 
-                      placeholder="••••••••"
-                      value={newPasswordVal}
-                      onChange={(e) => setNewPasswordVal(e.target.value)}
-                      className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
-                      style={{ borderColor: BORDER }} 
-                    />
-                    
-                    {/* Password Strength Indicator */}
-                    {newPasswordVal && (
-                      <div className="mt-2.5 space-y-1.5">
-                        <div className="flex justify-between items-center text-[10px] font-bold">
-                          <span className="text-[#7A6068] dark:text-slate-400">Strength:</span>
-                          <span 
-                            style={{ 
-                              color: strength.score <= 2 ? "#DC2626" : strength.score <= 4 ? "#D97706" : "#16A34A" 
-                            }}
-                          >
-                            {strength.label}
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-100 dark:bg-slate-850 h-1.5 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-300 ${strength.color}`} 
-                            style={{ width: strength.width }} 
-                          />
-                        </div>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-normal">
-                          Password should be at least 10 characters long, and contain numbers, uppercase letters, and symbols.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                      Confirm New Password
-                    </label>
-                    <input 
-                      type="password" 
-                      required 
-                      placeholder="••••••••"
-                      className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
-                      style={{ borderColor: BORDER }} 
-                    />
-                  </div>
-                  <button 
-                    type="submit" 
-                    className="w-full h-10 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
-                    style={{ backgroundColor: MAROON }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Left: Form Inputs */}
+                  <form 
+                    onSubmit={(e) => { 
+                      e.preventDefault(); 
+                      setPassword(newPasswordVal);
+                      logActivity("Security Alert", "Master password updated successfully", "warning");
+                      alert("Master password updated successfully!"); 
+                      setNewPasswordVal("");
+                      e.target.reset();
+                    }} 
+                    className="lg:col-span-2 space-y-5"
                   >
-                    Update Master Password
-                  </button>
-                </form>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                        Current Master Password
+                      </label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="••••••••"
+                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
+                        style={{ borderColor: BORDER }} 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                        New Master Password
+                      </label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="••••••••"
+                        value={newPasswordVal}
+                        onChange={(e) => setNewPasswordVal(e.target.value)}
+                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
+                        style={{ borderColor: BORDER }} 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                        Confirm New Password
+                      </label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="••••••••"
+                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container" 
+                        style={{ borderColor: BORDER }} 
+                      />
+                    </div>
+                    <button 
+                      type="submit" 
+                      className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
+                      style={{ backgroundColor: MAROON }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                    >
+                      Update Master Password
+                    </button>
+                  </form>
+
+                  {/* Right: Strength Checker & Policy Rules card */}
+                  <div className="lg:col-span-1 bg-slate-50 dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-5.5 rounded-2xl flex flex-col justify-between h-fit gap-5">
+                    <div>
+                      <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 pb-2 mb-4">
+                        Complexity Audit
+                      </h3>
+                      
+                      {newPasswordVal ? (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center text-xs font-bold">
+                            <span className="text-[#7A6068] dark:text-slate-400">Strength:</span>
+                            <span 
+                              style={{ 
+                                color: strength.score <= 2 ? "#DC2626" : strength.score <= 4 ? "#D97706" : "#16A34A" 
+                              }}
+                            >
+                              {strength.label}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-300 ${strength.color}`} 
+                              style={{ width: strength.width }} 
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-slate-400 dark:text-slate-500 font-semibold text-xs flex flex-col items-center justify-center gap-2">
+                          <Lock size={20} className="text-slate-300" />
+                          Type a password to audit complexity
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-[#FDF6F7] dark:bg-[#221015]/40 border border-[#7B1535]/12 dark:border-[#E27D9B]/15 p-4 rounded-xl">
+                      <span className="text-xs font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-wide block mb-1.5">
+                        School Security Rulebook
+                      </span>
+                      <ul className="text-xs text-[#7A6068] dark:text-slate-400 font-medium leading-relaxed list-disc list-inside space-y-1">
+                        <li>At least 10 characters long</li>
+                        <li>Include numeric digits (0-9)</li>
+                        <li>Include uppercase letters (A-Z)</li>
+                        <li>Include symbols (e.g. @, #, $, %)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })()}
