@@ -948,7 +948,7 @@ export default function App() {
                             style={{ borderColor: BORDER }}
                           >
                             <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: MAROON }} />
-                            
+
                             <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 truncate pr-6">{entity.name}</h4>
                             <div className="mt-3.5 space-y-2 text-xs text-[#7A6068] dark:text-slate-400 font-semibold">
                               <div className="flex items-center gap-2">
@@ -960,7 +960,7 @@ export default function App() {
                                 <span className="font-mono">{entity.phone}</span>
                               </div>
                             </div>
-                            
+
                             <button
                               onClick={() => {
                                 setEntityConfirmModal({
@@ -1527,7 +1527,7 @@ export default function App() {
                         <div>
                           <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Phone Number</span>
                           <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base font-mono">
-                            {profile.phone ? (profile.phone.startsWith("+91") ? profile.phone : `+91 ${profile.phone.slice(0,5)} ${profile.phone.slice(5)}`) : "+91 98765 43210"}
+                            {profile.phone ? (profile.phone.startsWith("+91") ? profile.phone : `+91 ${profile.phone.slice(0, 5)} ${profile.phone.slice(5)}`) : "+91 98765 43210"}
                           </span>
                         </div>
 
@@ -2101,9 +2101,8 @@ export default function App() {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#101010] border-t border-slate-200 dark:border-[#222222] flex justify-around items-center h-16 md:hidden px-4 shadow-lg">
         <button
           onClick={() => setActiveTab("vault")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
-            activeTab === "vault" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-          }`}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "vault" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+            }`}
         >
           <Landmark size={20} />
           <span className="text-[10px] font-bold">Vault</span>
@@ -2111,9 +2110,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("entities")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
-            activeTab === "entities" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-          }`}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "entities" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+            }`}
         >
           <UserPlus size={20} />
           <span className="text-[10px] font-bold">Entities</span>
@@ -2121,9 +2119,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("activity")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative ${
-            activeTab === "activity" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-          }`}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative ${activeTab === "activity" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+            }`}
         >
           <History size={20} />
           <span className="text-[10px] font-bold">Logs</span>
@@ -2134,9 +2131,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("profile")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
-            activeTab === "profile" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-          }`}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "profile" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+            }`}
         >
           <User size={20} />
           <span className="text-[10px] font-bold">Profile</span>
@@ -2144,9 +2140,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab("settings")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
-            activeTab === "settings" || activeTab === "password" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-          }`}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "settings" || activeTab === "password" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+            }`}
         >
           <SettingsIcon size={20} />
           <span className="text-[10px] font-bold">Settings</span>
