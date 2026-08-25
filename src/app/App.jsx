@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, LogIn, ArrowLeft, ChevronDown } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle } from "lucide-react";
 
 import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius } from "./components/theme";
 import { BoyCharacter } from "./components/BoyCharacter";
@@ -13,6 +13,7 @@ import { BankCard } from "./components/BankCard";
 import { Footer } from "./components/Footer";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { Sidebar } from "./components/Sidebar";
+import { CopyButton } from "./components/CopyButton";
 
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
@@ -43,6 +44,8 @@ export default function App() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteBank, setDeleteBank] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState("grid");
   const [stealthMode, setStealthMode] = useState(false);
   const [stealthPassword, setStealthPassword] = useState("");
   const [stealthError, setStealthError] = useState("");
@@ -442,6 +445,18 @@ export default function App() {
     );
   }
 
+  const filteredBanks = banks.filter((bank) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      bank.name.toLowerCase().includes(q) ||
+      (bank.holder && bank.holder.toLowerCase().includes(q)) ||
+      bank.accountNumber.includes(q) ||
+      (bank.ifsc && bank.ifsc.toLowerCase().includes(q)) ||
+      (bank.branchName && bank.branchName.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
       <Header
@@ -464,82 +479,266 @@ export default function App() {
         <main className="flex-grow min-w-0 px-8 py-5">
           {activeTab === "vault" && (
             <>
-              <div className="flex items-start justify-between mb-4">
+              {/* Header Title section */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
                 <div>
-                  <h1 className="text-xl font-bold" style={{ color: MAROON }}>Account Vault</h1>
-                  <p className="text-sm text-[#7A6068] mt-1">
-                    Linked bank accounts — South Point School, Guwahati
+                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Account Vault</h1>
+                  <p className="text-sm text-[#7A6068] mt-0.5 font-medium">
+                    Linked bank credentials — South Point School, Guwahati
                   </p>
                 </div>
+              </div>
 
-                <div className="relative flex items-center gap-2">
-                  <span className="text-sm text-[#7A6068]">Viewing:</span>
-                  <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2 h-8 pl-3 pr-2.5 rounded-lg border text-sm font-medium transition-colors bg-white"
-                    style={{ borderColor: BORDER, color: MAROON }}
+              {/* Stats Grid Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                {/* Stats Card 1: Total Vault Accounts */}
+                <div className="bg-white rounded-2xl p-4.5 border shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FBF3F5]" style={{ color: MAROON }}>
+                    <Users size={20} />
+                  </div>
+                  <div className="flex-grow">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068]">Active Vault Accounts</span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-2xl font-bold text-slate-800 leading-none">{banks.length}</span>
+                      <span className="text-xs font-semibold text-[#16A34A]">Monitored</span>
+                    </div>
+                    {/* Mini Progress Bar */}
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                      <div className="bg-[#7B1535] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((banks.length / 12) * 100, 100)}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Card 2: Security Status */}
+                <div className="bg-white rounded-2xl p-4.5 border shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 text-[#16A34A]">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div className="flex-grow">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068]">Security Coverage</span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-2xl font-bold text-slate-800 leading-none">AES-256</span>
+                      <span className="text-[10px] font-bold text-slate-400 font-mono">ENCRYPTED</span>
+                    </div>
+                    <p className="text-[10.5px] text-[#7A6068] mt-2 font-medium leading-none flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
+                      Vault database active & locked
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stats Card 3: Active Session Info */}
+                <div className="bg-white rounded-2xl p-4.5 border shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border" 
+                    style={{ backgroundColor: "#FBF3F5", borderColor: GOLD, color: MAROON }}
                   >
-                    {selectedUser}
-                    <ChevronDown size={13} style={{ color: GOLD }} />
-                  </button>
-
-                  {userDropdownOpen && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                      <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border" style={{ borderColor: BORDER }}>
-                        {USERS.map((user) => (
-                          <button
-                            key={user}
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setUserDropdownOpen(false);
-                            }}
-                            className="w-full text-left px-3 py-2.5 text-sm transition-colors"
-                            style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 600 } : { color: "#1A0810" }}
-                          >
-                            {user}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
+                    {selectedUser.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068]">Active Administrator</span>
+                    <h3 className="text-sm font-bold text-slate-800 truncate mt-1 leading-tight">{selectedUser}</h3>
+                    <span 
+                      className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5"
+                      style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
+                    >
+                      Access Level 3
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="h-px mb-4" style={{ backgroundColor: BORDER }} />
-
-              <div className="flex items-center justify-between mb-3.5">
-                <span
-                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
-                  style={{ color: MAROON, backgroundColor: "#FBF3F5", border: `1px solid ${BORDER}` }}
-                >
-                  {banks.length} Accounts
-                </span>
-                <button
-                  onClick={() => setAddModalOpen(true)}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white transition-colors shadow-sm hover:shadow cursor-pointer"
-                  style={{ backgroundColor: MAROON }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                  Add Bank Account
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 w-full">
-                {banks.map((bank) => (
-                  <BankCard
-                    key={bank.id}
-                    bank={bank}
-                    onClick={() => setSelectedBank(bank)}
-                    onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
+              {/* Toolbar */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 p-4 bg-white rounded-2xl border shadow-sm" style={{ borderColor: BORDER }}>
+                {/* Left: Search input */}
+                <div className="relative flex-grow max-w-md">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by bank name, cardholder, account #..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-10 pl-10 pr-4 text-sm border bg-white rounded-xl focus:outline-none focus:border-[#7B1535] transition-colors"
+                    style={{ borderColor: BORDER }}
                   />
-                ))}
+                </div>
+
+                {/* Right: Layout Switcher, View State, and Add Button */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Grid / List View Toggle */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "grid" ? "bg-white text-[#7B1535] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                      title="Grid View"
+                    >
+                      <Grid size={15} />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "list" ? "bg-white text-[#7B1535] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                      title="List View"
+                    >
+                      <List size={15} />
+                    </button>
+                  </div>
+
+                  {/* Admin dropdown selection */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      className="flex items-center gap-2 h-9 pl-3 pr-2.5 rounded-xl border text-xs font-semibold transition-colors bg-white hover:bg-slate-50 cursor-pointer"
+                      style={{ borderColor: BORDER, color: MAROON }}
+                    >
+                      Viewing: {selectedUser}
+                      <ChevronDown size={12} style={{ color: GOLD }} />
+                    </button>
+
+                    {userDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
+                        <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-xl z-20 py-1 overflow-hidden border animate-fade-in-up" style={{ borderColor: BORDER }}>
+                          {USERS.map((user) => (
+                            <button
+                              key={user}
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setUserDropdownOpen(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs font-semibold transition-colors cursor-pointer"
+                              style={user === selectedUser ? { color: MAROON, backgroundColor: "#FBF3F5", fontWeight: 700 } : { color: "#1A0810" }}
+                            >
+                              {user}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Add Account Button */}
+                  <button
+                    onClick={() => setAddModalOpen(true)}
+                    className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md cursor-pointer hover:scale-102"
+                    style={{ backgroundColor: MAROON }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                  >
+                    <Plus size={14} />
+                    Add Account
+                  </button>
+                </div>
               </div>
+
+              {/* Main Content Area */}
+              {filteredBanks.length === 0 ? (
+                /* Empty State */
+                <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-dashed text-center p-6" style={{ borderColor: BORDER }}>
+                  <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 mb-3">
+                    <AlertCircle size={24} />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-800">No accounts match your search</h3>
+                  <p className="text-xs text-[#7A6068] mt-1 max-w-xs leading-relaxed">
+                    Try checking your spelling or search terms, or clear the search to view all bank credentials.
+                  </p>
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="mt-4 px-4 py-2 bg-[#7B1535] hover:bg-[#661128] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              ) : viewMode === "grid" ? (
+                /* Grid View (Redesigned Premium Cards) */
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                  {filteredBanks.map((bank) => (
+                    <BankCard
+                      key={bank.id}
+                      bank={bank}
+                      onClick={() => setSelectedBank(bank)}
+                      onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* List View (Sleek Administrative Table) */
+                <div className="bg-white rounded-2xl border overflow-hidden shadow-sm" style={{ borderColor: BORDER }}>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-[#7A6068]" style={{ borderColor: BORDER }}>
+                          <th className="py-3.5 px-5">Bank</th>
+                          <th className="py-3.5 px-5">Account Holder</th>
+                          <th className="py-3.5 px-5">Account Number</th>
+                          <th className="py-3.5 px-5">IFSC Code</th>
+                          <th className="py-3.5 px-5">Branch</th>
+                          <th className="py-3.5 px-5 text-right pr-6">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-sm">
+                        {filteredBanks.map((bank) => (
+                          <tr key={bank.id} className="hover:bg-slate-50/70 transition-colors group">
+                            {/* Bank Name */}
+                            <td className="py-3.5 px-5 font-semibold text-slate-800">
+                              <div className="flex items-center gap-2.5">
+                                <div 
+                                  className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-black text-white" 
+                                  style={{ backgroundColor: bank.color }}
+                                >
+                                  {bank.initial || bank.name.slice(0,2).toUpperCase()}
+                                </div>
+                                <span>{bank.name}</span>
+                              </div>
+                            </td>
+                            
+                            {/* Account Holder */}
+                            <td className="py-3.5 px-5 text-slate-600 font-semibold">{bank.holder ? bank.holder.split(",")[0] : "SOUTH POINT SCHOOL"}</td>
+                            
+                            {/* Account Number */}
+                            <td className="py-3.5 px-5 font-mono text-slate-600 text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <span>{`•••• •••• •••• ${bank.accountNumber.slice(-4)}`}</span>
+                                <CopyButton value={bank.accountNumber} label="Account Number" />
+                              </div>
+                            </td>
+                            
+                            {/* IFSC Code */}
+                            <td className="py-3.5 px-5 font-mono text-slate-600 text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <span>{bank.ifsc}</span>
+                                <CopyButton value={bank.ifsc} label="IFSC Code" />
+                              </div>
+                            </td>
+                            
+                            {/* Branch */}
+                            <td className="py-3.5 px-5 text-slate-500 font-semibold">{bank.branchName}</td>
+                            
+                            {/* Actions */}
+                            <td className="py-3.5 px-5 text-right pr-6">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => setSelectedBank(bank)}
+                                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-[#7B1535] transition-colors cursor-pointer"
+                                  title="View Details"
+                                >
+                                  <Eye size={15} />
+                                </button>
+                                <button
+                                  onClick={() => setDeleteBank(bank)}
+                                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                                  title="Delete Account"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

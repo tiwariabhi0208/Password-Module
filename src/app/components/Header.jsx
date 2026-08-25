@@ -18,34 +18,21 @@ export function Header({ selectedUser, setSelectedUser, setScreen, setStealthMod
       style={{ backgroundColor: MAROON, borderBottom: `2.5px solid ${GOLD}` }}
     >
       {/* Brand */}
-      <div className="flex items-center justify-between w-52 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <img
-            src={schoolLogo}
-            alt="South Point School Logo"
-            style={{ height: 36, width: "auto", objectFit: "contain" }}
-          />
-          <div className="flex flex-col">
-            <span className="text-white text-sm font-bold leading-tight">South Point School</span>
-            <span
-              className="text-[10px] font-bold tracking-wider uppercase mt-0.5"
-              style={{ color: GOLD }}
-            >
-              GUWAHATI
-            </span>
-          </div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <img
+          src={schoolLogo}
+          alt="South Point School Logo"
+          style={{ height: 36, width: "auto", objectFit: "contain" }}
+        />
+        <div className="flex flex-col">
+          <span className="text-white text-sm font-bold leading-tight">South Point School</span>
+          <span
+            className="text-[10px] font-bold tracking-wider uppercase mt-0.5"
+            style={{ color: GOLD }}
+          >
+            GUWAHATI
+          </span>
         </div>
-        <button 
-          className="text-white/80 hover:text-white p-1 rounded transition-colors ml-2 cursor-pointer"
-          title="Menu"
-          style={{ border: "none", background: "none" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="4" y1="12" x2="20" y2="12"></line>
-            <line x1="4" y1="6" x2="20" y2="6"></line>
-            <line x1="4" y1="18" x2="20" y2="18"></line>
-          </svg>
-        </button>
       </div>
 
       {/* Actions (Stealth Button & Avatar Menu) */}

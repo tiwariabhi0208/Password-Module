@@ -48,147 +48,156 @@ export function AddBankModal({ isOpen, onClose, onAdd }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(80,10,25,0.5)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(12,2,5,0.6)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[450px] bg-white rounded-xl overflow-hidden shadow-2xl border" style={{ borderColor: BORDER }}>
+      <div 
+        className="w-[480px] max-w-full bg-white rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up" 
+        style={{ borderColor: BORDER }}
+      >
+        {/* Maroon modal header with gradient */}
         <div
-          className="flex items-center justify-between px-5 py-4"
-          style={{ backgroundColor: MAROON }}
+          className="flex items-center justify-between px-6 py-4.5 text-white"
+          style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4c0519 100%)` }}
         >
-          <span className="text-white text-[15px] font-semibold">Add New Bank Account</span>
+          <div className="flex flex-col">
+            <span className="text-[16px] font-extrabold tracking-wide">Add Vault Account</span>
+            <span className="text-[8px] uppercase tracking-widest text-white/50 font-bold mt-1">New Bank Credentials</span>
+          </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-white/10 text-white"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer border-none"
             title="Close"
           >
             <X size={15} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              Bank Name
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. HDFC Bank"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
-              style={{ borderColor: BORDER }}
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              Account Holder
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Account Holder's Name"
-              value={holder}
-              onChange={(e) => setHolder(e.target.value)}
-              className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
-              style={{ borderColor: BORDER }}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 bg-slate-50/20">
+          <div className="space-y-4 bg-white p-5 rounded-2xl border shadow-sm text-left" style={{ borderColor: BORDER }}>
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                Account Number
+              <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                Bank Name
               </label>
               <input
                 type="text"
                 required
-                placeholder="A/C Number"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535] font-mono"
+                placeholder="e.g. HDFC Bank"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all input-focus-container"
                 style={{ borderColor: BORDER }}
               />
             </div>
+
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                IFSC Code
+              <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                Account Holder
               </label>
               <input
                 type="text"
                 required
-                placeholder="IFSC Code"
-                value={ifsc}
-                onChange={(e) => setIfsc(e.target.value)}
-                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535] font-mono"
+                placeholder="Account Holder's Name"
+                value={holder}
+                onChange={(e) => setHolder(e.target.value)}
+                className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all input-focus-container"
                 style={{ borderColor: BORDER }}
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              Branch Name
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Guwahati Main"
-              value={branchName}
-              onChange={(e) => setBranchName(e.target.value)}
-              className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
-              style={{ borderColor: BORDER }}
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="A/C Number"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all font-mono input-focus-container"
+                  style={{ borderColor: BORDER }}
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                  IFSC Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="IFSC Code"
+                  value={ifsc}
+                  onChange={(e) => setIfsc(e.target.value)}
+                  className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all font-mono input-focus-container"
+                  style={{ borderColor: BORDER }}
+                />
+              </div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                Username
+              <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                Branch Name
               </label>
               <input
                 type="text"
                 required
-                placeholder="Corporate Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
+                placeholder="e.g. Guwahati Main"
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
+                className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all input-focus-container"
                 style={{ borderColor: BORDER }}
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                Password
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Portal Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 px-3 text-sm border bg-white rounded-lg focus:outline-none focus:border-[#7B1535]"
-                style={{ borderColor: BORDER }}
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Corporate Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all input-focus-container"
+                  style={{ borderColor: BORDER }}
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] font-bold uppercase tracking-wider text-[#7A6068] mb-1.5">
+                  Password
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Portal Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-10 px-3.5 text-sm border bg-[#FDFAFB] rounded-xl focus:outline-none focus:border-[#7B1535] transition-all input-focus-container"
+                  style={{ borderColor: BORDER }}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-3 border-t" style={{ borderColor: BORDER }}>
+          <div className="flex gap-3 pt-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              className="flex-1 h-10 border-2 text-xs font-bold rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
               style={{ borderColor: BORDER, color: "#6B7280" }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-10 text-sm font-semibold rounded-lg text-white transition-colors"
+              className="flex-1 h-10 text-xs font-bold rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
               style={{ backgroundColor: MAROON }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
