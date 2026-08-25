@@ -52,10 +52,9 @@ export default function App() {
   const [banks, setBanks] = useState(BANKS);
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
   const [entities, setEntities] = useState([
-    { id: 1, name: "Priya Sharma", phone: "+91 98450 12345", email: "priya.sharma@southpoint.edu.in" },
-    { id: 2, name: "Rahul Verma", phone: "+91 97060 54321", email: "rahul.verma@southpoint.edu.in" },
-    { id: 3, name: "Anita Nair", phone: "+91 88760 98765", email: "anita.nair@southpoint.edu.in" },
-    { id: 4, name: "Deepak Mehta", phone: "+91 94350 55667", email: "deepak.mehta@southpoint.edu.in" }
+    { id: 1, name: "Guwahati Central Campus", phone: "+91 98450 99999", email: "central.campus@southpoint.edu.in" },
+    { id: 2, name: "Guwahati East Branch", phone: "+91 97060 88888", email: "east.branch@southpoint.edu.in" },
+    { id: 3, name: "Guwahati South Campus", phone: "+91 88760 77777", email: "south.campus@southpoint.edu.in" }
   ]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteBank, setDeleteBank] = useState(null);
@@ -892,6 +891,26 @@ export default function App() {
 
                         if (!name || !email || !phone) {
                           alert("All fields are required.");
+                          return;
+                        }
+
+                        // Validate that entity name does not equal any admin user (case-insensitive)
+                        const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
+                        if (isAdminUser) {
+                          alert(`Error: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
+                          return;
+                        }
+
+                        // Validate that entity email does not equal any admin user email
+                        const ADMIN_EMAILS = [
+                          "priya.sharma@southpoint.edu.in",
+                          "rahul.verma@southpoint.edu.in",
+                          "anita.nair@southpoint.edu.in",
+                          "deepak.mehta@southpoint.edu.in"
+                        ];
+                        const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
+                        if (isAdminEmail) {
+                          alert(`Error: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
                           return;
                         }
 
