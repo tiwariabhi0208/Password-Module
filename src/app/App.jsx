@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus, Edit2 } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus, Edit2, AlertTriangle, X } from "lucide-react";
 
-import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius } from "./components/theme";
+import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius, font } from "./components/theme";
 import { BoyCharacter } from "./components/BoyCharacter";
-import { CustomInput, FormLabel, IconInput } from "./components/CustomInput";
 import { AuthCard } from "./components/AuthCard";
 import { AccountModal } from "./components/AccountModal";
 import { AddBankModal } from "./components/AddBankModal";
@@ -12,9 +11,8 @@ import { StealthLockScreen } from "./components/StealthLockScreen";
 import { BankCard, getBankLogo } from "./components/BankCard";
 import { AccountSelectorModal } from "./components/AccountSelectorModal";
 import { Footer } from "./components/Footer";
-import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { Sidebar } from "./components/Sidebar";
-import { CopyButton } from "./components/CopyButton";
+import { CopyButton } from "./components/ModalDetailRow";
 import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 
@@ -37,6 +35,231 @@ const INITIAL_ACTIVITIES = [
   { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid stealth password entered", user: "System", type: "error", ip: "172.56.21.9" },
   { id: 5, time: "18 Aug, 02:40 PM", action: "Account Deleted", details: "Deleted Yes Bank account details", user: "Anita Nair", type: "warning", ip: "192.168.1.14" }
 ];
+
+// --- INLINED COMPONENTS ---
+
+export function FormLabel({ text }) {
+  return (
+    <label style={{
+      fontSize: 11,
+      fontWeight: "800",
+      color: "#374151",
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      marginBottom: 5,
+      display: "block",
+    }}>
+      {text}
+    </label>
+  );
+}
+
+export function CustomInput({
+  icon,
+  type = "text",
+  name,
+  id,
+  autoComplete,
+  placeholder,
+  value,
+  onChange,
+  required,
+  showPasswordToggle,
+  onToggleShowPassword,
+  onFocus,
+  onBlur
+}) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      border: `1.5px solid #d1d5db`,
+      borderRadius: 12,
+      background: "#fff",
+      overflow: "hidden",
+      transition: "border-color 0.2s",
+      width: "100%",
+    }}
+      className="input-focus-container"
+    >
+      <div style={{
+        width: 38,
+        height: 36,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRight: "1.5px solid #e5e7eb",
+        color: T.primary,
+        background: "rgba(114, 16, 42, 0.02)",
+        flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+      <input
+        type={type}
+        name={name}
+        id={id}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        style={{
+          flex: 1,
+          border: "none",
+          outline: "none",
+          padding: "8px 12px",
+          fontSize: 14,
+          fontFamily: font.body,
+          color: T.ink,
+          background: "transparent",
+          width: "100%",
+        }}
+      />
+      {showPasswordToggle && (
+        <button
+          type="button"
+          onClick={onToggleShowPassword}
+          style={{
+            background: "none",
+            border: "none",
+            padding: "0 12px",
+            cursor: "pointer",
+            color: "#6B6B6B",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            zIndex: 10
+          }}
+        >
+          {type === "password" ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function IconInput({
+  icon,
+  right,
+  ...props
+}) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center" style={{ color: MAROON }}>
+        {icon}
+      </span>
+      <input
+        {...props}
+        className="w-full h-12 pl-11 pr-10 text-sm border bg-white text-[#1A0810] placeholder:text-[#94A3B8] focus:outline-none transition-colors rounded-xl"
+        style={{
+          borderColor: BORDER
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = MAROON;
+          e.currentTarget.style.boxShadow = `0 0 0 2px rgba(123,21,53,0.12)`;
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = BORDER;
+          e.currentTarget.style.boxShadow = "none";
+          props.onBlur?.(e);
+        }}
+      />
+      {right && <span className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center">{right}</span>}
+    </div>
+  );
+}
+
+function maskAccount(num) {
+  if (!num) return "";
+  return `•••• •••• •••• ${num.slice(-4)}`;
+}
+
+export function DeleteConfirmModal({ bank, onClose, onConfirm }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  if (!bank) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-[400px] bg-white rounded-2xl overflow-hidden shadow-2xl border border-red-200/80 transform scale-100 transition-all duration-300 flex flex-col"
+        style={{ fontFamily: "inherit" }}
+      >
+        <div className="h-1.5 w-full bg-red-600" />
+        <div className="flex justify-end pt-3 pr-3">
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+            title="Cancel"
+            style={{ border: "none", background: "none" }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-6 pb-6 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-650 mb-4 animate-pulse">
+            <AlertTriangle size={28} />
+          </div>
+          <h3 className="text-lg font-bold text-red-950 tracking-tight mb-2">
+            Delete Bank Account?
+          </h3>
+          <p className="text-sm text-[#7A6068] leading-relaxed mb-4">
+            Are you sure you want to delete <span className="font-semibold text-slate-900">{bank.name}</span> ({maskAccount(bank.accountNumber)})?
+          </p>
+          <div className="w-full bg-red-50/60 border border-red-100/80 rounded-xl p-3.5 text-left mb-6">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-red-700 block mb-1">
+              ⚠️ Strict Warning
+            </span>
+            <p className="text-xs text-red-900 leading-normal font-medium">
+              This will permanently delete the entire account details, including saved login credentials, usernames, passwords, and IFSC codes. This action is irreversible.
+            </p>
+          </div>
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={onClose}
+              className="flex-1 h-10 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+            >
+              No, Keep Account
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 h-10 bg-red-650 hover:bg-red-750 text-white text-xs font-bold rounded-lg transition-colors shadow-sm shadow-red-200 cursor-pointer"
+              style={{ border: "none" }}
+            >
+              Yes, Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [screen, setScreen] = useState("login");
@@ -85,6 +308,7 @@ export default function App() {
   const [deleteBank, setDeleteBank] = useState(null);
   const [editingBank, setEditingBank] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [entitiesScrollProgress, setEntitiesScrollProgress] = useState(0);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
@@ -242,6 +466,18 @@ export default function App() {
     setResendTimer(60);
     setCanResend(false);
     setTimeout(() => otpRefs.current[0]?.focus(), 50);
+  };
+
+  const handleEntitiesScroll = (e) => {
+    const slider = e.currentTarget;
+    if (!slider) return;
+    const maxScrollLeft = slider.scrollWidth - slider.clientWidth;
+    if (maxScrollLeft <= 0) {
+      setEntitiesScrollProgress(0);
+      return;
+    }
+    const percentage = (slider.scrollLeft / maxScrollLeft) * 100;
+    setEntitiesScrollProgress(percentage);
   };
 
   const handleSignIn = async (e) => {
@@ -992,11 +1228,6 @@ export default function App() {
                     <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest">
                       Registered Entities ({entities.length})
                     </h3>
-                    {entities.length > 0 && (
-                      <span className="text-xs font-bold text-slate-450 dark:text-slate-500 animate-pulse">
-                        Scroll horizontally →
-                      </span>
-                    )}
                   </div>
 
                   {entities.length === 0 ? (
@@ -1008,6 +1239,7 @@ export default function App() {
                       {/* Horizontal Scrolling Carousel wrapper */}
                       <div
                         ref={entitiesCarouselRef}
+                        onScroll={handleEntitiesScroll}
                         onMouseDown={(e) => {
                           const slider = entitiesCarouselRef.current;
                           if (!slider) return;
@@ -1075,6 +1307,23 @@ export default function App() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Custom Scroll Indicator Bar */}
+                      {entities.length > 1 && (
+                        <div className="flex justify-center mt-4 select-none">
+                          <div 
+                            className="w-40 h-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-full relative overflow-hidden"
+                          >
+                            <div 
+                              className="absolute top-0 bottom-0 bg-[#7B1535] dark:bg-[#E27D9B] rounded-full transition-all duration-75"
+                              style={{ 
+                                left: `${(entitiesScrollProgress / 100) * 112}px`, // sliding within 160px - 48px = 112px
+                                width: '48px' 
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
