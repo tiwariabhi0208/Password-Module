@@ -17,15 +17,15 @@ import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 
 const BANKS = [
-  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
-  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A" },
-  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", branchName: "Dispur", username: "sps_sbi_vault", password: "SbiPassphrase*12", color: "#1B3F5C" },
-  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", branchName: "Ganeshguri", username: "sps_axis_pay", password: "AxisKey#Secure1", color: "#5C2E6B" },
-  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A" },
-  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B" },
-  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F" },
-  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A" },
-  { id: 9, name: "HDFC Bank", initial: "H", accountNumber: "50100987654321", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati East", username: "sps_hdfc_retail", password: "HdfcRetail#99", color: "#1E3A5F" }
+  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F", accountType: "corporate" },
+  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A", accountType: "corporate" },
+  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", branchName: "Dispur", username: "sps_sbi_vault", password: "SbiPassphrase*12", color: "#1B3F5C", accountType: "corporate" },
+  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", branchName: "Ganeshguri", username: "sps_axis_pay", password: "AxisKey#Secure1", color: "#5C2E6B", accountType: "corporate" },
+  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A", accountType: "corporate" },
+  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B", accountType: "corporate" },
+  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F", accountType: "corporate" },
+  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A", accountType: "corporate" },
+  { id: 9, name: "HDFC Bank", initial: "H", accountNumber: "50100987654321", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati East", username: "sps_hdfc_retail", password: "HdfcRetail#99", color: "#1E3A5F", accountType: "retail" }
 ];
 
 const INITIAL_ACTIVITIES = [
@@ -208,14 +208,14 @@ export function DeleteConfirmModal({ bank, onClose, onConfirm }) {
       }}
     >
       <div
-        className="w-full max-w-[400px] bg-white rounded-2xl overflow-hidden shadow-2xl border border-red-200/80 transform scale-100 transition-all duration-300 flex flex-col"
+        className="w-full max-w-[400px] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border border-red-200/80 dark:border-red-950/60 transform scale-100 transition-all duration-300 flex flex-col"
         style={{ fontFamily: "inherit" }}
       >
         <div className="h-1.5 w-full bg-red-600" />
         <div className="flex justify-end pt-3 pr-3">
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
             title="Cancel"
             style={{ border: "none", background: "none" }}
           >
@@ -223,10 +223,10 @@ export function DeleteConfirmModal({ bank, onClose, onConfirm }) {
           </button>
         </div>
         <div className="px-6 pb-6 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-650 mb-4 animate-pulse">
+          <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 flex items-center justify-center text-red-600 mb-4 animate-pulse">
             <AlertTriangle size={28} />
           </div>
-          <h3 className="text-lg font-bold text-red-950 tracking-tight mb-2">
+          <h3 className="text-lg font-bold text-red-950 dark:text-red-200 tracking-tight mb-2">
             Delete Bank Account?
           </h3>
           <p className="text-sm text-[#7A6068] leading-relaxed mb-4">
@@ -249,7 +249,7 @@ export function DeleteConfirmModal({ bank, onClose, onConfirm }) {
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 h-10 bg-red-650 hover:bg-red-750 text-white text-xs font-bold rounded-lg transition-colors shadow-sm shadow-red-200 cursor-pointer"
+              className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm shadow-red-200/30 cursor-pointer"
               style={{ border: "none" }}
             >
               Yes, Delete
@@ -1321,7 +1321,7 @@ export default function App() {
                                   }
                                 });
                               }}
-                              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-655 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
+                              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
                               title="Remove Entity"
                             >
                               <Trash2 size={13} />
@@ -2057,16 +2057,21 @@ export default function App() {
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                           Access Level Clearance
                         </label>
-                        <select
-                          name="adminLevel"
-                          required
-                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                          style={{ borderColor: BORDER }}
-                        >
-                          <option value="1">Level 1 - Read-Only Clerk</option>
-                          <option value="2">Level 2 - Operator Manager</option>
-                          <option value="3">Level 3 - System Super Administrator</option>
-                        </select>
+                        <div className="relative">
+                          <select
+                            name="adminLevel"
+                            required
+                            className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
+                            style={{ borderColor: BORDER }}
+                          >
+                            <option value="1">Level 1 - Read-Only Clerk</option>
+                            <option value="2">Level 2 - Operator Manager</option>
+                            <option value="3">Level 3 - System Super Administrator</option>
+                          </select>
+                          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
+                            <ChevronDown size={16} />
+                          </div>
+                        </div>
                       </div>
                     </div>
 

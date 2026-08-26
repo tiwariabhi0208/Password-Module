@@ -111,14 +111,14 @@ export function AccountSelectorModal({
                 </button>
                 <button
                   onClick={() => onEdit(acc)}
-                  className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-[#7B1535]/10 dark:hover:bg-[#E27D9B]/10 text-slate-600 dark:text-slate-400 hover:text-[#7B1535] dark:hover:text-[#E27D9B] border border-slate-200/50 dark:border-slate-800 transition-all hover:scale-102 active:scale-98 cursor-pointer"
+                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-[#7B1535]/10 dark:hover:bg-[#E27D9B]/10 text-slate-600 dark:text-slate-400 hover:text-[#7B1535] dark:hover:text-[#E27D9B] border border-slate-200/50 dark:border-slate-800 transition-all hover:scale-102 active:scale-98 cursor-pointer"
                   title="Edit Account Details"
                 >
                   <Edit2 size={12} />
                 </button>
                 <button
                   onClick={() => onDelete(acc)}
-                  className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-650 hover:text-red-700 transition-all hover:scale-102 active:scale-98 cursor-pointer border border-transparent"
+                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 hover:text-red-750 transition-all hover:scale-102 active:scale-98 cursor-pointer border border-transparent"
                   title="Delete Account"
                 >
                   <Trash2 size={12} />

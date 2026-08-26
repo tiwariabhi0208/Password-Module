@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Plus, Shield, Edit2 } from "lucide-react";
+import { X, Plus, Shield, Edit2, ChevronDown } from "lucide-react";
 import { MAROON, MAROON_HOVER, BORDER } from "./theme";
 
 export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entities = [] }) {
@@ -11,6 +11,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [transactionPassword, setTransactionPassword] = useState("");
+  const [accountType, setAccountType] = useState("corporate");
 
   useEffect(() => {
     if (isOpen) {
@@ -23,6 +24,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setUsername(bankToEdit.username || "");
         setPassword(bankToEdit.password || "");
         setTransactionPassword(bankToEdit.transactionPassword || "");
+        setAccountType(bankToEdit.accountType || "corporate");
       } else {
         setName("");
         setHolder("South Point School, Guwahati");
@@ -32,6 +34,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setUsername("");
         setPassword("");
         setTransactionPassword("");
+        setAccountType("corporate");
       }
     }
   }, [isOpen, bankToEdit]);
@@ -59,6 +62,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         username,
         password,
         transactionPassword,
+        accountType,
       });
     } else {
       const colors = ["#1E3A5F", "#7A4C1A", "#1B3F5C", "#5C2E6B", "#7A1A1A", "#1A3F6B", "#2C1A5F", "#5F3A0A"];
@@ -75,6 +79,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         username,
         password,
         transactionPassword,
+        accountType,
         color
       });
     }
@@ -86,6 +91,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
     setUsername("");
     setPassword("");
     setTransactionPassword("");
+    setAccountType("corporate");
     onClose();
   };
 
@@ -93,8 +99,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
     >
-      <div 
-        className="w-[500px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up" 
+      <div
+        className="w-[720px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up"
         style={{ borderColor: BORDER }}
       >
         {/* Maroon modal header with brand gradient */}
@@ -102,25 +108,22 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
           className="flex items-center justify-between px-6 py-5 text-white"
           style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
-          <div className="flex flex-col text-left">
-            <span className="text-[17px] font-black tracking-wide flex items-center gap-1.5">
-              {bankToEdit ? (
-                <>
-                  <Edit2 size={18} className="text-[#C9A227]" /> Edit Vault Account
-                </>
-              ) : (
-                <>
-                  <Plus size={18} className="text-[#C9A227]" /> Add Vault Account
-                </>
-              )}
-            </span>
-            <span className="text-[8.5px] uppercase tracking-widest text-white/50 font-black mt-1 flex items-center gap-1">
-              <Shield size={10} className="text-white/40" /> {bankToEdit ? "Update Bank Authorization" : "New Bank Authorization"}
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+              <Shield size={18} className="text-[#F5E9BE]" />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-black tracking-wide">
+                {bankToEdit ? "Modify Vault Credentials" : "Add New Vault Account"}
+              </span>
+              <span className="text-[9.5px] uppercase tracking-widest text-[#F5E9BE] font-bold mt-0.5">
+                {bankToEdit ? "Update secure access keys" : "Link secondary banking channel"}
+              </span>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer border-none"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-colors cursor-pointer border-none"
             title="Close modal"
           >
             <X size={16} />
@@ -129,57 +132,84 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5 bg-slate-50/20 dark:bg-[#101010]/20">
           <div className="space-y-4 bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm text-left animate-fade-in" style={{ borderColor: BORDER }}>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                Select Registered Entity
-              </label>
-              <select
-                onChange={(e) => {
-                  const selectedName = e.target.value;
-                  if (selectedName) {
-                    setHolder(selectedName);
-                  }
-                }}
-                defaultValue=""
-                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-              >
-                <option value="" disabled>-- Select registered entity to pre-fill --</option>
-                {entities.map((ent) => (
-                  <option key={ent.id} value={ent.name}>
-                    {ent.name}
-                  </option>
-                ))}
-              </select>
+
+            {/* Row 1: Select Registered Entity & Account Holder */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                  Select Registered Entity
+                </label>
+                <div className="relative">
+                  <select
+                    onChange={(e) => {
+                      const selectedName = e.target.value;
+                      if (selectedName) {
+                        setHolder(selectedName);
+                      }
+                    }}
+                    defaultValue=""
+                    className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>-- Select registered entity to pre-fill --</option>
+                    {entities.map((ent) => (
+                      <option key={ent.id} value={ent.name}>
+                        {ent.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                  Account Holder Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Account Holder's Name"
+                  value={holder}
+                  onChange={(e) => setHolder(e.target.value)}
+                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                Bank Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. HDFC Bank"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-              />
+            {/* Row 2: Bank Name & Branch Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                  Bank Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. HDFC Bank"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                  Branch Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Guwahati Main"
+                  value={branchName}
+                  onChange={(e) => setBranchName(e.target.value)}
+                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                Account Holder Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Account Holder's Name"
-                value={holder}
-                onChange={(e) => setHolder(e.target.value)}
-                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-              />
-            </div>
-
+            {/* Row 3: Account Number & IFSC Code */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
@@ -194,6 +224,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                   IFSC Code
@@ -209,20 +240,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                Branch Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Guwahati Main"
-                value={branchName}
-                onChange={(e) => setBranchName(e.target.value)}
-                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-              />
-            </div>
-
+            {/* Row 4: Net Banking Username & Password */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
@@ -237,6 +255,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                   Password
@@ -252,17 +271,39 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                Transaction Password <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Transaction Password (if any)"
-                value={transactionPassword}
-                onChange={(e) => setTransactionPassword(e.target.value)}
-                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-              />
+            {/* Row 5: Account Login Type & Transaction Password */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                  Account Login Type
+                </label>
+                <div className="relative">
+                  <select
+                    value={accountType}
+                    onChange={(e) => setAccountType(e.target.value)}
+                    className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
+                  >
+                    <option value="corporate">Corporate Banking Login</option>
+                    <option value="retail">Retail / Personal Banking Login</option>
+                  </select>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                  Transaction Password <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Transaction Password (if any)"
+                  value={transactionPassword}
+                  onChange={(e) => setTransactionPassword(e.target.value)}
+                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                />
+              </div>
             </div>
           </div>
 

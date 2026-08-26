@@ -4,6 +4,46 @@ import { ModalDetailRow } from "./ModalDetailRow";
 import { MAROON, GOLD, BORDER } from "./theme";
 import { getBankLogo } from "./BankCard";
 
+export function getDirectLoginUrl(bankName, accountType = "corporate") {
+  if (!bankName) return "";
+  const name = bankName.toLowerCase();
+  const type = accountType.toLowerCase();
+
+  if (name.includes("icici")) {
+    return type === "retail" 
+      ? "https://infinity.icicibank.com/" 
+      : "https://cib.icicibank.com/";
+  }
+  if (name.includes("hdfc")) {
+    return "https://netbanking.hdfcbank.com/netbanking/";
+  }
+  if (name.includes("state bank") || name.includes("sbi")) {
+    return type === "retail"
+      ? "https://retail.onlinesbi.sbi/"
+      : "https://corp.onlinesbi.sbi/";
+  }
+  if (name.includes("axis")) {
+    return type === "retail"
+      ? "https://retail.axisbank.co.in/"
+      : "https://corporate.axisbank.co.in/";
+  }
+  if (name.includes("kotak")) {
+    return "https://netbanking.kotak.com/knb2/";
+  }
+  if (name.includes("yes")) {
+    return "https://yesonline.yesbank.co.in/";
+  }
+  if (name.includes("punjab") || name.includes("pnb")) {
+    return "https://netpnb.com/";
+  }
+  if (name.includes("baroda") || name.includes("bob")) {
+    return "https://www.bobibanking.com/";
+  }
+
+  // Fallback to Google Search for unrecognized banks
+  return `https://www.google.com/search?q=${encodeURIComponent(bankName + " " + type + " banking login")}`;
+}
+
 export function AccountModal({ bank, onClose, onDelete, onEdit }) {
   const logoUrl = getBankLogo(bank.name);
   useEffect(() => {
@@ -52,8 +92,8 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
                 <span className="text-[17px] font-black tracking-wide leading-none">{bank.name}</span>
                 <button 
                   className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5" 
-                  title="Open bank search"
-                  onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " corporate login")}`, "_blank")}
+                  title="Open official login portal"
+                  onClick={() => window.open(getDirectLoginUrl(bank.name, bank.accountType), "_blank")}
                 >
                   <ExternalLink size={12} />
                 </button>
@@ -64,24 +104,24 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onDelete(bank)}
-              className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
               title="Delete Account"
             >
               <Trash2 size={14} />
             </button>
             <button
               onClick={() => onEdit(bank)}
-              className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
               title="Edit Account Details"
             >
               <Edit2 size={14} />
             </button>
             <button
               onClick={onClose}
-              className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-white/85 hover:text-white transition-all cursor-pointer border-none"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-white/85 hover:text-white transition-all cursor-pointer border-none"
               title="Close modal"
             >
               <X size={16} />
@@ -89,14 +129,15 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
           </div>
         </div>
 
-        {/* Body Container */}
-        <div className="bg-slate-50/30 dark:bg-[#101010]/30 p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm" style={{ borderColor: BORDER }}>
+        {/* Info Grid */}
+        <div className="max-h-[50vh] overflow-y-auto custom-scrollbar text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5 px-6 py-5">
             <ModalDetailRow label="Account Holder" value={bank.holder} />
             <ModalDetailRow label="Account Number" value={bank.accountNumber} isMonospaced={true} />
             <ModalDetailRow label="IFSC Code" value={bank.ifsc} isMonospaced={true} />
             <ModalDetailRow label="Branch Name" value={bank.branchName} />
-            <ModalDetailRow label="Username" value={bank.username} isMonospaced={true} />
+            <ModalDetailRow label="Login Type" value={bank.accountType === "retail" ? "Retail / Personal Banking" : "Corporate Banking"} />
+            <ModalDetailRow label="Net Banking Username" value={bank.username} isMonospaced={true} />
             <ModalDetailRow label="Password" value={bank.password} isMonospaced={true} isPassword={true} />
             {bank.transactionPassword && (
               <ModalDetailRow label="Transaction Password" value={bank.transactionPassword} isMonospaced={true} isPassword={true} />
@@ -104,21 +145,13 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
           </div>
         </div>
 
-        {/* Footer with high-fidelity portal links */}
         <div className="flex gap-4 px-6 py-4.5 border-t bg-slate-50/50 dark:bg-[#151515]/80" style={{ borderColor: BORDER }}>
           <button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " corporate banking login")}`, "_blank")}
-            className="flex-1 h-10 border border-[#7B1535] dark:border-[#E27D9B] text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2 bg-transparent text-[#7B1535] dark:text-[#E27D9B] hover:bg-[#7B1535] hover:text-white dark:hover:bg-[#E27D9B] dark:hover:text-[#101010] active:scale-[0.98]"
+            onClick={() => window.open(getDirectLoginUrl(bank.name, bank.accountType), "_blank")}
+            className="flex-grow h-10 border border-[#7B1535] dark:border-[#E27D9B] text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2 bg-transparent text-[#7B1535] dark:text-[#E27D9B] hover:bg-[#7B1535] hover:text-white dark:hover:bg-[#E27D9B] dark:hover:text-[#101010] active:scale-[0.98]"
           >
             <Globe size={13} />
-            Corporate Login
-          </button>
-          <button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(bank.name + " retail banking login")}`, "_blank")}
-            className="flex-1 h-10 border border-[#7B1535] dark:border-[#E27D9B] text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2 bg-transparent text-[#7B1535] dark:text-[#E27D9B] hover:bg-[#7B1535] hover:text-white dark:hover:bg-[#E27D9B] dark:hover:text-[#101010] active:scale-[0.98]"
-          >
-            <Globe size={13} />
-            Retail Login
+            {bank.accountType === "retail" ? "Retail Login" : "Corporate Login"}
           </button>
         </div>
       </div>
