@@ -72,7 +72,13 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit }) {
         {/* Row 1: Header (Bank Info & Account Tag) */}
         <div className="flex items-center justify-between w-full pb-2 border-b border-slate-100 dark:border-slate-900">
           <div className="flex items-center gap-2.5 min-w-0">
-            {logoUrl ? (
+            {bank.photo ? (
+              <img 
+                src={bank.photo} 
+                alt={bank.name} 
+                className="h-14 w-14 rounded-xl object-contain shrink-0 bg-white" 
+              />
+            ) : logoUrl ? (
               <img 
                 src={logoUrl} 
                 alt={bank.name} 

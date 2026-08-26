@@ -339,6 +339,40 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Centralized effect to block document body scroll when any modal popup is open
+  useEffect(() => {
+    const isAnyModalOpen = 
+      addModalOpen || 
+      !!selectedBank || 
+      !!editingBank || 
+      !!deleteBank || 
+      !!selectedGroup || 
+      !!entityConfirmModal || 
+      !!duplicateEntityModal || 
+      !!emailOtpState || 
+      !!pendingTabChange;
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [
+    addModalOpen,
+    selectedBank,
+    editingBank,
+    deleteBank,
+    selectedGroup,
+    entityConfirmModal,
+    duplicateEntityModal,
+    emailOtpState,
+    pendingTabChange
+  ]);
+
   useEffect(() => {
     if (screen !== "dashboard" || stealthMode || timeoutDuration === "never") {
       return;
@@ -1193,7 +1227,13 @@ export default function App() {
                             {/* Bank Name */}
                             <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                               <div className="flex items-center gap-2.5">
-                                {getBankLogo(bank.name) ? (
+                                {bank.photo ? (
+                                  <img
+                                    src={bank.photo}
+                                    alt={bank.name}
+                                    className="h-12 w-12 rounded-xl object-contain shrink-0 bg-white"
+                                  />
+                                ) : getBankLogo(bank.name) ? (
                                   <img
                                     src={getBankLogo(bank.name)}
                                     alt={bank.name}

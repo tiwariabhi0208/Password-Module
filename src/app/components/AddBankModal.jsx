@@ -12,6 +12,37 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
   const [password, setPassword] = useState("");
   const [transactionPassword, setTransactionPassword] = useState("");
   const [accountType, setAccountType] = useState("corporate");
+  const [photo, setPhoto] = useState(null);
+  const [photoError, setPhotoError] = useState("");
+
+  const handlePhotoChange = (e) => {
+    setPhotoError("");
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // File validation: Size limit to 5 MB
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setPhotoError("File size exceeds 5 MB. Please choose a smaller image.");
+      e.target.value = null;
+      return;
+    }
+
+    // File validation: Allow only jpeg, jpg, png
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      setPhotoError("Unsupported format. Only JPEG, JPG, and PNG are allowed.");
+      e.target.value = null;
+      return;
+    }
+
+    // Convert file to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhoto(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -25,6 +56,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setPassword(bankToEdit.password || "");
         setTransactionPassword(bankToEdit.transactionPassword || "");
         setAccountType(bankToEdit.accountType || "corporate");
+        setPhoto(bankToEdit.photo || null);
+        setPhotoError("");
       } else {
         setName("");
         setHolder("South Point School, Guwahati");
@@ -35,6 +68,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setPassword("");
         setTransactionPassword("");
         setAccountType("corporate");
+        setPhoto(null);
+        setPhotoError("");
       }
     }
   }, [isOpen, bankToEdit]);
@@ -63,6 +98,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         password,
         transactionPassword,
         accountType,
+        photo
       });
     } else {
       const colors = ["#1E3A5F", "#7A4C1A", "#1B3F5C", "#5C2E6B", "#7A1A1A", "#1A3F6B", "#2C1A5F", "#5F3A0A"];
@@ -80,7 +116,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         password,
         transactionPassword,
         accountType,
-        color
+        color,
+        photo
       });
     }
 
@@ -303,6 +340,57 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   onChange={(e) => setTransactionPassword(e.target.value)}
                   className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                 />
+              </div>
+            </div>
+
+            {/* Row 6: Upload Account Photo */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400">
+                Account Photo / Logo <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+              </label>
+              
+              <div className="flex flex-col sm:flex-row items-center gap-4 p-4.5 bg-[#FDFAFB] dark:bg-[#181818] border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl">
+                {photo ? (
+                  <div className="relative shrink-0 w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-[#101010] flex items-center justify-center">
+                    <img src={photo} alt="Preview" className="w-full h-full object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => setPhoto(null)}
+                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center text-[10px] font-black border-none cursor-pointer shadow active:scale-90"
+                      title="Remove Photo"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div className="shrink-0 w-16 h-16 rounded-xl border border-dashed border-slate-300 dark:border-slate-850 bg-slate-50/50 dark:bg-[#101010]/30 flex items-center justify-center text-slate-400 dark:text-slate-600">
+                    <Plus size={20} />
+                  </div>
+                )}
+                
+                <div className="flex-grow text-left w-full sm:w-auto">
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/jpg,image/png"
+                    onChange={handlePhotoChange}
+                    className="block w-full text-xs text-slate-500 dark:text-slate-400
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-xl file:border-0
+                      file:text-xs file:font-black
+                      file:bg-[#7B1535]/10 file:text-[#7B1535]
+                      dark:file:bg-[#E27D9B]/10 dark:file:text-[#E27D9B]
+                      hover:file:bg-[#7B1535]/15 dark:hover:file:bg-[#E27D9B]/15
+                      file:cursor-pointer cursor-pointer"
+                  />
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
+                    Allowed formats: JPEG, JPG, PNG (Max size: 5 MB)
+                  </p>
+                  {photoError && (
+                    <p className="text-[10.5px] font-semibold text-red-600 dark:text-red-400 mt-1">
+                      ⚠️ {photoError}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

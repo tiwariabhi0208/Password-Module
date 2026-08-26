@@ -41,7 +41,13 @@ export function AccountSelectorModal({
           style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
           <div className="flex items-center gap-3">
-            {logoUrl ? (
+            {accounts[0]?.photo ? (
+              <img
+                src={accounts[0].photo}
+                alt={bankName}
+                className="h-16 w-16 rounded-xl object-contain shrink-0 bg-white"
+              />
+            ) : logoUrl ? (
               <img
                 src={logoUrl}
                 alt={bankName}

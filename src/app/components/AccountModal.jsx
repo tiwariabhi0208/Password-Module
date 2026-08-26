@@ -71,7 +71,13 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
           style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
           <div className="flex items-center gap-3">
-            {logoUrl ? (
+            {bank.photo ? (
+              <img 
+                src={bank.photo} 
+                alt={bank.name} 
+                className="h-20 w-20 rounded-xl object-contain shrink-0 bg-white" 
+              />
+            ) : logoUrl ? (
               <img 
                 src={logoUrl} 
                 alt={bank.name} 
