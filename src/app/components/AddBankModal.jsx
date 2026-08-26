@@ -131,20 +131,6 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
           <div className="space-y-4 bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm text-left animate-fade-in" style={{ borderColor: BORDER }}>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                Bank Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. HDFC Bank"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                 Select Registered Entity
               </label>
               <select
@@ -164,6 +150,20 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                Bank Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. HDFC Bank"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+              />
             </div>
 
             <div>
