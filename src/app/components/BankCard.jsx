@@ -76,11 +76,11 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit }) {
               <img 
                 src={logoUrl} 
                 alt={bank.name} 
-                className="h-10 w-auto object-contain shrink-0" 
+                className="h-14 w-auto object-contain shrink-0" 
               />
             ) : (
               <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black bg-slate-100 dark:bg-slate-900 shrink-0 text-slate-650 dark:text-slate-350"
+                className="w-14 h-14 rounded-xl flex items-center justify-center text-sm font-black bg-slate-100 dark:bg-slate-900 shrink-0 text-slate-650 dark:text-slate-350"
               >
                 {initial}
               </div>

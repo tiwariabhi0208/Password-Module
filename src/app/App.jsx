@@ -1160,11 +1160,11 @@ export default function App() {
                                   <img
                                     src={getBankLogo(bank.name)}
                                     alt={bank.name}
-                                    className="h-9 w-auto object-contain shrink-0"
+                                    className="h-12 w-auto object-contain shrink-0"
                                   />
                                 ) : (
                                   <div
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black text-white shrink-0"
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-xs font-black text-white shrink-0"
                                     style={{ backgroundColor: bank.color }}
                                   >
                                     {bank.initial || bank.name.slice(0, 2).toUpperCase()}
@@ -1430,7 +1430,7 @@ export default function App() {
                           type="text"
                           name="entityName"
                           required
-                          placeholder="e.g. Guwahati North Campus"
+                          placeholder="Your Entity Name"
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -1449,7 +1449,7 @@ export default function App() {
                           onInput={(e) => {
                             e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
                           }}
-                          placeholder="e.g. 9876543210"
+                          placeholder="Your Phone Number"
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -1464,7 +1464,7 @@ export default function App() {
                         type="email"
                         name="entityEmail"
                         required
-                        placeholder="e.g. branch.name@gmail.com"
+                        placeholder="Your Email"
                         className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
                         style={{ borderColor: BORDER }}
                       />
@@ -1848,17 +1848,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Status Indicator */}
-                      <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-2xl">
-                        <div className="relative flex items-center justify-center w-2.5 h-2.5">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75 animate-ping" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#16A34A]" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wide">STATUS</span>
-                          <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider">{profile.status}</span>
-                        </div>
-                      </div>
                     </div>
 
                     {/* Profile Grid Information Panel */}
@@ -2047,7 +2036,7 @@ export default function App() {
                           type="text"
                           name="adminName"
                           required
-                          placeholder="e.g. Rahul Verma"
+                          placeholder="Your Name"
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -2084,7 +2073,7 @@ export default function App() {
                           type="email"
                           name="adminEmail"
                           required
-                          placeholder="e.g. rahul.verma@southpoint.edu.in"
+                          placeholder="Your Email"
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -2098,7 +2087,7 @@ export default function App() {
                           type="password"
                           name="adminPassword"
                           required
-                          placeholder="••••••••"
+                          placeholder="Your Password"
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -2167,7 +2156,7 @@ export default function App() {
                       <input
                         type="password"
                         required
-                        placeholder="••••••••"
+                        placeholder="Your Current Password"
                         className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
                         style={{ borderColor: BORDER }}
                       />
@@ -2179,7 +2168,7 @@ export default function App() {
                       <input
                         type="password"
                         required
-                        placeholder="••••••••"
+                        placeholder="Your New Password"
                         value={newPasswordVal}
                         onChange={(e) => setNewPasswordVal(e.target.value)}
                         className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
@@ -2193,7 +2182,7 @@ export default function App() {
                       <input
                         type="password"
                         required
-                        placeholder="••••••••"
+                        placeholder="Confirm Your New Password"
                         className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
                         style={{ borderColor: BORDER }}
                       />

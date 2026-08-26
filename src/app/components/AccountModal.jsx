@@ -75,14 +75,14 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
               <img 
                 src={logoUrl} 
                 alt={bank.name} 
-                className="h-14 w-auto object-contain shrink-0" 
+                className="h-20 w-auto object-contain shrink-0" 
               />
             ) : (
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
+                className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
                 style={{ color: GOLD }}
               >
-                <span className="text-lg font-black tracking-wider leading-none">
+                <span className="text-xl font-black tracking-wider leading-none">
                   {bank.initial || bank.name.slice(0, 2).toUpperCase()}
                 </span>
               </div>

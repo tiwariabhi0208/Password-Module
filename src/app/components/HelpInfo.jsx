@@ -73,6 +73,11 @@ export function HelpInfo() {
       title: "Entities vs. Admins",
       icon: Users,
       content: "An Entity represents a business structure, school branch, or organizational unit (e.g., South Point School, Delhi Public School) that owns the accounts. Admins are the actual human operators (e.g., Priya Sharma) who log into the terminal. Multiple Admins manage credentials belonging to different Entities under audit control."
+    },
+    {
+      title: "Registering & Managing Entities",
+      icon: FileSignature,
+      content: "Administrators (Level 3) can register and manage organizational entities. When registering an entity, specify the Full Name/Entity Name, a 10-digit Phone Number, and the official Email ID. Once registered, these entities appear in vault creation forms, allowing you to pre-fill Account Holder details instantly."
     }
   ];
 
@@ -167,6 +172,22 @@ export function HelpInfo() {
               <div className="flex gap-2">
                 <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />
                 <span>Zero pre-shared plain-text credentials leave local app memory.</span>
+              </div>
+              <div className="flex gap-2">
+                <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />
+                <span>Audit logging: All credentials access, updates, and user registration events are logged in the Activity Log.</span>
+              </div>
+              <div className="flex gap-2">
+                <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />
+                <span>Session sandboxing: The vault data resides strictly in memory and is wiped clean upon logging out.</span>
+              </div>
+              <div className="flex gap-2">
+                <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />
+                <span>Anti brute-force: Master passcode input incorporates progressive delay lockout limits after failed attempts.</span>
+              </div>
+              <div className="flex gap-2">
+                <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />
+                <span>Zero third-party trackers: Absolutely no external analytic tools, telemetry services, or cookies are enabled.</span>
               </div>
             </div>
 
