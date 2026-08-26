@@ -4,7 +4,7 @@ import { ModalDetailRow } from "./ModalDetailRow";
 import { MAROON, GOLD, BORDER } from "./theme";
 import { getBankLogo } from "./BankCard";
 
-export function AccountModal({ bank, onClose, onDelete }) {
+export function AccountModal({ bank, onClose, onDelete, onEdit }) {
   const logoUrl = getBankLogo(bank.name);
   useEffect(() => {
     const onKey = (e) => {
@@ -73,6 +73,7 @@ export function AccountModal({ bank, onClose, onDelete }) {
               <Trash2 size={14} />
             </button>
             <button
+              onClick={() => onEdit(bank)}
               className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
               title="Edit Account Details"
             >

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { X, Plus, Shield } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Plus, Shield, Edit2 } from "lucide-react";
 import { MAROON, MAROON_HOVER, BORDER } from "./theme";
 
-export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
+export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entities = [] }) {
   const [name, setName] = useState("");
   const [holder, setHolder] = useState("South Point School, Guwahati");
   const [accountNumber, setAccountNumber] = useState("");
@@ -11,6 +11,30 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [transactionPassword, setTransactionPassword] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      if (bankToEdit) {
+        setName(bankToEdit.name || "");
+        setHolder(bankToEdit.holder || "South Point School, Guwahati");
+        setAccountNumber(bankToEdit.accountNumber || "");
+        setIfsc(bankToEdit.ifsc || "");
+        setBranchName(bankToEdit.branchName || "");
+        setUsername(bankToEdit.username || "");
+        setPassword(bankToEdit.password || "");
+        setTransactionPassword(bankToEdit.transactionPassword || "");
+      } else {
+        setName("");
+        setHolder("South Point School, Guwahati");
+        setAccountNumber("");
+        setIfsc("");
+        setBranchName("");
+        setUsername("");
+        setPassword("");
+        setTransactionPassword("");
+      }
+    }
+  }, [isOpen, bankToEdit]);
 
   if (!isOpen) return null;
 
@@ -22,22 +46,38 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
     }
 
     const initial = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-    const colors = ["#1E3A5F", "#7A4C1A", "#1B3F5C", "#5C2E6B", "#7A1A1A", "#1A3F6B", "#2C1A5F", "#5F3A0A"];
-    const color = colors[Math.floor(Math.random() * colors.length)];
 
-    onAdd({
-      id: Date.now(),
-      name,
-      initial,
-      accountNumber,
-      ifsc,
-      holder,
-      branchName,
-      username,
-      password,
-      transactionPassword,
-      color
-    });
+    if (bankToEdit) {
+      onEdit({
+        ...bankToEdit,
+        name,
+        initial,
+        accountNumber,
+        ifsc,
+        holder,
+        branchName,
+        username,
+        password,
+        transactionPassword,
+      });
+    } else {
+      const colors = ["#1E3A5F", "#7A4C1A", "#1B3F5C", "#5C2E6B", "#7A1A1A", "#1A3F6B", "#2C1A5F", "#5F3A0A"];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      onAdd({
+        id: Date.now(),
+        name,
+        initial,
+        accountNumber,
+        ifsc,
+        holder,
+        branchName,
+        username,
+        password,
+        transactionPassword,
+        color
+      });
+    }
 
     setName("");
     setAccountNumber("");
@@ -64,10 +104,18 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
         >
           <div className="flex flex-col text-left">
             <span className="text-[17px] font-black tracking-wide flex items-center gap-1.5">
-              <Plus size={18} className="text-[#C9A227]" /> Add Vault Account
+              {bankToEdit ? (
+                <>
+                  <Edit2 size={18} className="text-[#C9A227]" /> Edit Vault Account
+                </>
+              ) : (
+                <>
+                  <Plus size={18} className="text-[#C9A227]" /> Add Vault Account
+                </>
+              )}
             </span>
             <span className="text-[8.5px] uppercase tracking-widest text-white/50 font-black mt-1 flex items-center gap-1">
-              <Shield size={10} className="text-white/40" /> New Bank Authorization
+              <Shield size={10} className="text-white/40" /> {bankToEdit ? "Update Bank Authorization" : "New Bank Authorization"}
             </span>
           </div>
           <button
@@ -230,7 +278,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, entities = [] }) {
               type="submit"
               className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none bg-[#7B1535] hover:bg-[#600f27] dark:bg-[#E27D9B] dark:hover:bg-[#d85f83] dark:text-[#101010] active:scale-[0.98]"
             >
-              Add Vault Account
+              {bankToEdit ? "Save Changes" : "Add Vault Account"}
             </button>
           </div>
         </form>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus, Edit2 } from "lucide-react";
 
 import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius } from "./components/theme";
 import { BoyCharacter } from "./components/BoyCharacter";
@@ -80,6 +80,7 @@ export default function App() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [emailOtpState, setEmailOtpState] = useState(null);
   const [deleteBank, setDeleteBank] = useState(null);
+  const [editingBank, setEditingBank] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
@@ -89,7 +90,7 @@ export default function App() {
   const [newPasswordVal, setNewPasswordVal] = useState("");
   const [tfaEnabled, setTfaEnabled] = useState(false);
   const [auditEnabled, setAuditEnabled] = useState(true);
-  const [timeoutEnabled, setTimeoutEnabled] = useState(true);
+  const [timeoutDuration, setTimeoutDuration] = useState("15m");
   const [stealthMode, setStealthMode] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
@@ -106,6 +107,48 @@ export default function App() {
       localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    if (screen !== "dashboard" || stealthMode || timeoutDuration === "never") {
+      return;
+    }
+
+    let timeoutId;
+
+    const resetTimer = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      let seconds = 900; // default 15m
+      if (timeoutDuration === "5m") seconds = 300;
+      else if (timeoutDuration === "10m") seconds = 600;
+      else if (timeoutDuration === "15m") seconds = 900;
+      else if (timeoutDuration === "30m") seconds = 1800;
+      else if (timeoutDuration === "60m") seconds = 3600;
+
+      timeoutId = setTimeout(() => {
+        setStealthMode(true);
+        logActivity("Lock Screen Triggered", "Vault locked automatically due to inactivity", "info");
+      }, seconds * 1000);
+    };
+
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    resetTimer();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      events.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [screen, stealthMode, timeoutDuration]);
 
   const logActivity = (action, details, type) => {
     setActivities((prev) => [
@@ -127,6 +170,11 @@ export default function App() {
     if (bank) {
       logActivity("Credential Accessed", `Viewed credentials for ${bank.name}`, "success");
     }
+  };
+
+  const handleEditBank = (bank) => {
+    setEditingBank(bank);
+    setAddModalOpen(true);
   };
 
   const [stealthPassword, setStealthPassword] = useState("");
@@ -786,6 +834,7 @@ export default function App() {
                       bank={bank}
                       onClick={() => handleViewBank(bank)}
                       onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
+                      onEdit={handleEditBank}
                     />
                   ))}
                 </div>
@@ -859,6 +908,13 @@ export default function App() {
                                   title="View Details"
                                 >
                                   <Eye size={15} />
+                                </button>
+                                <button
+                                  onClick={() => handleEditBank(bank)}
+                                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
+                                  title="Edit Account Details"
+                                >
+                                  <Edit2 size={15} />
                                 </button>
                                 <button
                                   onClick={() => setDeleteBank(bank)}
@@ -1892,8 +1948,8 @@ export default function App() {
               setTfaEnabled={setTfaEnabled}
               auditEnabled={auditEnabled}
               setAuditEnabled={setAuditEnabled}
-              timeoutEnabled={timeoutEnabled}
-              setTimeoutEnabled={setTimeoutEnabled}
+              timeoutDuration={timeoutDuration}
+              setTimeoutDuration={setTimeoutDuration}
               darkMode={darkMode}
               setDarkMode={setDarkMode}
               defaultBanks={BANKS}
@@ -1911,16 +1967,28 @@ export default function App() {
             setDeleteBank(bankObj);
             setSelectedBank(null);
           }}
+          onEdit={(bankObj) => {
+            setSelectedBank(null);
+            handleEditBank(bankObj);
+          }}
         />
       )}
 
       <AddBankModal
         isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        onClose={() => {
+          setAddModalOpen(false);
+          setEditingBank(null);
+        }}
         entities={entities}
+        bankToEdit={editingBank}
         onAdd={(newBank) => {
           setBanks([...banks, newBank]);
           logActivity("Account Added", `Added ${newBank.name} account details`, "success");
+        }}
+        onEdit={(updatedBank) => {
+          setBanks(banks.map((b) => (b.id === updatedBank.id ? updatedBank : b)));
+          logActivity("Account Updated", `Updated ${updatedBank.name} account details`, "info");
         }}
       />
 

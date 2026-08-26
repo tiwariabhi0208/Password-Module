@@ -1,5 +1,5 @@
 import React from "react";
-import { Eye, Trash2, Lock } from "lucide-react";
+import { Eye, Trash2, Lock, Edit2 } from "lucide-react";
 import { GOLD, MAROON, BORDER } from "./theme";
 import bobLogo from "../../../photos/BOB-Bank.png";
 import hdfcLogo from "../../../photos/HDFC-Bank.png";
@@ -22,7 +22,7 @@ export function getBankLogo(bankName) {
   return null;
 }
 
-export function BankCard({ bank, onClick, onConfirmDelete }) {
+export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
   // Extract initials or use predefined
   const initial = bank.initial || bank.name.slice(0, 2).toUpperCase();
   const logoUrl = getBankLogo(bank.name);
@@ -136,24 +136,36 @@ export function BankCard({ bank, onClick, onConfirmDelete }) {
       </div>
 
       {/* Hover Action Overlay */}
-      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2.5px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20 flex items-center justify-center gap-3">
+      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2.5px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20 flex items-center justify-center gap-2.5 px-2">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onClick();
           }}
-          className="flex items-center gap-1.5 bg-[#C9A227] hover:bg-[#b08d20] text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+          className="flex items-center gap-1 bg-[#C9A227] hover:bg-[#b08d20] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+          title="View Details"
         >
-          <Eye size={13} /> View Details
+          <Eye size={12} /> View
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(bank);
+          }}
+          className="flex items-center gap-1 bg-[#7B1535] hover:bg-[#600f27] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+          title="Edit Details"
+        >
+          <Edit2 size={12} /> Edit
         </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onConfirmDelete(bank);
           }}
-          className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+          className="flex items-center gap-1 bg-red-650 hover:bg-red-750 text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+          title="Delete Account"
         >
-          <Trash2 size={13} /> Delete
+          <Trash2 size={12} /> Delete
         </button>
       </div>
     </div>

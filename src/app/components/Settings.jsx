@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShieldCheck, Database, AlertTriangle, Eye, EyeOff, X, Lock } from "lucide-react";
+import { ShieldCheck, Database, AlertTriangle, Eye, EyeOff, X, Lock, ChevronDown } from "lucide-react";
 import { MAROON, MAROON_HOVER, BORDER } from "./theme";
 
 export function Settings({
@@ -10,8 +10,8 @@ export function Settings({
   setTfaEnabled,
   auditEnabled,
   setAuditEnabled,
-  timeoutEnabled,
-  setTimeoutEnabled,
+  timeoutDuration,
+  setTimeoutDuration,
   darkMode,
   setDarkMode,
   defaultBanks,
@@ -127,23 +127,36 @@ export function Settings({
               </button>
             </div>
 
-            {/* Auto Lock Timer Toggle */}
-            <div className="flex items-start justify-between gap-4 py-4">
+            {/* Auto Lock Timer Select */}
+            <div className="flex items-center justify-between gap-4 py-4 border-b border-slate-100 dark:border-slate-800/60 text-left" style={{ borderColor: BORDER }}>
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Inactivity Timeout Lock</span>
                 <span className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-normal mt-0.5">
-                  Automatically lock vault database after 15 minutes of user inactivity.
+                  Automatically lock vault database after a period of user inactivity.
                 </span>
               </div>
-              <button
-                onClick={() => {
-                  setTimeoutEnabled(!timeoutEnabled);
-                  logActivity("Settings Updated", `Inactivity lock was ${!timeoutEnabled ? "enabled" : "disabled"}`, "info");
-                }}
-                className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 ${timeoutEnabled ? "bg-[#7B1535] dark:bg-[#E27D9B]" : "bg-slate-200 dark:bg-slate-800"} relative cursor-pointer`}
-              >
-                <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-100 shadow transition-all duration-300 ${timeoutEnabled ? "translate-x-4" : "translate-x-0"}`} />
-              </button>
+              <div className="relative">
+                <select
+                  value={timeoutDuration}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTimeoutDuration(val);
+                    logActivity("Settings Updated", `Inactivity lock duration set to ${val === "never" ? "never" : val}`, "info");
+                  }}
+                  className="h-10 pl-3.5 pr-9 text-xs font-bold border border-slate-200 dark:border-slate-800 bg-[#FDFAFB] dark:bg-[#121212] text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all cursor-pointer appearance-none"
+                  style={{ borderColor: BORDER }}
+                >
+                  <option value="5m">5 min</option>
+                  <option value="10m">10 min</option>
+                  <option value="15m">15 min</option>
+                  <option value="30m">30 min</option>
+                  <option value="60m">60 min</option>
+                  <option value="never">Never</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                  <ChevronDown size={14} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
