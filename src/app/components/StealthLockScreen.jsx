@@ -55,7 +55,7 @@ export function StealthLockScreen({
               Session Locked
             </h2>
             <p className="text-[10px] uppercase tracking-widest mt-1" style={{ color: GOLD }}>
-              Stealth Mode Active
+              Lock Screen Active
             </p>
           </div>
         </div>

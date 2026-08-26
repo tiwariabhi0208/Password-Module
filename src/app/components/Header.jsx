@@ -36,18 +36,18 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
 
       {/* Actions (Stealth Button & Avatar Menu) */}
       <div className="flex items-center gap-5">
-        {/* Stealth Mode Button */}
+        {/* Lock Screen Button */}
         <button
           onClick={() => setStealthMode(true)}
           className="flex items-center gap-2 h-11 px-5 rounded-lg border text-base font-black transition-all hover:bg-white/10 text-white shadow-sm hover:shadow active:scale-[0.98]"
           style={{ borderColor: "rgba(255,255,255,0.35)", cursor: "pointer", letterSpacing: "0.02em" }}
-          title="Activate Stealth Mode (Quick Lock)"
+          title="Activate Lock Screen (Quick Lock)"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          Stealth Mode
+          Lock Screen
         </button>
 
         {/* Avatar menu */}

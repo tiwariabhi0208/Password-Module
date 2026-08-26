@@ -60,9 +60,9 @@ export function HelpInfo() {
 
   const glossaryItems = [
     {
-      title: "Stealth Mode & Inactivity Lock",
+      title: "Lock Screen & Inactivity Lock",
       icon: EyeOff,
-      content: "A security mechanism that protects credentials from shoulder surfing or physical breaches. If the vault is left idle for the configured timeout (e.g. 15 minutes), the terminal immediately locks behind an overlay screen. In stealth mode, password entries are protected by disc-security masking, and the login session cannot be hijacked without entering the master passcode."
+      content: "A security mechanism that protects credentials from shoulder surfing or physical breaches. If the vault is left idle for the configured timeout (e.g. 15 minutes), the terminal immediately locks behind an overlay screen. When locked, password entries are protected by disc-security masking, and the login session cannot be hijacked without entering the master passcode."
     },
     {
       title: "AES-256 Encrypted Cryptographic Public Signature",

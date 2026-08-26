@@ -30,9 +30,9 @@ const BANKS = [
 
 const INITIAL_ACTIVITIES = [
   { id: 1, time: "Today, 12:05 PM", action: "Credential Accessed", details: "Viewed password details for HDFC Bank", user: "Priya Sharma", type: "success", ip: "192.168.1.45" },
-  { id: 2, time: "Today, 11:32 AM", action: "Lock Screen Triggered", details: "Stealth mode manual activation", user: "Priya Sharma", type: "info", ip: "192.168.1.45" },
+  { id: 2, time: "Today, 11:32 AM", action: "Lock Screen Triggered", details: "Lock screen manual activation", user: "Priya Sharma", type: "info", ip: "192.168.1.45" },
   { id: 3, time: "Yesterday, 04:10 PM", action: "Account Added", details: "Added Kotak Mahindra Bank account", user: "Rahul Verma", type: "success", ip: "192.168.1.98" },
-  { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid stealth password entered", user: "System", type: "error", ip: "172.56.21.9" },
+  { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid lock screen password entered", user: "System", type: "error", ip: "172.56.21.9" },
   { id: 5, time: "18 Aug, 02:40 PM", action: "Account Deleted", details: "Deleted Yes Bank account details", user: "Anita Nair", type: "warning", ip: "192.168.1.14" }
 ];
 
@@ -1006,20 +1006,22 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Stats Card 2: Security Status */}
+                {/* Stats Card 2: Unique Bank Accounts */}
                 <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-950/20 text-[#16A34A]">
-                    <ShieldCheck size={20} />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/20 text-[#1E3A5F] dark:text-[#6FA4E3]">
+                    <Landmark size={20} />
                   </div>
                   <div className="flex-grow">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Security Coverage</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Unique Bank Accounts</span>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">AES-256</span>
-                      <span className="text-[10px] font-bold text-slate-400 font-mono">ENCRYPTED</span>
+                      <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">
+                        {new Set(banks.map(b => b.name.trim().toLowerCase())).size}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 font-mono">UNIFIED</span>
                     </div>
                     <p className="text-[10.5px] text-[#7A6068] dark:text-slate-400 mt-2 font-medium leading-none flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
-                      Vault database active & locked
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A5F] dark:bg-[#6FA4E3] animate-pulse"></span>
+                      Managing {banks.length} total accounts
                     </p>
                   </div>
                 </div>
