@@ -8,6 +8,7 @@ import axisLogo from "../../../photos/AXIS-Bank.png";
 import iciciLogo from "../../../photos/ICICI_Bank.png";
 import kotakLogo from "../../../photos/KOTAK-Bank.png";
 import yesLogo from "../../../photos/YES-Bank.png";
+import pnbLogo from "../../../photos/PNB-Bank.png";
 
 export function getBankLogo(bankName) {
   if (!bankName) return null;
@@ -19,6 +20,7 @@ export function getBankLogo(bankName) {
   if (name.includes("icici")) return iciciLogo;
   if (name.includes("kotak")) return kotakLogo;
   if (name.includes("yes")) return yesLogo;
+  if (name.includes("punjab") || name.includes("pnb")) return pnbLogo;
   return null;
 }
 

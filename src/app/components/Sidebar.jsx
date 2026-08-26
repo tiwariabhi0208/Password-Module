@@ -15,7 +15,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
     {
       title: "SETTINGS",
       items: [
-        { id: "profile", label: "Profile", icon: User },
+        { id: "profile", label: "My Profile", icon: User },
         { id: "register-admin", label: "Register Admin", icon: ShieldCheck },
         { id: "password", label: "Change Password", icon: Lock },
         { id: "settings", label: "General Settings", icon: Settings },

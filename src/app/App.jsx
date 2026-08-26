@@ -309,6 +309,7 @@ export default function App() {
   const [editingBank, setEditingBank] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [entitiesScrollProgress, setEntitiesScrollProgress] = useState(0);
+  const [pendingTabChange, setPendingTabChange] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
@@ -478,6 +479,15 @@ export default function App() {
     }
     const percentage = (slider.scrollLeft / maxScrollLeft) * 100;
     setEntitiesScrollProgress(percentage);
+  };
+
+  const handleTabChange = (newTab) => {
+    if (newTab === activeTab) return;
+    if (isEditingProfile) {
+      setPendingTabChange(newTab);
+      return;
+    }
+    setActiveTab(newTab);
   };
 
   const handleSignIn = async (e) => {
@@ -889,17 +899,29 @@ export default function App() {
         setSelectedUser={setSelectedUser}
         setScreen={setScreen}
         setStealthMode={setStealthMode}
-        onNavigate={setActiveTab}
+        onNavigate={handleTabChange}
         avatarMenuOpen={avatarMenuOpen}
         setAvatarMenuOpen={setAvatarMenuOpen}
         setUserDropdownOpen={setUserDropdownOpen}
+        onLogout={() => {
+          if (isEditingProfile) {
+            setPendingTabChange("logout");
+            return;
+          }
+          setScreen("login");
+          setActiveTab("vault");
+        }}
       />
 
       <div className="flex-grow flex w-full">
         <Sidebar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onLogout={() => {
+            if (isEditingProfile) {
+              setPendingTabChange("logout");
+              return;
+            }
             setScreen("login");
             setActiveTab("vault");
           }}
@@ -1422,6 +1444,7 @@ export default function App() {
                           type="tel"
                           name="entityPhone"
                           required
+                          minLength={10}
                           maxLength={10}
                           onInput={(e) => {
                             e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -1595,7 +1618,7 @@ export default function App() {
               <div className="w-full text-left animate-fade-in">
                 <div className="mb-5 flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Profile Details</h1>
+                    <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>My Profile</h1>
                     <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
                       Your administrator security credentials and role assignment
                     </p>
@@ -1620,13 +1643,14 @@ export default function App() {
                     onSubmit={(e) => {
                       e.preventDefault();
                       const formData = new FormData(e.target);
+                      const name = formData.get("profileName").trim();
                       const designation = formData.get("profileDesignation").trim();
                       const dept = formData.get("profileDept").trim();
                       const phone = formData.get("profilePhone").trim();
                       const campus = formData.get("profileCampus").trim();
 
-                      if (!designation || !dept || !phone || !campus) {
-                        alert("Designation, Department, Phone Number, and Assigned Campus are required.");
+                      if (!name || !designation || !dept || !phone || !campus) {
+                        alert("Full Name, Designation, Department, Phone Number, and Assigned Campus are required.");
                         return;
                       }
 
@@ -1642,6 +1666,7 @@ export default function App() {
                         if (a.email.toLowerCase() === profile.email.toLowerCase()) {
                           return {
                             ...a,
+                            name,
                             designation,
                             dept,
                             phone,
@@ -1654,6 +1679,7 @@ export default function App() {
                       if (currentAdmin && currentAdmin.email.toLowerCase() === profile.email.toLowerCase()) {
                         setCurrentAdmin({
                           ...currentAdmin,
+                          name,
                           designation,
                           dept,
                           phone,
@@ -1661,7 +1687,7 @@ export default function App() {
                         });
                       }
 
-                      logActivity("Profile Updated", "Updated designation, department, phone, and campus details", "updated");
+                      logActivity("Profile Updated", "Updated name, designation, department, phone, and campus details", "updated");
                       setIsEditingProfile(false);
                     }}
                     className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full space-y-6"
@@ -1674,13 +1700,14 @@ export default function App() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                          Full Name (Read Only)
+                          Full Name
                         </label>
                         <input
                           type="text"
-                          disabled
-                          value={profile.name}
-                          className="w-full h-11 px-3.5 text-sm border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-850 text-slate-450 rounded-xl cursor-not-allowed font-semibold"
+                          required
+                          name="profileName"
+                          defaultValue={profile.name}
+                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                         />
                       </div>
 
@@ -1747,6 +1774,7 @@ export default function App() {
                           type="text"
                           name="profilePhone"
                           required
+                          minLength={10}
                           maxLength={10}
                           onInput={(e) => {
                             e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -2487,7 +2515,7 @@ export default function App() {
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#101010] border-t border-slate-200 dark:border-[#222222] flex justify-around items-center h-16 md:hidden px-4 shadow-lg">
         <button
-          onClick={() => setActiveTab("vault")}
+          onClick={() => handleTabChange("vault")}
           className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "vault" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
             }`}
         >
@@ -2496,7 +2524,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab("entities")}
+          onClick={() => handleTabChange("entities")}
           className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "entities" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
             }`}
         >
@@ -2505,7 +2533,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab("activity")}
+          onClick={() => handleTabChange("activity")}
           className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative ${activeTab === "activity" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
             }`}
         >
@@ -2517,7 +2545,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab("profile")}
+          onClick={() => handleTabChange("profile")}
           className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "profile" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
             }`}
         >
@@ -2526,7 +2554,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab("settings")}
+          onClick={() => handleTabChange("settings")}
           className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "settings" || activeTab === "password" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
             }`}
         >
@@ -2536,6 +2564,82 @@ export default function App() {
       </div>
 
       {activeTab === "vault" && <Footer />}
+
+      {/* Custom Leave Profile Confirmation Modal */}
+      {pendingTabChange && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
+          onClick={() => setPendingTabChange(null)}
+        >
+          <div
+            className="w-full max-w-[400px] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border transform scale-100 transition-all duration-300 flex flex-col animate-fade-in-up"
+            style={{ borderColor: BORDER, fontFamily: "inherit" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Accent Line */}
+            <div className="h-1.5 w-full bg-[#C9A227]" />
+
+            {/* Modal Header & Close Button */}
+            <div className="flex justify-end pt-3 pr-3">
+              <button
+                onClick={() => setPendingTabChange(null)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
+                title="Cancel"
+                style={{ border: "none", background: "none" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 pb-6 flex flex-col items-center text-center">
+              {/* Pulsing Warning Icon Container */}
+              <div className="w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center text-[#C9A227] mb-4">
+                <AlertCircle size={28} />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight mb-2">
+                Unsaved Changes
+              </h3>
+
+              {/* Description */}
+              <p className="text-sm text-[#7A6068] dark:text-slate-400 leading-relaxed mb-6 font-semibold">
+                Are you sure you want to leave without saving the changes? Your modifications will be permanently lost.
+              </p>
+
+              {/* Buttons Row */}
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setPendingTabChange(null)}
+                  className="flex-1 h-10 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-350 text-xs font-bold rounded-lg transition-colors cursor-pointer bg-transparent"
+                >
+                  Keep Editing
+                </button>
+                <button
+                  onClick={() => {
+                    const destination = pendingTabChange;
+                    setPendingTabChange(null);
+                    setIsEditingProfile(false);
+                    if (destination === "logout") {
+                      setScreen("login");
+                      setActiveTab("vault");
+                    } else {
+                      setActiveTab(destination);
+                    }
+                  }}
+                  className="flex-1 h-10 text-white text-xs font-bold rounded-lg transition-colors shadow-sm cursor-pointer border-none"
+                  style={{ backgroundColor: MAROON }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                >
+                  Discard & Leave
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

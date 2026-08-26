@@ -9,7 +9,7 @@ function getInitials(name) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen }) {
+export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen, onLogout }) {
 
   return (
     <nav
@@ -104,12 +104,16 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
               <button
                 onClick={() => {
                   setAvatarMenuOpen(false);
-                  setScreen("login");
+                  if (onLogout) {
+                    onLogout();
+                  } else {
+                    setScreen("login");
+                  }
                 }}
                 className="w-full text-left px-3.5 py-3 text-base text-[#1A0810] dark:text-slate-200 hover:bg-[#FBF3F5] dark:hover:bg-[#221015] flex items-center gap-2.5 transition-colors cursor-pointer"
               >
                 <LogOut size={14} className="text-[#7B1535] dark:text-[#E27D9B]" />
-                Sign out
+                Logout
               </button>
             </div>
           </>}
