@@ -22,10 +22,23 @@ export function getBankLogo(bankName) {
   return null;
 }
 
-export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
+export function BankCard({ accounts, onClick, onConfirmDelete, onEdit }) {
+  const bank = accounts[0];
+  const isMultiple = accounts.length > 1;
+
   // Extract initials or use predefined
   const initial = bank.initial || bank.name.slice(0, 2).toUpperCase();
   const logoUrl = getBankLogo(bank.name);
+
+  // Helper values for multiple accounts logic
+  const isSameHolder = accounts.every(a => a.holder === bank.holder);
+  const holderText = isSameHolder ? bank.holder.split(",")[0] : "Multiple Holders";
+
+  const isSameIfsc = accounts.every(a => a.ifsc === bank.ifsc);
+  const ifscText = isSameIfsc ? bank.ifsc : "Multiple IFSCs";
+
+  const isSameBranch = accounts.every(a => a.branchName === bank.branchName);
+  const branchText = isSameBranch ? (bank.branchName || "Guwahati Main") : "Multiple Branches";
 
   return (
     <div
@@ -87,17 +100,17 @@ export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
               borderColor: `${bank.color}35`, 
             }}
           >
-            Corporate A/C
+            {isMultiple ? `${accounts.length} Accounts` : "Corporate A/C"}
           </div>
         </div>
 
         {/* Row 2: Account Number Section */}
         <div className="flex flex-col bg-slate-50/50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-900 rounded-lg p-2 flex-grow justify-center">
           <span className="text-[8.5px] uppercase tracking-widest text-slate-400 dark:text-slate-500 font-extrabold block mb-0.5">
-            Account Number (A/C)
+            {isMultiple ? "Account Numbers" : "Account Number (A/C)"}
           </span>
-          <div className="font-mono text-base font-black text-slate-800 dark:text-slate-100 tracking-wide truncate">
-            {bank.accountNumber}
+          <div className={`font-mono font-black text-slate-800 dark:text-slate-100 tracking-wide truncate ${isMultiple ? "text-xs" : "text-base"}`}>
+            {isMultiple ? accounts.map(a => `•••• ${a.accountNumber.slice(-4)}`).join(", ") : bank.accountNumber}
           </div>
         </div>
 
@@ -108,7 +121,7 @@ export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
               Account Holder
             </span>
             <span className="text-[11px] font-black text-slate-800 dark:text-slate-200 truncate uppercase tracking-wide">
-              {bank.holder ? bank.holder.split(",")[0] : "SOUTH POINT SCHOOL"}
+              {holderText}
             </span>
           </div>
 
@@ -117,7 +130,7 @@ export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
               IFSC Code
             </span>
             <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-slate-200 tracking-wider">
-              {bank.ifsc}
+              {ifscText}
             </span>
           </div>
         </div>
@@ -125,7 +138,7 @@ export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
         {/* Row 4: Branch Info (Footer) */}
         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-900 text-[9.5px] text-slate-500 dark:text-slate-400 font-bold">
           <div className="truncate">
-            Branch: <span className="text-slate-700 dark:text-slate-350 font-extrabold">{bank.branchName || "Guwahati Main"}</span>
+            Branch: <span className="text-slate-700 dark:text-slate-350 font-extrabold">{branchText}</span>
           </div>
           <div className="flex items-center gap-1 text-[8.5px] uppercase text-[#16A34A] dark:text-[#4ADE80] font-black shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#4ADE80] animate-pulse" />
@@ -136,38 +149,53 @@ export function BankCard({ bank, onClick, onConfirmDelete, onEdit }) {
       </div>
 
       {/* Hover Action Overlay */}
-      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2.5px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20 flex items-center justify-center gap-2.5 px-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-          className="flex items-center gap-1 bg-[#C9A227] hover:bg-[#b08d20] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
-          title="View Details"
-        >
-          <Eye size={12} /> View
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(bank);
-          }}
-          className="flex items-center gap-1 bg-[#7B1535] hover:bg-[#600f27] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
-          title="Edit Details"
-        >
-          <Edit2 size={12} /> Edit
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onConfirmDelete(bank);
-          }}
-          className="flex items-center gap-1 bg-red-650 hover:bg-red-750 text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
-          title="Delete Account"
-        >
-          <Trash2 size={12} /> Delete
-        </button>
-      </div>
+      {isMultiple ? (
+        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2.5px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20 flex items-center justify-center px-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="w-full flex items-center justify-center gap-1.5 bg-[#C9A227] hover:bg-[#b08d20] text-white text-xs font-bold py-2.5 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+            title="View Accounts"
+          >
+            <Eye size={14} /> View Accounts
+          </button>
+        </div>
+      ) : (
+        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2.5px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20 flex items-center justify-center gap-2.5 px-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="flex items-center gap-1 bg-[#C9A227] hover:bg-[#b08d20] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+            title="View Details"
+          >
+            <Eye size={12} /> View
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(accounts[0]);
+            }}
+            className="flex items-center gap-1 bg-[#7B1535] hover:bg-[#600f27] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+            title="Edit Details"
+          >
+            <Edit2 size={12} /> Edit
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfirmDelete(accounts[0]);
+            }}
+            className="flex items-center gap-1 bg-red-650 hover:bg-red-750 text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+            title="Delete Account"
+          >
+            <Trash2 size={12} /> Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }

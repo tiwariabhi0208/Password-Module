@@ -10,6 +10,7 @@ import { AddBankModal } from "./components/AddBankModal";
 import { Header, USERS } from "./components/Header";
 import { StealthLockScreen } from "./components/StealthLockScreen";
 import { BankCard, getBankLogo } from "./components/BankCard";
+import { AccountSelectorModal } from "./components/AccountSelectorModal";
 import { Footer } from "./components/Footer";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { Sidebar } from "./components/Sidebar";
@@ -24,7 +25,8 @@ const BANKS = [
   { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A" },
   { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B" },
   { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F" },
-  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A" }
+  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A" },
+  { id: 9, name: "HDFC Bank", initial: "H", accountNumber: "50100987654321", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati East", username: "sps_hdfc_retail", password: "HdfcRetail#99", color: "#1E3A5F" }
 ];
 
 const INITIAL_ACTIVITIES = [
@@ -81,6 +83,7 @@ export default function App() {
   const [emailOtpState, setEmailOtpState] = useState(null);
   const [deleteBank, setDeleteBank] = useState(null);
   const [editingBank, setEditingBank] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
@@ -149,6 +152,15 @@ export default function App() {
       });
     };
   }, [screen, stealthMode, timeoutDuration]);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      const remaining = banks.filter(b => b.name.trim() === selectedGroup.name);
+      if (remaining.length === 0) {
+        setSelectedGroup(null);
+      }
+    }
+  }, [banks, selectedGroup]);
 
   const logActivity = (action, details, type) => {
     setActivities((prev) => [
@@ -324,6 +336,33 @@ export default function App() {
       {label}
     </button>
   );
+
+  const filteredBanks = banks.filter((bank) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      bank.name.toLowerCase().includes(q) ||
+      (bank.holder && bank.holder.toLowerCase().includes(q)) ||
+      bank.accountNumber.includes(q) ||
+      (bank.ifsc && bank.ifsc.toLowerCase().includes(q)) ||
+      (bank.branchName && bank.branchName.toLowerCase().includes(q))
+    );
+  });
+
+  const groupedBanks = React.useMemo(() => {
+    const groups = {};
+    filteredBanks.forEach((bank) => {
+      const name = bank.name.trim();
+      if (!groups[name]) {
+        groups[name] = [];
+      }
+      groups[name].push(bank);
+    });
+    return Object.keys(groups).map((name) => ({
+      name,
+      accounts: groups[name],
+    }));
+  }, [filteredBanks]);
 
   if (screen === "login") {
     return (
@@ -605,18 +644,6 @@ export default function App() {
     );
   }
 
-  const filteredBanks = banks.filter((bank) => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
-    return (
-      bank.name.toLowerCase().includes(q) ||
-      (bank.holder && bank.holder.toLowerCase().includes(q)) ||
-      bank.accountNumber.includes(q) ||
-      (bank.ifsc && bank.ifsc.toLowerCase().includes(q)) ||
-      (bank.branchName && bank.branchName.toLowerCase().includes(q))
-    );
-  });
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] dark:bg-[#080808] text-slate-800 dark:text-slate-200 transition-colors duration-200">
       <Header
@@ -828,15 +855,26 @@ export default function App() {
               ) : viewMode === "grid" ? (
                 /* Grid View (Redesigned Premium Cards) */
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-                  {filteredBanks.map((bank) => (
-                    <BankCard
-                      key={bank.id}
-                      bank={bank}
-                      onClick={() => handleViewBank(bank)}
-                      onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
-                      onEdit={handleEditBank}
-                    />
-                  ))}
+                  {groupedBanks.map((group) => {
+                    const accounts = group.accounts;
+                    const handleClick = () => {
+                      if (accounts.length > 1) {
+                        setSelectedGroup(group);
+                      } else {
+                        handleViewBank(accounts[0]);
+                      }
+                    };
+
+                    return (
+                      <BankCard
+                        key={group.name}
+                        accounts={accounts}
+                        onClick={handleClick}
+                        onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
+                        onEdit={handleEditBank}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 /* List View (Sleek Administrative Table) */
@@ -1973,6 +2011,33 @@ export default function App() {
           }}
         />
       )}
+
+      {(() => {
+        if (!selectedGroup) return null;
+        const currentGroupAccounts = banks.filter(b => b.name.trim() === selectedGroup.name);
+        if (currentGroupAccounts.length === 0) return null;
+
+        // Render the selector only when other modals (details, edit, delete) are closed
+        if (selectedBank || addModalOpen || deleteBank) return null;
+
+        return (
+          <AccountSelectorModal
+            isOpen={true}
+            onClose={() => setSelectedGroup(null)}
+            bankName={selectedGroup.name}
+            accounts={currentGroupAccounts}
+            onViewDetails={(acc) => {
+              handleViewBank(acc);
+            }}
+            onEdit={(acc) => {
+              handleEditBank(acc);
+            }}
+            onDelete={(acc) => {
+              setDeleteBank(acc);
+            }}
+          />
+        );
+      })()}
 
       <AddBankModal
         isOpen={addModalOpen}
