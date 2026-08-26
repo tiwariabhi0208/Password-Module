@@ -16,6 +16,7 @@ import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 import { Sidebar } from "./components/Sidebar";
 import { CopyButton } from "./components/CopyButton";
 import { Settings } from "./components/Settings";
+import { HelpInfo } from "./components/HelpInfo";
 
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F" },
@@ -1993,6 +1994,10 @@ export default function App() {
               defaultBanks={BANKS}
               masterPassword={password}
             />
+          )}
+
+          {activeTab === "help" && (
+            <HelpInfo />
           )}
         </main>
       </div>

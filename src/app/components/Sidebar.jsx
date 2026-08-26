@@ -1,5 +1,5 @@
 import React from "react";
-import { Landmark, History, User, Lock, LogOut, ShieldCheck, Settings, UserPlus } from "lucide-react";
+import { Landmark, History, User, Lock, LogOut, ShieldCheck, Settings, UserPlus, HelpCircle } from "lucide-react";
 import { GOLD, BORDER } from "./theme";
 
 export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
@@ -19,6 +19,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
         { id: "register-admin", label: "Register Admin", icon: ShieldCheck },
         { id: "password", label: "Change Password", icon: Lock },
         { id: "settings", label: "General Settings", icon: Settings },
+        { id: "help", label: "Help & Information", icon: HelpCircle },
         { id: "logout", label: "Logout", icon: LogOut, isAction: true }
       ]
     }
