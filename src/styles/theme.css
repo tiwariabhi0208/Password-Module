@@ -186,6 +186,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -220,9 +221,17 @@
 }
 
 @keyframes dotFlash {
-  0% { opacity: .2; }
-  20% { opacity: 1; }
-  100% { opacity: .2; }
+  0% {
+    opacity: .2;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: .2;
+  }
 }
 
 .lm-dot-flash {

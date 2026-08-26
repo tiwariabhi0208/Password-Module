@@ -35,11 +35,11 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
               <img 
                 src={logoUrl} 
                 alt={bank.name} 
-                className="w-13 h-13 rounded-2xl object-contain bg-white p-1.5 border border-white/20 shadow-inner shrink-0" 
+                className="h-14 w-auto object-contain shrink-0" 
               />
             ) : (
               <div
-                className="w-13 h-13 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
                 style={{ color: GOLD }}
               >
                 <span className="text-lg font-black tracking-wider leading-none">

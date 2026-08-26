@@ -902,11 +902,11 @@ export default function App() {
                                   <img
                                     src={getBankLogo(bank.name)}
                                     alt={bank.name}
-                                    className="w-8 h-8 rounded-lg object-contain bg-white p-1 border border-slate-200/60 dark:border-slate-850 shrink-0"
+                                    className="h-9 w-auto object-contain shrink-0"
                                   />
                                 ) : (
                                   <div
-                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0"
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black text-white shrink-0"
                                     style={{ backgroundColor: bank.color }}
                                   >
                                     {bank.initial || bank.name.slice(0, 2).toUpperCase()}

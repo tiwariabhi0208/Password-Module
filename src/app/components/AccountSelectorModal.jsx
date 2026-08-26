@@ -45,11 +45,11 @@ export function AccountSelectorModal({
               <img
                 src={logoUrl}
                 alt={bankName}
-                className="w-11 h-11 rounded-xl object-contain bg-white p-1 border border-white/20 shadow-inner shrink-0"
+                className="h-12 w-auto object-contain shrink-0"
               />
             ) : (
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center border border-white/20 bg-white/10 shadow-inner shrink-0 text-white"
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
                 style={{ color: GOLD }}
               >
                 <span className="text-sm font-black tracking-wider leading-none">
