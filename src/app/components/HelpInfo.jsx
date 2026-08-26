@@ -21,7 +21,7 @@ export function HelpInfo() {
   const accessLevels = [
     {
       level: 1,
-      name: "Level 1: Standard Access (Read-Only)",
+      name: "Level 1: Read Only",
       desc: "Ideal for basic operations staff who only need to copy/view bank details for making payments.",
       capabilities: [
         "View grouped bank cards on the dashboard grid",
@@ -33,7 +33,7 @@ export function HelpInfo() {
     },
     {
       level: 2,
-      name: "Level 2: Supervisor Access (Editor)",
+      name: "Level 2: Limited Access",
       desc: "Authorized for managers who supervise financial records and maintain bank account details.",
       capabilities: [
         "All Level 1 permissions",
@@ -45,7 +45,7 @@ export function HelpInfo() {
     },
     {
       level: 3,
-      name: "Level 3: Administrator Access (Superuser)",
+      name: "Level 3: Super Admin",
       desc: "Full privilege level for system administrators managing the company structure and security rules.",
       capabilities: [
         "All Level 2 permissions",
@@ -77,7 +77,7 @@ export function HelpInfo() {
     {
       title: "Registering & Managing Entities",
       icon: FileSignature,
-      content: "Administrators (Level 3) can register and manage organizational entities. When registering an entity, specify the Full Name/Entity Name, a 10-digit Phone Number, and the official Email ID. Once registered, these entities appear in vault creation forms, allowing you to pre-fill Account Holder details instantly."
+      content: "Super Admins (Level 3) can register and manage organizational entities. When registering an entity, specify the Full Name/Entity Name, a 10-digit Phone Number, and the official Email ID. Once registered, these entities appear in vault creation forms, allowing you to pre-fill Account Holder details instantly."
     }
   ];
 

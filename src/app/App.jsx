@@ -291,7 +291,7 @@ export default function App() {
       level: 3,
       dept: "Information Security & IT Administration",
       campus: "Guwahati Central Campus, Assam",
-      clearance: "Level 3 - System Super Administrator",
+      clearance: "Level 3 - Super Admin",
       designation: "Director of IT Infrastructure",
       session_id: "SPS-ADM-001-ABHISHEK",
       auth_time: "25 Aug 2026, 09:30 AM",
@@ -311,6 +311,7 @@ export default function App() {
   const [entitiesScrollProgress, setEntitiesScrollProgress] = useState(0);
   const [pendingTabChange, setPendingTabChange] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
+  const [duplicateEntityModal, setDuplicateEntityModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
@@ -326,6 +327,7 @@ export default function App() {
   });
 
   const entitiesCarouselRef = useRef(null);
+  const profileFormRef = useRef(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -481,11 +483,38 @@ export default function App() {
     setEntitiesScrollProgress(percentage);
   };
 
+  const hasProfileFormChanges = () => {
+    if (!isEditingProfile || !profileFormRef.current) return false;
+    const form = profileFormRef.current;
+    const profile = activeAdmin;
+
+    const currentName = form.elements["profileName"]?.value || "";
+    const currentDesignation = form.elements["profileDesignation"]?.value || "";
+    const currentDept = form.elements["profileDept"]?.value || "";
+
+    const rawPhone = form.elements["profilePhone"]?.value || "";
+    const currentPhone = rawPhone.replace(/\D/g, "").slice(-10);
+    const profilePhone = (profile.phone || "9876543210").replace(/\D/g, "").slice(-10);
+
+    const currentCampus = form.elements["profileCampus"]?.value || "";
+
+    return (
+      currentName.trim() !== (profile.name || "").trim() ||
+      currentDesignation.trim() !== (profile.designation || "").trim() ||
+      currentDept.trim() !== (profile.dept || "").trim() ||
+      currentPhone !== profilePhone ||
+      currentCampus.trim() !== (profile.campus || "").trim()
+    );
+  };
+
   const handleTabChange = (newTab) => {
     if (newTab === activeTab) return;
-    if (isEditingProfile) {
+    if (isEditingProfile && hasProfileFormChanges()) {
       setPendingTabChange(newTab);
       return;
+    }
+    if (isEditingProfile) {
+      setIsEditingProfile(false);
     }
     setActiveTab(newTab);
   };
@@ -528,7 +557,7 @@ export default function App() {
             level: 3,
             dept: "Information Security & IT Administration",
             campus: "Guwahati Central Campus, Assam",
-            clearance: "Level 3 - System Super Administrator",
+            clearance: "Level 3 - Super Admin",
             designation: "Director of IT Infrastructure",
             session_id: `SPS-ADM-TEMP-${namePrefix.toUpperCase()}`,
             auth_time: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) + ", " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
@@ -904,9 +933,12 @@ export default function App() {
         setAvatarMenuOpen={setAvatarMenuOpen}
         setUserDropdownOpen={setUserDropdownOpen}
         onLogout={() => {
-          if (isEditingProfile) {
+          if (isEditingProfile && hasProfileFormChanges()) {
             setPendingTabChange("logout");
             return;
+          }
+          if (isEditingProfile) {
+            setIsEditingProfile(false);
           }
           setScreen("login");
           setActiveTab("vault");
@@ -918,9 +950,12 @@ export default function App() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onLogout={() => {
-            if (isEditingProfile) {
+            if (isEditingProfile && hasProfileFormChanges()) {
               setPendingTabChange("logout");
               return;
+            }
+            if (isEditingProfile) {
+              setIsEditingProfile(false);
             }
             setScreen("login");
             setActiveTab("vault");
@@ -1040,7 +1075,7 @@ export default function App() {
                     <span
                       className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5 border border-slate-200 dark:border-slate-800 bg-[#FBF3F5] dark:bg-[#221015]/60 text-[#7B1535] dark:text-[#E27D9B]"
                     >
-                      Access Level 3
+                      Super Admin (Level 3)
                     </span>
                   </div>
                 </div>
@@ -1405,21 +1440,42 @@ export default function App() {
                       }
 
                       const targetForm = e.target;
-                      setEntityConfirmModal({
-                        title: "Confirm Registration",
-                        message: `Are you sure you want to register "${name}" as a new school entity?`,
-                        onConfirm: () => {
-                          const newEntity = {
-                            id: Date.now(),
-                            name,
-                            email,
-                            phone
-                          };
-                          setEntities([...entities, newEntity]);
-                          logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
-                          targetForm.reset();
-                        }
-                      });
+                      const nameExists = entities.some(ent => ent.name.toLowerCase() === name.toLowerCase());
+                      const emailExists = entities.some(ent => ent.email.toLowerCase() === email.toLowerCase());
+
+                      const proceedWithRegistration = () => {
+                        setEntityConfirmModal({
+                          title: "Confirm Registration",
+                          message: `Are you sure you want to register "${name}" as a new school entity?`,
+                          onConfirm: () => {
+                            const newEntity = {
+                              id: Date.now(),
+                              name,
+                              email,
+                              phone
+                            };
+                            setEntities([...entities, newEntity]);
+                            logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
+                            targetForm.reset();
+                          }
+                        });
+                      };
+
+                      if (nameExists || emailExists) {
+                        const duplicateField = nameExists && emailExists
+                          ? "name and email address"
+                          : nameExists
+                            ? "name"
+                            : "email address";
+
+                        setDuplicateEntityModal({
+                          title: "Duplicate Entity Detected",
+                          message: `An entity with this identical ${duplicateField} already exists in our system. Registering duplicate entities may cause credentials mapping conflicts and administrative confusion. Are you sure you want to proceed and enter another record with similar details?`,
+                          onConfirm: proceedWithRegistration
+                        });
+                      } else {
+                        proceedWithRegistration();
+                      }
                     }}
                     className="space-y-4 text-left"
                   >
@@ -1642,6 +1698,7 @@ export default function App() {
 
                 {isEditingProfile ? (
                   <form
+                    ref={profileFormRef}
                     onSubmit={(e) => {
                       e.preventDefault();
                       const formData = new FormData(e.target);
@@ -1994,9 +2051,9 @@ export default function App() {
                             3: "Information Security & IT Administration"
                           };
                           const clearances = {
-                            1: "Level 1 - Read-Only Access",
-                            2: "Level 2 - Operator Manager Access",
-                            3: "Level 3 - System Super Administrator"
+                            1: "Level 1 - Read Only",
+                            2: "Level 2 - Limited Access",
+                            3: "Level 3 - Super Admin"
                           };
                           const designations = {
                             1: "Accounts Assistant",
@@ -2055,9 +2112,9 @@ export default function App() {
                             className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
                             style={{ borderColor: BORDER }}
                           >
-                            <option value="1">Level 1 - Read-Only Clerk</option>
-                            <option value="2">Level 2 - Operator Manager</option>
-                            <option value="3">Level 3 - System Super Administrator</option>
+                            <option value="1">Level 1 - Read Only</option>
+                            <option value="2">Level 2 - Limited Access</option>
+                            <option value="3">Level 3 - Super Admin</option>
                           </select>
                           <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
                             <ChevronDown size={16} />
@@ -2377,6 +2434,39 @@ export default function App() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
               >
                 Yes, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {duplicateEntityModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="w-[450px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border-2 p-6 text-center animate-scale-in" style={{ borderColor: "rgba(239, 68, 68, 0.4)" }}>
+            <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-950/30 text-red-650 dark:text-red-400 flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
+              ⚠️
+            </div>
+            <h3 className="text-lg font-black text-red-600 dark:text-red-400 mb-2.5">
+              {duplicateEntityModal.title}
+            </h3>
+            <p className="text-xs text-[#7A6068] dark:text-slate-400 mb-6 leading-relaxed font-semibold">
+              {duplicateEntityModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDuplicateEntityModal(null)}
+                className="flex-1 h-11 border border-slate-200 dark:border-slate-800 text-xs font-black rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer bg-transparent"
+              >
+                Cancel & Review
+              </button>
+              <button
+                onClick={() => {
+                  duplicateEntityModal.onConfirm();
+                  setDuplicateEntityModal(null);
+                }}
+                className="flex-1 h-11 text-xs font-black rounded-xl text-white bg-red-600 hover:bg-red-700 transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+              >
+                Register Anyway
               </button>
             </div>
           </div>
