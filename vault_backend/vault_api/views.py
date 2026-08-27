@@ -173,7 +173,7 @@ class LoginView(APIView):
                 key='refresh_token',
                 value=str(refresh),
                 httponly=True,
-                secure=True,
+                secure=settings.REFRESH_COOKIE_SECURE,
                 samesite='Strict',
                 path='/api/v1/auth/refresh/'
             )
@@ -269,7 +269,7 @@ class LoginVerifyView(APIView):
             key='refresh_token',
             value=str(refresh),
             httponly=True,
-            secure=True,
+            secure=settings.REFRESH_COOKIE_SECURE,
             samesite='Strict',
             path='/api/v1/auth/refresh/'
         )
@@ -427,6 +427,102 @@ class PasswordResetConfirmView(APIView):
         return Response({"detail": "Password has been reset successfully. Please log in with your new password."}, status=status.HTTP_200_OK)
 
 
+class EmailChangeRequestView(APIView):
+    """
+    Sends an OTP code to verify a new email address.
+    Protected: Only authenticated admins can change their email.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        new_email = request.data.get('new_email')
+        if not new_email:
+            return Response({"detail": "New email address is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_email_clean = new_email.strip().lower()
+
+        # Check if the new email is already taken by another admin
+        if Admin.objects.filter(email=new_email_clean).exclude(id=request.user.id).exists():
+            return Response({"detail": f"The email address '{new_email_clean}' is already registered to another account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate a secure 6-digit OTP code
+        otp_code = f"{secrets.randbelow(900000) + 100000}"
+        request.user.otp_code = otp_code
+        request.user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
+        request.user.save()
+
+        # Send OTP to the new email address
+        try:
+            send_mail(
+                subject="Verify Your New Vault Email Address",
+                message=f"Hello {request.user.name},\n\nYou requested to change your email address. Please use this verification code to confirm: {otp_code}\n\nIt is valid for 5 minutes.\n\nSecure Vault Admin",
+                from_email=None,
+                recipient_list=[new_email_clean],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # Fallback for development/testing
+            print(f"SMTP Error: {str(e)}. Simulated Email Change OTP Sent to {new_email_clean}: {otp_code}")
+
+        return Response({
+            "detail": "Verification OTP sent successfully to the new email address.",
+            "otp_sent": True
+        }, status=status.HTTP_200_OK)
+
+
+class EmailChangeConfirmView(APIView):
+    """
+    Verifies the OTP and updates the email address of the authenticated admin.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        new_email = request.data.get('new_email')
+        otp_submitted = request.data.get('otp')
+        ip = get_client_ip(request)
+
+        if not new_email or not otp_submitted:
+            return Response({"detail": "New email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_email_clean = new_email.strip().lower()
+        user = request.user
+
+        # Verify OTP code and expiration
+        if not user.otp_code or user.otp_code != otp_submitted.strip():
+            return Response(
+                {"detail": "Invalid OTP code."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if timezone.now() > user.otp_expires_at:
+            return Response(
+                {"detail": "OTP code has expired. Please request a new one."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check again if email is taken (to prevent race conditions)
+        if Admin.objects.filter(email=new_email_clean).exclude(id=user.id).exists():
+            return Response({"detail": "This email address is already taken."}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_email = user.email
+        user.email = new_email_clean
+        user.otp_code = None
+        user.otp_expires_at = None
+        user.save()
+
+        # Audit successful email change
+        ActivityLog.objects.create(
+            action="Email Updated",
+            details=f"Admin {user.name} changed email from {old_email} to {new_email_clean}",
+            user=user,
+            user_snapshot=user.name,
+            log_type="warning",
+            ip_address=ip
+        )
+
+        return Response({"detail": "Email address updated successfully.", "email": new_email_clean}, status=status.HTTP_200_OK)
+
+
 class CustomTokenRefreshView(TokenRefreshView):
     """
     Enhanced Token Refresh Endpoint.
@@ -460,7 +556,7 @@ class CustomTokenRefreshView(TokenRefreshView):
                 key='refresh_token',
                 value=str(new_refresh_token),
                 httponly=True,
-                secure=True,
+                secure=settings.REFRESH_COOKIE_SECURE,
                 samesite='Strict',
                 path='/api/v1/auth/refresh/'
             )

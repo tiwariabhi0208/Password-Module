@@ -2934,31 +2934,40 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (!emailOtpState.newEmail.trim() || !emailOtpState.newEmail.includes("@")) {
+                      disabled={loading}
+                      onClick={async () => {
+                        const newMail = emailOtpState.newEmail.trim();
+                        if (!newMail || !newMail.includes("@")) {
                           alert("Please enter a valid email address.");
                           return;
                         }
-                        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-                        setEmailOtpState({
-                          ...emailOtpState,
-                          otpSent: true,
-                          otpCode: generatedCode
-                        });
-                        alert(`Simulated OTP Code sent to "${emailOtpState.newEmail}": ${generatedCode}\n\nPlease enter this code on the next screen.`);
+                        setLoading(true);
+                        try {
+                          await api.post('/auth/email-change/', { new_email: newMail });
+                          setEmailOtpState({
+                            ...emailOtpState,
+                            otpSent: true
+                          });
+                          alert("Verification code has been sent to the new email address. Please check your inbox (or Python console fallback).");
+                        } catch (error) {
+                          console.error("Failed requesting email change.", error);
+                          alert(error.response?.data?.detail || "Failed sending verification code. Email may already be registered.");
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
                       style={{ backgroundColor: MAROON }}
                     >
-                      Send OTP Code
+                      {loading ? "Sending..." : "Send OTP Code"}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="p-3 bg-amber-50 dark:bg-amber-955/20 border border-amber-200 dark:border-amber-900/60 rounded-xl text-center">
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-widest block mb-1">Simulated OTP Sent</span>
-                    <span className="text-lg font-mono font-black tracking-widest text-[#7B1535] dark:text-[#E27D9B] block">{emailOtpState.otpCode}</span>
+                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-widest block mb-1">Verification OTP Sent</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400 block font-semibold leading-relaxed">Please check your new email address for the 6-digit confirmation code.</span>
                   </div>
 
                   <div>
@@ -2985,34 +2994,48 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (emailOtpState.userCode !== emailOtpState.otpCode) {
-                          alert("Error: Invalid OTP code. Please enter the correct 6-digit code shown above.");
+                      disabled={loading}
+                      onClick={async () => {
+                        const userCode = emailOtpState.userCode;
+                        if (!userCode || userCode.length < 6) {
+                          alert("Please enter the complete 6-digit OTP code.");
                           return;
                         }
-                        // Update in state!
-                        const targetEmail = activeAdmin.email;
                         const newEmail = emailOtpState.newEmail.trim();
+                        const targetEmail = activeAdmin.email;
 
-                        const updatedAdmins = admins.map(a => {
-                          if (a.email.toLowerCase() === targetEmail.toLowerCase()) {
-                            return { ...a, email: newEmail };
+                        setLoading(true);
+                        try {
+                          await api.post('/auth/email-change/verify/', {
+                            new_email: newEmail,
+                            otp: userCode
+                          });
+
+                          // Update state successfully
+                          const updatedAdmins = admins.map(a => {
+                            if (a.email.toLowerCase() === targetEmail.toLowerCase()) {
+                              return { ...a, email: newEmail };
+                            }
+                            return a;
+                          });
+                          setAdmins(updatedAdmins);
+                          if (currentAdmin && currentAdmin.email.toLowerCase() === targetEmail.toLowerCase()) {
+                            setCurrentAdmin({ ...currentAdmin, email: newEmail });
                           }
-                          return a;
-                        });
-                        setAdmins(updatedAdmins);
-                        if (currentAdmin && currentAdmin.email.toLowerCase() === targetEmail.toLowerCase()) {
-                          setCurrentAdmin({ ...currentAdmin, email: newEmail });
-                        }
 
-                        logActivity("Email Updated", `Updated administrator email to: ${newEmail}`, "updated");
-                        setEmailOtpState(null);
-                        alert(`Email successfully updated to ${newEmail}!`);
+                          setEmailOtpState(null);
+                          alert(`Email successfully updated to ${newEmail}!`);
+                        } catch (error) {
+                          console.error("Email update verification failed.", error);
+                          alert(error.response?.data?.detail || "Invalid or expired OTP code.");
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       className="flex-1 h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
                       style={{ backgroundColor: MAROON }}
                     >
-                      Verify & Update
+                      {loading ? "Verifying..." : "Verify & Update"}
                     </button>
                   </div>
                 </div>
