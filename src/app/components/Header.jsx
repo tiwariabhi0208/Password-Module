@@ -1,13 +1,9 @@
 import React, { useState } from "react";
-import { ChevronDown, Settings, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, Settings, LogOut, ShieldCheck, User } from "lucide-react";
 import schoolLogo from "../../../images(1).png";
 import { MAROON, GOLD, BORDER } from "./theme";
 
 export const USERS = ["Priya Sharma", "Rahul Verma", "Anita Nair", "Deepak Mehta"];
-
-function getInitials(name) {
-  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-}
 
 export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen, onLogout }) {
 
@@ -66,9 +62,7 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
               className="w-8.5 h-8.5 rounded-full flex items-center justify-center border-2 shrink-0"
               style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
             >
-              <span className="text-xs font-black" style={{ color: GOLD }}>
-                {getInitials(activeAdmin?.name || "Abhishek Tiwari")}
-              </span>
+              <User size={15} style={{ color: GOLD }} />
             </div>
             <span className="text-base text-white font-extrabold tracking-wide hidden sm:inline">{activeAdmin?.name || "Abhishek Tiwari"}</span>
             <ChevronDown size={14} className="text-white/60" />

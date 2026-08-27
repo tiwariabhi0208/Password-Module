@@ -22,7 +22,12 @@ if len(SECRET_KEY) < 50:
     raise ValueError("SECRET_KEY is too short. Regenerate with secrets.token_hex(64).")
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'  # NEVER set this to True in production
-ALLOWED_HOSTS = ['api.yourvaultdomain.com', '127.0.0.1', 'localhost']
+
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+else:
+    ALLOWED_HOSTS = ['api.yourvaultdomain.com', '127.0.0.1', 'localhost']
 
 # ============================================================
 # Section 3: Telling Django to Use Your Custom User Model
@@ -109,14 +114,14 @@ DATABASES = {
 # ============================================================
 # Section 7: CORS Configuration
 # ============================================================
-# Environment-gated -- never mix http:// and https:// in the same list
-if DEBUG:
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:5173",  # Vite React dev server
-    ]
+# Environment-gated -- read allowed origins from environment variables.
+cors_allowed_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+if cors_allowed_env:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed_env.split(',') if origin.strip()]
 else:
     CORS_ALLOWED_ORIGINS = [
-        "https://yourvaultdomain.com",  # Production -- HTTPS only, no http://
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
     ]
 
 CORS_ALLOW_CREDENTIALS = True  # Required to allow HttpOnly cookies to be sent
@@ -231,3 +236,72 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Secure Vault <no-repl
 # Development helper: if no host user is set, write emails to console instead of trying SMTP
 if not EMAIL_HOST_USER:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# ============================================================
+# Section 12: Advanced Auditing and Logging (Part 16)
+# ============================================================
+# Ensure logs directory exists
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+        'audit': {
+            'format': '[AUDIT] {asctime} - {levelname} - {message}',
+            'style': '{',
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'audit.log'),
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 10,           # Keep 10 rotated log files
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'security_audit.log'),
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 10,
+            'formatter': 'audit',
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'vault_api': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        }
+    }
+}
+

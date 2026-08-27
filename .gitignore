@@ -19,3 +19,7 @@ venv/
 ENV/
 env/
 db.sqlite3
+logs/
+backups/
+.backup_passphrase
+

@@ -176,6 +176,11 @@ class LoginVerifyView(APIView):
     2. Validates the submitted OTP code against database record.
     3. Confirms OTP code is not expired.
     4. Issues short-lived access JWT and HttpOnly refresh token cookie.
+
+    Brute-force protection:
+    - Protected by DRF rate limiting via 'login' throttle scope.
+    - Combined with a short 5-minute OTP expiry window, this prevents brute-force 
+      enumeration attacks on the 6-digit code space.
     """
     permission_classes = (AllowAny,)
     throttle_scope = 'login'

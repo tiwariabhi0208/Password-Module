@@ -1507,7 +1507,7 @@ export default function App() {
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800"
                     style={{ color: MAROON }}
                   >
-                    AT
+                    <User size={18} />
                   </div>
                   <div className="flex-grow min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Administrator</span>
@@ -2335,7 +2335,7 @@ export default function App() {
                           className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
                           style={{ color: MAROON }}
                         >
-                          {profile.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                          <User size={36} />
                         </div>
                         <div>
                           <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{profile.name}</h2>
