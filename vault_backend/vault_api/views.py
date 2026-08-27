@@ -110,29 +110,63 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Generate a secure 6-digit OTP code
-        otp_code = f"{secrets.randbelow(900000) + 100000}"
-        user.otp_code = otp_code
-        user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
-        user.save()
+        # Check if 2FA/OTP is enabled
+        otp_enabled = getattr(settings, 'OTP_ENABLED', False)
 
-        # Send OTP via email
-        try:
-            send_mail(
-                subject="Your Secure Vault OTP Verification Code",
-                message=f"Hello {user.name},\n\nYour OTP code is: {otp_code}\n\nIt is valid for 5 minutes. If you did not initiate this login, please secure your account immediately.\n\nSecure Vault Admin",
-                from_email=None,
-                recipient_list=[user.email],
-                fail_silently=False,
+        if otp_enabled:
+            # Generate a secure 6-digit OTP code
+            otp_code = f"{secrets.randbelow(900000) + 100000}"
+            user.otp_code = otp_code
+            user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
+            user.save()
+
+            # Send OTP via email
+            try:
+                send_mail(
+                    subject="Your Secure Vault OTP Verification Code",
+                    message=f"Hello {user.name},\n\nYour OTP code is: {otp_code}\n\nIt is valid for 5 minutes. If you did not initiate this login, please secure your account immediately.\n\nSecure Vault Admin",
+                    from_email=None,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # Fallback for development/testing: log to console if mail server isn't set up
+                print(f"SMTP Error: {str(e)}. Simulated OTP Sent to {user.email}: {otp_code}")
+
+            return Response({
+                "detail": "OTP code has been sent to your registered email address.",
+                "otp_required": True
+            }, status=status.HTTP_200_OK)
+        else:
+            # OTP is disabled, issue access and refresh tokens directly
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+
+            # Audit successful login
+            ActivityLog.objects.create(
+                action="Login Success",
+                details=f"Admin {user.name} completed login successfully (2FA bypassed)",
+                user=user,
+                user_snapshot=user.name,
+                log_type="success",
+                ip_address=ip
             )
-        except Exception as e:
-            # Fallback for development/testing: log to console if mail server isn't set up
-            print(f"SMTP Error: {str(e)}. Simulated OTP Sent to {user.email}: {otp_code}")
 
-        return Response({
-            "detail": "OTP code has been sent to your registered email address.",
-            "otp_required": True
-        }, status=status.HTTP_200_OK)
+            response = Response({
+                "access": access_token,
+                "user": AdminSerializer(user, context={'request': request}).data,
+                "otp_required": False
+            }, status=status.HTTP_200_OK)
+
+            response.set_cookie(
+                key='refresh_token',
+                value=str(refresh),
+                httponly=True,
+                secure=True,
+                samesite='Strict',
+                path='/api/v1/auth/refresh/'
+            )
+            return response
 
 
 class LoginVerifyView(APIView):
@@ -201,7 +235,7 @@ class LoginVerifyView(APIView):
 
         response = Response({
             "access": access_token,
-            "user": AdminSerializer(user).context({'request': request}).data if hasattr(AdminSerializer(user), 'context') else AdminSerializer(user).data
+            "user": AdminSerializer(user, context={'request': request}).data
         }, status=status.HTTP_200_OK)
 
         response.set_cookie(

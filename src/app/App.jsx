@@ -244,6 +244,18 @@ export function DeleteConfirmModal({ bank, onClose, onConfirm }) {
   );
 }
 
+const BANKS = [
+  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F", accountType: "corporate" },
+  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A", accountType: "corporate" },
+  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", branchName: "Dispur", username: "sps_sbi_vault", password: "SbiPassphrase*12", color: "#1B3F5C", accountType: "corporate" },
+  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", branchName: "Ganeshguri", username: "sps_axis_pay", password: "AxisKey#Secure1", color: "#5C2E6B", accountType: "corporate" },
+  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A", accountType: "corporate" },
+  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B", accountType: "corporate" },
+  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F", accountType: "corporate" },
+  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A", accountType: "corporate" },
+  { id: 9, name: "HDFC Bank", initial: "H", accountNumber: "50100987654321", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati East", username: "sps_hdfc_retail", password: "HdfcRetail#99", color: "#1E3A5F", accountType: "retail" }
+];
+
 export default function App() {
   const [screen, setScreen] = useState("login");
   const [email, setEmail] = useState("");
@@ -403,6 +415,26 @@ export default function App() {
         setCanResend(false);
         setOtpValues(["", "", "", "", "", ""]);
         setScreen("login-otp");
+      } else {
+        // Direct login success when 2FA is off
+        const token = loginResponse.data.access;
+        const userData = loginResponse.data.user;
+
+        // Store access token in memory and state
+        setAccessToken(token);
+        setAccessTokenState(token);
+
+        // Store master key in state for decryption
+        setMasterKey(derived.masterKey);
+
+        // Save user profile state
+        setCurrentAdmin(userData);
+
+        setSuccess("Login successful!");
+        setTimeout(() => {
+          goToDashboard();
+          setSuccess("");
+        }, 400);
       }
     } catch (err) {
       console.error("Login initialization failed.", err);
@@ -869,7 +901,7 @@ export default function App() {
               value={val}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleOtpKeyDown(i, e)}
-              className="flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
+              className="w-0 min-w-0 flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
               style={{
                 borderColor: val ? MAROON : BORDER,
                 backgroundColor: val ? GOLD_LIGHT : "#fff"
@@ -1135,7 +1167,7 @@ export default function App() {
               value={val}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleOtpKeyDown(i, e)}
-              className="flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
+              className="w-0 min-w-0 flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
               style={{
                 borderColor: val ? MAROON : BORDER,
                 backgroundColor: val ? GOLD_LIGHT : "#fff"

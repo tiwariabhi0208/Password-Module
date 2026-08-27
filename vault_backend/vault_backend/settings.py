@@ -122,6 +122,12 @@ else:
 CORS_ALLOW_CREDENTIALS = True  # Required to allow HttpOnly cookies to be sent
 
 # ============================================================
+# Section 7.5: 2FA / OTP Configuration
+# ============================================================
+# Set to True to enable 2FA / OTP step. Default is False.
+OTP_ENABLED = os.environ.get('OTP_ENABLED', 'False').lower() in ('true', '1', 'yes')
+
+# ============================================================
 # Section 8: DRF Settings and Rate Limiting
 # ============================================================
 REST_FRAMEWORK = {
