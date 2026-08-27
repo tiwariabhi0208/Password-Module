@@ -66,6 +66,10 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     # is_staff=True means the admin can access /admin/ -- we control this separately from level
     is_staff = models.BooleanField(default=False)
 
+    # OTP verification fields for 2FA login
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
+    otp_expires_at = models.DateTimeField(blank=True, null=True)
+
     # auto_now_add=True: Django sets this once when the record is created, never changes it
     date_joined = models.DateTimeField(auto_now_add=True)
 
