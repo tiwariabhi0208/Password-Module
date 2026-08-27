@@ -9,3 +9,13 @@ dist-ssr
 .agents
 .git
 final-documentation.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+db.sqlite3
