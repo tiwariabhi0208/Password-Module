@@ -188,7 +188,6 @@ SECURE_SSL_REDIRECT = not DEBUG
 # Cookies are only sent over HTTPS connections
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
-REFRESH_COOKIE_SECURE = not DEBUG
 
 # Prevents browsers from guessing (sniffing) file types -- stops script-disguised-as-image attacks
 SECURE_CONTENT_TYPE_NOSNIFF = True

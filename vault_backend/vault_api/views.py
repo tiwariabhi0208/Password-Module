@@ -173,8 +173,8 @@ class LoginView(APIView):
                 key='refresh_token',
                 value=str(refresh),
                 httponly=True,
-                secure=settings.REFRESH_COOKIE_SECURE,
-                samesite='Strict',
+                secure=True,
+                samesite='Lax',
                 path='/api/v1/auth/refresh/'
             )
             return response
@@ -269,8 +269,8 @@ class LoginVerifyView(APIView):
             key='refresh_token',
             value=str(refresh),
             httponly=True,
-            secure=settings.REFRESH_COOKIE_SECURE,
-            samesite='Strict',
+            secure=True,
+            samesite='Lax',
             path='/api/v1/auth/refresh/'
         )
         return response
@@ -556,8 +556,8 @@ class CustomTokenRefreshView(TokenRefreshView):
                 key='refresh_token',
                 value=str(new_refresh_token),
                 httponly=True,
-                secure=settings.REFRESH_COOKIE_SECURE,
-                samesite='Strict',
+                secure=True,
+                samesite='Lax',
                 path='/api/v1/auth/refresh/'
             )
         return response

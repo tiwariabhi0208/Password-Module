@@ -2948,7 +2948,6 @@ export default function App() {
                             ...emailOtpState,
                             otpSent: true
                           });
-                          alert("Verification code has been sent to the new email address. Please check your inbox (or Python console fallback).");
                         } catch (error) {
                           console.error("Failed requesting email change.", error);
                           alert(error.response?.data?.detail || "Failed sending verification code. Email may already be registered.");
@@ -2966,8 +2965,8 @@ export default function App() {
               ) : (
                 <div className="space-y-4">
                   <div className="p-3 bg-amber-50 dark:bg-amber-955/20 border border-amber-200 dark:border-amber-900/60 rounded-xl text-center">
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-widest block mb-1">Verification OTP Sent</span>
-                    <span className="text-xs text-slate-600 dark:text-slate-400 block font-semibold leading-relaxed">Please check your new email address for the 6-digit confirmation code.</span>
+                    <span className="text-[10px] font-bold text-amber-850 dark:text-amber-400 uppercase tracking-widest block mb-1">Verification OTP Sent</span>
+                    <span className="text-xs text-slate-650 dark:text-slate-450 block font-bold leading-relaxed">An OTP has been sent to your email. Kindly type the code.</span>
                   </div>
 
                   <div>
