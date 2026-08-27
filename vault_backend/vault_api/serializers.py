@@ -1,1 +1,55 @@
+from rest_framework import serializers
+from .models import Admin, EncryptedBank, ActivityLog
 
+class AdminSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Admin model.
+    Exposes profile fields but excludes sensitive credentials (like the password hash).
+    """
+    class Meta:
+        model = Admin
+        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'is_active', 'date_joined')
+        read_only_fields = ('id', 'date_joined')
+
+
+class AdminCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer specifically for registering new Admin users.
+    Ensures passwords are submitted securely and hashed via Argon2id through the custom manager.
+    """
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    class Meta:
+        model = Admin
+        fields = ('email', 'name', 'password', 'level', 'dept', 'campus', 'designation')
+
+    def create(self, validated_data):
+        # Uses the custom create_user method in AdminManager which handles Argon2id hashing
+        return Admin.objects.create_user(**validated_data)
+
+
+class EncryptedBankSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the EncryptedBank credential storage.
+    Enforces validation on metadata fields and securely receives base64-encoded encrypted fields.
+    """
+    class Meta:
+        model = EncryptedBank
+        fields = (
+            'id', 'name', 'initial', 'color', 'account_type', 'branch_name',
+            'encrypted_holder', 'encrypted_account_number', 'encrypted_ifsc',
+            'encrypted_username', 'encrypted_password', 'encrypted_transaction_password',
+            'photo_payload', 'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    """
+    Serializer for reading ActivityLog entries.
+    All fields are read-only as audit logs must be immutable.
+    """
+    class Meta:
+        model = ActivityLog
+        fields = ('id', 'timestamp', 'action', 'details', 'user', 'user_snapshot', 'log_type', 'ip_address')
+        read_only_fields = fields
