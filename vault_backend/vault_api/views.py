@@ -152,9 +152,20 @@ class LoginView(APIView):
                 ip_address=ip
             )
 
+            # Generate a unique cryptographic signature token for this user
+            user_signature = hmac.new(
+                settings.SECRET_KEY.encode('utf-8'),
+                user.email.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+
             response = Response({
                 "access": access_token,
-                "user": AdminSerializer(user, context={'request': request}).data,
+                "user": {
+                    **AdminSerializer(user, context={'request': request}).data,
+                    "public_signature": user_signature,
+                    "ip": ip
+                },
                 "otp_required": False
             }, status=status.HTTP_200_OK)
 
@@ -238,9 +249,20 @@ class LoginVerifyView(APIView):
             ip_address=ip
         )
 
+        # Generate a unique cryptographic signature token for this user
+        user_signature = hmac.new(
+            settings.SECRET_KEY.encode('utf-8'),
+            user.email.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
         response = Response({
             "access": access_token,
-            "user": AdminSerializer(user, context={'request': request}).data
+            "user": {
+                **AdminSerializer(user, context={'request': request}).data,
+                "public_signature": user_signature,
+                "ip": ip
+            }
         }, status=status.HTTP_200_OK)
 
         response.set_cookie(

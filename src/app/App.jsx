@@ -2410,18 +2410,6 @@ export default function App() {
                         </h3>
 
                         <div>
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Security Clearance</span>
-                          <span className="text-slate-800 dark:text-slate-200 font-bold mt-1.5 block text-base">{profile.clearance}</span>
-                        </div>
-
-                        <div>
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Session Token ID</span>
-                          <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm truncate" title={profile.session_id}>
-                            {profile.session_id}
-                          </span>
-                        </div>
-
-                        <div>
                           <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Assigned IP Address</span>
                           <span className="text-slate-800 dark:text-slate-200 font-mono font-bold mt-1.5 block text-sm">{profile.ip}</span>
                         </div>
@@ -2435,7 +2423,7 @@ export default function App() {
                       </span>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <span className="text-[11px] font-mono text-slate-650 dark:text-slate-400 break-all select-all font-semibold">
-                          {profile.publicKey}
+                          {profile.public_signature || profile.publicKey}
                         </span>
                         <span className="text-[9px] font-extrabold text-[#7B1535] dark:text-[#E27D9B] bg-[#FBF3F5] dark:bg-[#221015] border border-[#7B1535]/14 dark:border-[#E27D9B]/15 px-3 py-1 rounded-lg shrink-0 uppercase tracking-widest">
                           AES-256 Verified
