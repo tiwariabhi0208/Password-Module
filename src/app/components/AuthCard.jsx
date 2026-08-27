@@ -26,7 +26,7 @@ export function AuthCard({ children, sideElement }) {
       {/* Card Wrapper */}
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[420px] px-4">
         {sideElement && (
-          <div className="md:absolute md:-right-[140px] md:bottom-[20px] md:z-20 mb-4 md:mb-0 transform md:-rotate-[3deg] origin-bottom transition-all duration-300">
+          <div className="pointer-events-none md:absolute md:-right-[140px] md:bottom-[20px] md:z-20 mb-4 md:mb-0 transform md:-rotate-[3deg] origin-bottom transition-all duration-300">
             {sideElement}
           </div>
         )}
