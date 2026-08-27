@@ -16,25 +16,8 @@ import { CopyButton } from "./components/ModalDetailRow";
 import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 
-const BANKS = [
-  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F", accountType: "corporate" },
-  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A", accountType: "corporate" },
-  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", branchName: "Dispur", username: "sps_sbi_vault", password: "SbiPassphrase*12", color: "#1B3F5C", accountType: "corporate" },
-  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", branchName: "Ganeshguri", username: "sps_axis_pay", password: "AxisKey#Secure1", color: "#5C2E6B", accountType: "corporate" },
-  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A", accountType: "corporate" },
-  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B", accountType: "corporate" },
-  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F", accountType: "corporate" },
-  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A", accountType: "corporate" },
-  { id: 9, name: "HDFC Bank", initial: "H", accountNumber: "50100987654321", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati East", username: "sps_hdfc_retail", password: "HdfcRetail#99", color: "#1E3A5F", accountType: "retail" }
-];
-
-const INITIAL_ACTIVITIES = [
-  { id: 1, time: "Today, 12:05 PM", action: "Credential Accessed", details: "Viewed password details for HDFC Bank", user: "Priya Sharma", type: "success", ip: "192.168.1.45" },
-  { id: 2, time: "Today, 11:32 AM", action: "Lock Screen Triggered", details: "Lock screen manual activation", user: "Priya Sharma", type: "info", ip: "192.168.1.45" },
-  { id: 3, time: "Yesterday, 04:10 PM", action: "Account Added", details: "Added Kotak Mahindra Bank account", user: "Rahul Verma", type: "success", ip: "192.168.1.98" },
-  { id: 4, time: "21 Aug, 09:12 AM", action: "Failed Authentication", details: "Invalid lock screen password entered", user: "System", type: "error", ip: "172.56.21.9" },
-  { id: 5, time: "18 Aug, 02:40 PM", action: "Account Deleted", details: "Deleted Yes Bank account details", user: "Anita Nair", type: "warning", ip: "192.168.1.14" }
-];
+import { api, setAccessToken } from "./utils/apiClient";
+import { deriveKeyAndHash, encryptData, decryptData } from "./utils/cryptoHelper";
 
 // --- INLINED COMPONENTS ---
 
@@ -276,8 +259,11 @@ export default function App() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
-  const [banks, setBanks] = useState(BANKS);
-  const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
+  const [banks, setBanks] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [accessToken, setAccessTokenState] = useState("");
+  const [masterKey, setMasterKey] = useState(null);
+  const [tempLoginHash, setTempLoginHash] = useState("");
   const [entities, setEntities] = useState([
     { id: 1, name: "Guwahati Central Campus", phone: "+91 98450 99999", email: "central.campus@southpoint.edu.in" },
     { id: 2, name: "Guwahati East Branch", phone: "+91 97060 88888", email: "east.branch@southpoint.edu.in" },
@@ -325,6 +311,227 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
   });
+
+  // Load all credentials on mount or token change
+  useEffect(() => {
+    if (accessToken && masterKey) {
+      fetchBanks();
+      fetchActivities();
+    }
+  }, [accessToken, masterKey]);
+
+  const fetchBanks = async () => {
+    try {
+      const response = await api.get('/vault/');
+      // Decrypt credentials client-side on-the-fly
+      const decryptedBanks = await Promise.all(response.data.map(async (bank) => {
+        return {
+          id: bank.id,
+          name: bank.name,
+          initial: bank.initial,
+          color: bank.color || "#7B1535",
+          accountType: bank.account_type,
+          branchName: bank.branch_name,
+          holder: await decryptData(bank.encrypted_holder, masterKey),
+          accountNumber: await decryptData(bank.encrypted_account_number, masterKey),
+          ifsc: await decryptData(bank.encrypted_ifsc, masterKey),
+          username: await decryptData(bank.encrypted_username, masterKey),
+          password: await decryptData(bank.encrypted_password, masterKey),
+          transactionPassword: bank.encrypted_transaction_password 
+            ? await decryptData(bank.encrypted_transaction_password, masterKey) 
+            : ""
+        };
+      }));
+      setBanks(decryptedBanks);
+    } catch (error) {
+      console.error("Failed fetching credential vault.", error);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const response = await api.get('/audit-logs/');
+      // Map API fields to UI field format: time, action, details, user, type, ip
+      const mapped = response.data.map((log) => ({
+        id: log.id,
+        time: new Date(log.timestamp).toLocaleString(),
+        action: log.action,
+        details: log.details,
+        user: log.user_snapshot,
+        type: log.log_type,
+        ip: log.ip_address
+      }));
+      setActivities(mapped);
+    } catch (error) {
+      console.error("Failed fetching audit logs.", error);
+    }
+  };
+
+  const handleSignIn = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!email.trim() || !password.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Step 1: Request the server salt
+      const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(email.trim())}`);
+      const serverSaltHex = saltResponse.data.salt;
+
+      // Step 2: Derive master key and login hash hex
+      const derived = await deriveKeyAndHash(password.trim(), serverSaltHex);
+      
+      // Step 3: Login Phase 1
+      const loginResponse = await api.post('/auth/login/', {
+        email: email.trim(),
+        password: derived.loginHashHex,
+      });
+
+      if (loginResponse.data.otp_required) {
+        // Save derived variables in temporary states for Phase 2 verification
+        setTempLoginHash(derived.loginHashHex);
+        setMasterKey(derived.masterKey);
+        setSuccess("OTP sent to your registered email address.");
+        
+        // Transition to OTP verification screen
+        setResendTimer(60);
+        setCanResend(false);
+        setOtpValues(["", "", "", "", "", ""]);
+        setScreen("login-otp");
+      }
+    } catch (err) {
+      console.error("Login initialization failed.", err);
+      setError(err.response?.data?.detail || "Invalid credentials or deactivated account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginOtpVerify = async () => {
+    setError("");
+    setSuccess("");
+    const otpCode = otpValues.join("");
+    if (otpCode.length < 6) return;
+
+    setLoading(true);
+    try {
+      const verifyResponse = await api.post('/auth/login/verify/', {
+        email: email.trim(),
+        password: tempLoginHash,
+        otp: otpCode
+      });
+
+      // Verification success
+      const token = verifyResponse.data.access;
+      const userData = verifyResponse.data.user;
+
+      // Store access token
+      setAccessToken(token);
+      setAccessTokenState(token);
+
+      // Save user profile state
+      setCurrentAdmin(userData);
+
+      setSuccess("Verification successful!");
+      setTimeout(() => {
+        goToDashboard();
+        setSuccess("");
+      }, 400);
+    } catch (err) {
+      console.error("OTP verification failed.", err);
+      setError(err.response?.data?.detail || "Invalid OTP code or expired session.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddBank = async (bankData) => {
+    try {
+      const payload = {
+        name: bankData.name,
+        initial: bankData.initial,
+        color: bankData.color || "#7B1535",
+        account_type: bankData.accountType,
+        branch_name: bankData.branchName,
+        encrypted_holder: await encryptData(bankData.holder, masterKey),
+        encrypted_account_number: await encryptData(bankData.accountNumber, masterKey),
+        encrypted_ifsc: await encryptData(bankData.ifsc, masterKey),
+        encrypted_username: await encryptData(bankData.username, masterKey),
+        encrypted_password: await encryptData(bankData.password, masterKey),
+        encrypted_transaction_password: bankData.transactionPassword 
+          ? await encryptData(bankData.transactionPassword, masterKey) 
+          : null,
+        photo_payload: bankData.photoPayload || null
+      };
+
+      await api.post('/vault/', payload);
+      fetchBanks();
+      setAddModalOpen(false);
+    } catch (error) {
+      alert("Error adding bank credential: " + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleEditBank = async (bankData) => {
+    try {
+      const payload = {
+        name: bankData.name,
+        initial: bankData.initial,
+        color: bankData.color || "#7B1535",
+        account_type: bankData.accountType,
+        branch_name: bankData.branchName,
+        encrypted_holder: await encryptData(bankData.holder, masterKey),
+        encrypted_account_number: await encryptData(bankData.accountNumber, masterKey),
+        encrypted_ifsc: await encryptData(bankData.ifsc, masterKey),
+        encrypted_username: await encryptData(bankData.username, masterKey),
+        encrypted_password: await encryptData(bankData.password, masterKey),
+        encrypted_transaction_password: bankData.transactionPassword 
+          ? await encryptData(bankData.transactionPassword, masterKey) 
+          : null,
+        photo_payload: bankData.photoPayload || null
+      };
+
+      await api.put(`/vault/${bankData.id}/`, payload);
+      fetchBanks();
+      setAddModalOpen(false);
+      setEditingBank(null);
+    } catch (error) {
+      alert("Error updating bank credential: " + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleDeleteBank = async (bankId) => {
+    try {
+      await api.delete(`/vault/${bankId}/`);
+      fetchBanks();
+      setDeleteBank(null);
+    } catch (error) {
+      alert("Error deleting bank credential: " + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout/');
+    } catch (err) {
+      console.error("Logout failed on server.", err);
+    } finally {
+      // Clear client session regardless of server success
+      setAccessToken("");
+      setAccessTokenState("");
+      setMasterKey(null);
+      setTempLoginHash("");
+      setBanks([]);
+      setActivities([]);
+      setScreen("login");
+      setActiveTab("vault");
+    }
+  };
 
   const entitiesCarouselRef = useRef(null);
   const profileFormRef = useRef(null);
@@ -446,7 +653,7 @@ export default function App() {
     }
   };
 
-  const handleEditBank = (bank) => {
+  const handleOpenEditModal = (bank) => {
     setEditingBank(bank);
     setAddModalOpen(true);
   };
@@ -553,68 +760,7 @@ export default function App() {
     setActiveTab(newTab);
   };
 
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
 
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      try {
-        if (rememberMe) {
-          localStorage.setItem("remembered_email", email.trim());
-        } else {
-          localStorage.removeItem("remembered_email");
-        }
-      } catch (err) { }
-
-      let foundAdmin = admins.find(a => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password.trim());
-      if (!foundAdmin) {
-        // Automatically look up by email, otherwise dynamically create a temporary admin profile
-        foundAdmin = admins.find(a => a.email.toLowerCase() === email.trim().toLowerCase());
-        if (!foundAdmin) {
-          const namePrefix = email.split("@")[0];
-          const nameParts = namePrefix.split(/[._-]/).map(part => part.charAt(0).toUpperCase() + part.slice(1));
-          const derivedName = nameParts.join(" ") || "External Admin";
-
-          foundAdmin = {
-            name: derivedName,
-            email: email.trim(),
-            password: password.trim(),
-            level: 3,
-            dept: "Information Security & IT Administration",
-            campus: "Guwahati Central Campus, Assam",
-            clearance: "Level 3 - Super Admin",
-            designation: "Director of IT Infrastructure",
-            session_id: `SPS-ADM-TEMP-${namePrefix.toUpperCase()}`,
-            auth_time: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) + ", " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-            ip: "192.168.1.100",
-            publicKey: `sha256:temp${namePrefix.toLowerCase()}${Date.now().toString().slice(-6)}`,
-            status: "Active / Temporary Administrator Session"
-          };
-          setAdmins(prev => [...prev, foundAdmin]);
-        }
-      }
-
-      setCurrentAdmin(foundAdmin);
-      setSuccess("Login successful!");
-      setTimeout(() => {
-        goToDashboard();
-        setSuccess("");
-      }, 400);
-    } catch (err) {
-      setError("Login failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const goToDashboard = () => {
     setScreen("dashboard");
@@ -673,6 +819,88 @@ export default function App() {
       accounts: groups[name],
     }));
   }, [filteredBanks]);
+
+  if (screen === "login-otp") {
+    const otpComplete = otpValues.every((v) => v !== "");
+    return (
+      <AuthCard sideElement={<BoyCharacter state={focusField} />}>
+        {error && (
+          <div
+            style={{
+              background: T.redLight,
+              border: `1px solid ${T.red}33`,
+              color: T.red,
+              padding: "8px 12px",
+              borderRadius: radius.md,
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 14,
+              lineHeight: 1.4,
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
+
+        <button
+          onClick={() => setScreen("login")}
+          className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70 bg-transparent border-none cursor-pointer"
+          style={{ color: MAROON }}
+        >
+          <ArrowLeft size={13} />
+          Back to Login
+        </button>
+        <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>2FA Authentication</h2>
+        <p className="text-sm text-[#7A6068] mb-5">
+          Enter the 6-digit OTP code sent to{" "}
+          <span className="font-medium text-[#1A0810]">{email}</span>
+        </p>
+
+        <div className="flex gap-2 mb-4">
+          {otpValues.map((val, i) => (
+            <input
+              key={i}
+              ref={(el) => {
+                otpRefs.current[i] = el;
+              }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={val}
+              onChange={(e) => handleOtpChange(i, e.target.value)}
+              onKeyDown={(e) => handleOtpKeyDown(i, e)}
+              className="flex-1 h-12 text-center text-base font-bold border-2 rounded-lg bg-white text-[#1A0810] focus:outline-none transition-colors caret-transparent"
+              style={{
+                borderColor: val ? MAROON : BORDER,
+                backgroundColor: val ? GOLD_LIGHT : "#fff"
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="mb-4 h-5 flex items-center">
+          {canResend ? (
+            <button
+              onClick={handleResend}
+              className="text-sm font-semibold hover:underline bg-transparent border-none cursor-pointer"
+              style={{ color: MAROON }}
+            >
+              Resend code
+            </button>
+          ) : (
+            <span className="text-sm text-[#7A6068]">
+              Resend in{" "}
+              <span className="font-mono font-semibold" style={{ color: MAROON }}>
+                0:{String(resendTimer).padStart(2, "0")}
+              </span>
+            </span>
+          )}
+        </div>
+
+        {primaryBtn("Verify & Log In", handleLoginOtpVerify, undefined, !otpComplete || loading)}
+      </AuthCard>
+    );
+  }
 
   if (screen === "login") {
     return (
@@ -966,34 +1194,14 @@ export default function App() {
         avatarMenuOpen={avatarMenuOpen}
         setAvatarMenuOpen={setAvatarMenuOpen}
         setUserDropdownOpen={setUserDropdownOpen}
-        onLogout={() => {
-          if (isEditingProfile && hasProfileFormChanges()) {
-            setPendingTabChange("logout");
-            return;
-          }
-          if (isEditingProfile) {
-            setIsEditingProfile(false);
-          }
-          setScreen("login");
-          setActiveTab("vault");
-        }}
+        onLogout={handleLogout}
       />
 
       <div className="flex-grow flex w-full">
         <Sidebar
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          onLogout={() => {
-            if (isEditingProfile && hasProfileFormChanges()) {
-              setPendingTabChange("logout");
-              return;
-            }
-            if (isEditingProfile) {
-              setIsEditingProfile(false);
-            }
-            setScreen("login");
-            setActiveTab("vault");
-          }}
+          onLogout={handleLogout}
           vaultCount={banks.length}
         />
 
@@ -1201,7 +1409,7 @@ export default function App() {
                         accounts={accounts}
                         onClick={handleClick}
                         onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
-                        onEdit={handleEditBank}
+                        onEdit={handleOpenEditModal}
                       />
                     );
                   })}
@@ -1284,7 +1492,7 @@ export default function App() {
                                   <Eye size={15} />
                                 </button>
                                 <button
-                                  onClick={() => handleEditBank(bank)}
+                                  onClick={() => handleOpenEditModal(bank)}
                                   className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
                                   title="Edit Account Details"
                                 >
@@ -2382,7 +2590,7 @@ export default function App() {
           }}
           onEdit={(bankObj) => {
             setSelectedBank(null);
-            handleEditBank(bankObj);
+            handleOpenEditModal(bankObj);
           }}
         />
       )}
@@ -2405,7 +2613,7 @@ export default function App() {
               handleViewBank(acc);
             }}
             onEdit={(acc) => {
-              handleEditBank(acc);
+              handleOpenEditModal(acc);
             }}
             onDelete={(acc) => {
               setDeleteBank(acc);
@@ -2422,25 +2630,15 @@ export default function App() {
         }}
         entities={entities}
         bankToEdit={editingBank}
-        onAdd={(newBank) => {
-          setBanks([...banks, newBank]);
-          logActivity("Account Added", `Added ${newBank.name} account details`, "success");
-        }}
-        onEdit={(updatedBank) => {
-          setBanks(banks.map((b) => (b.id === updatedBank.id ? updatedBank : b)));
-          logActivity("Account Updated", `Updated ${updatedBank.name} account details`, "info");
-        }}
+        onAdd={handleAddBank}
+        onEdit={handleEditBank}
       />
 
       {deleteBank && (
         <DeleteConfirmModal
           bank={deleteBank}
           onClose={() => setDeleteBank(null)}
-          onConfirm={() => {
-            setBanks(banks.filter((b) => b.id !== deleteBank.id));
-            logActivity("Account Deleted", `Deleted ${deleteBank.name} account details`, "warning");
-            setDeleteBank(null);
-          }}
+          onConfirm={() => handleDeleteBank(deleteBank.id)}
         />
       )}
 
@@ -2748,8 +2946,7 @@ export default function App() {
                     setPendingTabChange(null);
                     setIsEditingProfile(false);
                     if (destination === "logout") {
-                      setScreen("login");
-                      setActiveTab("vault");
+                      handleLogout();
                     } else {
                       setActiveTab(destination);
                     }

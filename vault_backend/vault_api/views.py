@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import secrets
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -362,3 +365,24 @@ class ActivityLogListView(generics.ListAPIView):
     queryset = ActivityLog.objects.all().order_by('-timestamp')
     serializer_class = ActivityLogSerializer
     permission_classes = (IsLimitedAccessOrAbove,)
+
+
+class SaltView(APIView):
+    """
+    Returns a secure, deterministic salt for a given email.
+    Uses HMAC-SHA256 with the server's SECRET_KEY to produce the salt.
+    This ensures the salt is unique and unpredictable, without requiring database storage.
+    """
+    permission_classes = (AllowAny,)
+
+    def get(self, request, *args, **kwargs):
+        email = request.query_params.get('email')
+        if not email:
+            return Response({"detail": "Email parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Derive a 16-byte salt using HMAC
+        key = settings.SECRET_KEY.encode('utf-8')
+        msg = email.strip().lower().encode('utf-8')
+        salt_hex = hmac.new(key, msg, hashlib.sha256).hexdigest()[:32] # 32 hex chars = 16 bytes
+
+        return Response({"salt": salt_hex}, status=status.HTTP_200_OK)
