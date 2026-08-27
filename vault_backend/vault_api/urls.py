@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     LoginView, LoginVerifyView, LogoutView, CustomTokenRefreshView,
-    EncryptedBankViewSet, ActivityLogListView, SaltView
+    EncryptedBankViewSet, ActivityLogListView, SaltView,
+    PasswordResetRequestView, PasswordResetConfirmView
 )
 
 router = DefaultRouter()
@@ -21,6 +22,8 @@ urlpatterns = [
     path('auth/login/verify/', LoginVerifyView.as_view(), name='auth_login_verify'),
     path('auth/logout/', LogoutView.as_view(), name='auth_logout'),
     path('auth/refresh/', CustomTokenRefreshView.as_view(), name='auth_token_refresh'),
+    path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('auth/password-reset/verify/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 
     # Audit Logs
     path('audit-logs/', ActivityLogListView.as_view(), name='audit_logs'),

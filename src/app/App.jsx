@@ -115,7 +115,8 @@ export function CustomInput({
             alignItems: "center",
             justifyContent: "center",
             position: "relative",
-            zIndex: 10
+            zIndex: 10,
+            flexShrink: 0
           }}
         >
           {type === "password" ? (
@@ -261,6 +262,8 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
@@ -800,11 +803,78 @@ export default function App() {
     setUserDropdownOpen(false);
   };
 
-  const sendOtp = () => {
-    setResendTimer(60);
-    setCanResend(false);
-    setOtpValues(["", "", "", "", "", ""]);
-    setScreen("forgot-step2");
+  const sendOtp = async () => {
+    if (!forgotEmail.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/password-reset/', {
+        email: forgotEmail.trim()
+      });
+      if (response.data.otp_sent) {
+        setSuccess("Verification OTP sent to your registered email address.");
+        setResendTimer(60);
+        setCanResend(false);
+        setOtpValues(["", "", "", "", "", ""]);
+        setScreen("forgot-step2");
+      }
+    } catch (err) {
+      console.error("Failed to send password reset OTP.", err);
+      setError(err.response?.data?.detail || "Failed to send OTP. Please verify your email is correct and registered.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordResetConfirm = async () => {
+    const otpCode = otpValues.join("");
+    if (otpCode.length < 6) {
+      setError("Please enter the full 6-digit OTP code.");
+      return;
+    }
+    if (!newPassword.trim()) {
+      setError("Please enter your new master password.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      // Step 1: Request the salt for this email first (to derive the correct new hash)
+      const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(forgotEmail.trim())}`);
+      const serverSaltHex = saltResponse.data.salt;
+
+      // Step 2: Derive Key A and Hash B from the NEW password and salt
+      const derived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
+
+      // Step 3: Send the reset confirm request to the backend with the new login hash
+      const response = await api.post('/auth/password-reset/verify/', {
+        email: forgotEmail.trim(),
+        otp: otpCode,
+        new_password: derived.loginHashHex
+      });
+
+      setSuccess("Password has been reset successfully. Please log in with your new password.");
+      
+      // Clear password states and redirect to login
+      setNewPassword("");
+      setPassword("");
+      setTimeout(() => {
+        setScreen("login");
+        setSuccess("");
+      }, 2000);
+
+    } catch (err) {
+      console.error("Password reset confirmation failed.", err);
+      setError(err.response?.data?.detail || "Failed to reset password. Please check your OTP and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const primaryBtn = (label, onClick, icon, disabled = false) => (
@@ -1112,6 +1182,45 @@ export default function App() {
           Back to login
         </button>
         <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>Reset Password</h2>
+
+        {error && (
+          <div
+            style={{
+              background: T.redLight,
+              border: `1px solid ${T.red}33`,
+              color: T.red,
+              padding: "8px 12px",
+              borderRadius: radius.md,
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 14,
+              lineHeight: 1.4,
+              textAlign: "left"
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              background: T.greenLight,
+              border: `1px solid ${T.green}33`,
+              color: T.green,
+              padding: "8px 12px",
+              borderRadius: radius.md,
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 14,
+              lineHeight: 1.4,
+              textAlign: "left"
+            }}
+          >
+            ✓ {success}
+          </div>
+        )}
+
         <p className="text-sm text-[#7A6068] mb-4">
           We&apos;ll send a one-time code to your work email.
         </p>
@@ -1130,7 +1239,7 @@ export default function App() {
               onKeyDown={(e) => e.key === "Enter" && sendOtp()}
             />
           </div>
-          {primaryBtn("Send OTP", sendOtp)}
+          {primaryBtn(loading ? "Sending..." : "Send OTP", sendOtp, undefined, loading)}
         </div>
       </AuthCard>
     );
@@ -1140,9 +1249,47 @@ export default function App() {
     const otpComplete = otpValues.every((v) => v !== "");
     return (
       <AuthCard>
+        {error && (
+          <div
+            style={{
+              background: T.redLight,
+              border: `1px solid ${T.red}33`,
+              color: T.red,
+              padding: "8px 12px",
+              borderRadius: radius.md,
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 14,
+              lineHeight: 1.4,
+              textAlign: "left"
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              background: T.greenLight,
+              border: `1px solid ${T.green}33`,
+              color: T.green,
+              padding: "8px 12px",
+              borderRadius: radius.md,
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 14,
+              lineHeight: 1.4,
+              textAlign: "left"
+            }}
+          >
+            ✓ {success}
+          </div>
+        )}
+
         <button
           onClick={() => setScreen("forgot-step1")}
-          className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70"
+          className="flex items-center gap-1.5 text-sm mb-4 transition-colors hover:opacity-70 bg-transparent border-none cursor-pointer"
           style={{ color: MAROON }}
         >
           <ArrowLeft size={13} />
@@ -1176,11 +1323,30 @@ export default function App() {
           ))}
         </div>
 
+        <div style={{ marginBottom: 14, textAlign: "left" }}>
+          <FormLabel text="New Master Password" />
+          <CustomInput
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            }
+            type={showNewPassword ? "text" : "password"}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Enter your new master password..."
+            showPasswordToggle={true}
+            onToggleShowPassword={() => setShowNewPassword(!showNewPassword)}
+            required
+          />
+        </div>
+
         <div className="mb-4 h-5 flex items-center">
           {canResend ? (
             <button
               onClick={handleResend}
-              className="text-sm font-semibold hover:underline"
+              className="text-sm font-semibold hover:underline bg-transparent border-none cursor-pointer"
               style={{ color: MAROON }}
             >
               Resend code
@@ -1195,7 +1361,7 @@ export default function App() {
           )}
         </div>
 
-        {primaryBtn("Verify & Reset Password", goToDashboard, undefined, !otpComplete)}
+        {primaryBtn(loading ? "Verifying..." : "Verify & Reset Password", handlePasswordResetConfirm, undefined, !otpComplete || loading)}
       </AuthCard>
     );
   }

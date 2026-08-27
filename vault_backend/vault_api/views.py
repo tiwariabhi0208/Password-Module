@@ -285,6 +285,121 @@ class LogoutView(APIView):
         return response
 
 
+class PasswordResetRequestView(APIView):
+    """
+    Sends an OTP code for password reset.
+    Validation: Checks if email is registered. If not, returns 404.
+    """
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email:
+            return Response({"detail": "Email address is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Admin.objects.get(email=email.strip().lower())
+        except Admin.DoesNotExist:
+            # Audit unauthorized password reset attempt for tracking
+            ActivityLog.objects.create(
+                action="Password Reset Rejected",
+                details=f"Password reset requested for unregistered email: {email}",
+                user_snapshot=email,
+                log_type="warning",
+                ip_address=get_client_ip(request)
+            )
+            return Response({"detail": "This email address is not registered in our system."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.is_active:
+            return Response({"detail": "This account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Generate a secure 6-digit OTP code
+        otp_code = f"{secrets.randbelow(900000) + 100000}"
+        user.otp_code = otp_code
+        user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
+        user.save()
+
+        # Send OTP via email
+        try:
+            send_mail(
+                subject="Your Secure Vault Password Reset Code",
+                message=f"Hello {user.name},\n\nYour password reset verification code is: {otp_code}\n\nIt is valid for 5 minutes. If you did not request this, please contact IT immediately.\n\nSecure Vault Admin",
+                from_email=None,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # Fallback for development/testing: log to console if mail server isn't set up
+            print(f"SMTP Error: {str(e)}. Simulated Password Reset OTP Sent to {user.email}: {otp_code}")
+
+        return Response({
+            "detail": "Password reset OTP sent successfully.",
+            "otp_sent": True
+        }, status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Verifies the OTP and resets the password.
+    """
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        otp_submitted = request.data.get('otp')
+        new_password = request.data.get('new_password')
+        ip = get_client_ip(request)
+
+        if not email or not otp_submitted or not new_password:
+            return Response({"detail": "Email, OTP, and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Admin.objects.get(email=email.strip().lower())
+        except Admin.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.is_active:
+            return Response({"detail": "This account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Verify OTP code and expiration
+        if not user.otp_code or user.otp_code != otp_submitted.strip():
+            ActivityLog.objects.create(
+                action="Password Reset Failed",
+                details=f"Invalid password reset OTP code submitted for {email}",
+                user_snapshot=email,
+                log_type="warning",
+                ip_address=ip
+            )
+            return Response(
+                {"detail": "Invalid OTP code."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if timezone.now() > user.otp_expires_at:
+            return Response(
+                {"detail": "OTP code has expired. Please request a new one."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # OTP is valid, update password and clear OTP fields
+        user.set_password(new_password)
+        user.otp_code = None
+        user.otp_expires_at = None
+        user.save()
+
+        # Audit successful password reset
+        ActivityLog.objects.create(
+            action="Password Reset Success",
+            details=f"Admin {user.name} successfully reset their master password via OTP validation",
+            user=user,
+            user_snapshot=user.name,
+            log_type="warning",
+            ip_address=ip
+        )
+
+        return Response({"detail": "Password has been reset successfully. Please log in with your new password."}, status=status.HTTP_200_OK)
+
+
 class CustomTokenRefreshView(TokenRefreshView):
     """
     Enhanced Token Refresh Endpoint.
