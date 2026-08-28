@@ -26,8 +26,10 @@ export function HelpInfo() {
       capabilities: [
         "View grouped bank cards on the dashboard grid",
         "Search and sort bank credentials",
-        "Copy bank details (account numbers, IFSC, branches) to clipboard",
-        "Access personal profile details"
+        "Copy bank details (account numbers, IFSC, branches, login passwords) to clipboard",
+        "View registered school entities list (read-only)",
+        "Configure personal theme settings (Light/Dark mode)",
+        "Restricted from: editing/deleting/adding credentials, managing entities, managing admins, viewing activity logs, or resetting the database"
       ],
       color: "bg-[#1E3A5F]/10 dark:bg-[#1E3A5F]/20 text-[#1E3A5F] dark:text-[#6FA4E3]"
     },
@@ -36,10 +38,10 @@ export function HelpInfo() {
       name: "Level 2: Limited Access",
       desc: "Authorized for managers who supervise financial records and maintain bank account details.",
       capabilities: [
-        "All Level 1 permissions",
-        "Modify existing bank accounts details (names, IFSC, account numbers, holders)",
-        "Submit updates and trigger activity logs",
-        "Review activity logs for tracking credential changes"
+        "All Level 1 permissions (View credentials and entities)",
+        "Modify existing bank accounts details (names, IFSC, account numbers, holders, login credentials)",
+        "View complete system activity logs to review audit history and tracking changes",
+        "Restricted from: creating or deleting bank accounts, bulk entity registration, managing admin accounts, or resetting the database"
       ],
       color: "bg-[#7B1535]/10 dark:bg-[#7B1535]/20 text-[#7B1535] dark:text-[#E27D9B]"
     },
@@ -48,11 +50,12 @@ export function HelpInfo() {
       name: "Level 3: Super Admin",
       desc: "Full privilege level for system administrators managing the company structure and security rules.",
       capabilities: [
-        "All Level 2 permissions",
-        "Register and manage organizational Entities",
+        "All Level 2 permissions (Modify credentials, view activity logs)",
+        "Register and manage organizational school entities (single or dynamic bulk additions)",
+        "Delete entities from the system database",
         "Add new bank cards and delete deprecated bank accounts",
-        "Register and manage other Admin users",
-        "Configure security lockouts, inactivity duration timeouts, and audit policies"
+        "Register and manage other system administrators",
+        "Perform destructive database resets (wipe credentials, logs, and entities)"
       ],
       color: "bg-[#C9A227]/10 dark:bg-[#C9A227]/20 text-[#C9A227] dark:text-[#F3D778]"
     }
