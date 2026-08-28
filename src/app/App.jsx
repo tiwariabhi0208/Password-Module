@@ -2317,7 +2317,7 @@ export default function App() {
                 {isEditingProfile ? (
                   <form
                     ref={profileFormRef}
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       const formData = new FormData(e.target);
                       const name = formData.get("profileName").trim();
@@ -2338,34 +2338,27 @@ export default function App() {
                         return;
                       }
 
-                      // Update the active admin profile
-                      const updatedAdmins = admins.map(a => {
-                        if (a.email.toLowerCase() === profile.email.toLowerCase()) {
-                          return {
-                            ...a,
-                            name,
-                            designation,
-                            dept,
-                            phone,
-                            campus
-                          };
-                        }
-                        return a;
-                      });
-                      setAdmins(updatedAdmins);
-                      if (currentAdmin && currentAdmin.email.toLowerCase() === profile.email.toLowerCase()) {
-                        setCurrentAdmin({
-                          ...currentAdmin,
-                          name,
-                          designation,
-                          dept,
-                          phone,
-                          campus
+                      try {
+                        const response = await api.patch('/auth/profile/', {
+                          name, designation, dept, phone, campus
                         });
-                      }
+                        const updated = response.data;
 
-                      logActivity("Profile Updated", "Updated name, designation, department, phone, and campus details", "updated");
-                      setIsEditingProfile(false);
+                        // Reflect the persisted (server-confirmed) values, not the raw form input
+                        const updatedAdmins = admins.map(a =>
+                          a.email.toLowerCase() === profile.email.toLowerCase() ? { ...a, ...updated } : a
+                        );
+                        setAdmins(updatedAdmins);
+                        if (currentAdmin && currentAdmin.email.toLowerCase() === profile.email.toLowerCase()) {
+                          setCurrentAdmin({ ...currentAdmin, ...updated });
+                        }
+
+                        logActivity("Profile Updated", "Updated name, designation, department, phone, and campus details", "updated");
+                        setIsEditingProfile(false);
+                      } catch (err) {
+                        console.error("Profile update failed.", err);
+                        alert(err.response?.data?.detail || "Failed to update profile. Please try again.");
+                      }
                     }}
                     className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full space-y-6"
                     style={{ borderColor: BORDER }}
@@ -2650,16 +2643,11 @@ export default function App() {
                       setEntityConfirmModal({
                         title: "Confirm Admin Registration",
                         message: `Are you sure you want to register "${name}" as a new Level ${levelVal} Administrator?`,
-                        onConfirm: () => {
+                        onConfirm: async () => {
                           const departments = {
                             1: "General Administration",
                             2: "Audit & Risk Compliance",
                             3: "Information Security & IT Administration"
-                          };
-                          const clearances = {
-                            1: "Level 1 - Read Only",
-                            2: "Level 2 - Limited Access",
-                            3: "Level 3 - Super Admin"
                           };
                           const designations = {
                             1: "Accounts Assistant",
@@ -2667,26 +2655,30 @@ export default function App() {
                             3: "Director of IT Infrastructure"
                           };
 
-                          const newAdmin = {
-                            name,
-                            email,
-                            password: passVal,
-                            level: levelVal,
-                            dept: departments[levelVal],
-                            campus: "",
-                            clearance: clearances[levelVal],
-                            designation: designations[levelVal],
-                            session_id: `SPS-ADM-00${admins.length + 1}-${name.split(" ")[0].toUpperCase()}`,
-                            auth_time: "Just registered",
-                            ip: "192.168.1.1",
-                            publicKey: `sha256:${name.toLowerCase().replace(/\s/g, "")}${Date.now().toString().slice(-6)}`,
-                            status: "Active / Administrator Verified"
-                          };
+                          try {
+                            // The server never sees the plaintext password -- derive the
+                            // same login-hash the sign-in flow sends, using that email's salt.
+                            const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(email)}`);
+                            const derived = await deriveKeyAndHash(passVal, saltResponse.data.salt);
 
-                          setAdmins([...admins, newAdmin]);
-                          logActivity("Admin Registered", `Registered new administrator: ${name} (Level ${levelVal})`, "updated");
-                          targetForm.reset();
-                          alert(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
+                            const response = await api.post('/admins/', {
+                              name,
+                              email,
+                              password: derived.loginHashHex,
+                              level: levelVal,
+                              dept: departments[levelVal],
+                              campus: "",
+                              designation: designations[levelVal]
+                            });
+
+                            setAdmins([...admins, response.data]);
+                            logActivity("Admin Registered", `Registered new administrator: ${name} (Level ${levelVal})`, "updated");
+                            targetForm.reset();
+                            alert(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
+                          } catch (err) {
+                            console.error("Admin registration failed.", err);
+                            alert(err.response?.data?.email?.[0] || err.response?.data?.detail || "Failed to register administrator. Please try again.");
+                          }
                         }
                       });
                     }}

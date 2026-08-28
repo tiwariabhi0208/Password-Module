@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from .models import Admin, EncryptedBank, ActivityLog, Entity
 
@@ -8,8 +9,28 @@ class AdminSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Admin
-        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'is_active', 'date_joined', 'tfa_enabled')
+        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'phone', 'is_active', 'date_joined', 'tfa_enabled')
         read_only_fields = ('id', 'date_joined')
+
+
+class AdminProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for an admin editing their OWN profile (self-service).
+    Deliberately excludes 'level', 'is_active' and 'email' -- a level-1 admin must
+    never be able to promote themselves or reactivate/deactivate their own account.
+    Email changes go through the dedicated OTP-verified EmailChange flow instead.
+    """
+    class Meta:
+        model = Admin
+        fields = ('name', 'dept', 'campus', 'designation', 'phone')
+
+    def validate_phone(self, value):
+        if not value:
+            return value
+        phone_clean = re.sub(r'\D', '', value)
+        if len(phone_clean) != 10:
+            raise serializers.ValidationError("Phone number must be exactly 10 digits.")
+        return phone_clean
 
 
 class AdminCreateSerializer(serializers.ModelSerializer):
@@ -21,7 +42,7 @@ class AdminCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Admin
-        fields = ('email', 'name', 'password', 'level', 'dept', 'campus', 'designation')
+        fields = ('email', 'name', 'password', 'level', 'dept', 'campus', 'designation', 'phone')
 
     def create(self, validated_data):
         # Uses the custom create_user method in AdminManager which handles Argon2id hashing

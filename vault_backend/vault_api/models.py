@@ -64,6 +64,7 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     dept = models.CharField(max_length=255, blank=True)
     campus = models.CharField(max_length=255, blank=True)
     designation = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=15, blank=True)
 
     # is_active=False means the admin is deactivated -- their JWT will be rejected
     is_active = models.BooleanField(default=True)

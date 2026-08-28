@@ -5,7 +5,7 @@ from .views import (
     EncryptedBankViewSet, ActivityLogListView, SaltView,
     PasswordResetRequestView, PasswordResetConfirmView,
     EmailChangeRequestView, EmailChangeConfirmView, TfaToggleView,
-    DatabaseResetView, EntityViewSet
+    DatabaseResetView, EntityViewSet, AdminProfileView, AdminViewSet
 )
 
 router = DefaultRouter()
@@ -17,6 +17,7 @@ router = DefaultRouter()
 # DELETE /api/v1/vault/<id>/ -> destroy
 router.register(r'vault', EncryptedBankViewSet, basename='vault')
 router.register(r'entities', EntityViewSet, basename='entities')
+router.register(r'admins', AdminViewSet, basename='admins')
 
 urlpatterns = [
     # Auth Endpoints
@@ -30,6 +31,7 @@ urlpatterns = [
     path('auth/email-change/', EmailChangeRequestView.as_view(), name='email_change_request'),
     path('auth/email-change/verify/', EmailChangeConfirmView.as_view(), name='email_change_confirm'),
     path('auth/tfa/toggle/', TfaToggleView.as_view(), name='tfa_toggle'),
+    path('auth/profile/', AdminProfileView.as_view(), name='auth_profile'),
     path('auth/reset-database/', DatabaseResetView.as_view(), name='reset_database'),
 
     # Audit Logs

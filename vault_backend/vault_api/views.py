@@ -17,7 +17,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .models import Admin, EncryptedBank, ActivityLog, Entity
 from .email_utils import send_otp_email
 from .serializers import (
-    AdminSerializer, AdminCreateSerializer,
+    AdminSerializer, AdminCreateSerializer, AdminProfileUpdateSerializer,
     EncryptedBankSerializer, ActivityLogSerializer, EntitySerializer
 )
 
@@ -667,6 +667,71 @@ class TfaToggleView(APIView):
             "detail": f"2FA has been {'enabled' if request.user.tfa_enabled else 'disabled'} successfully.",
             "tfa_enabled": request.user.tfa_enabled
         }, status=status.HTTP_200_OK)
+
+
+class AdminProfileView(APIView):
+    """
+    Self-service profile endpoint. Lets the logged-in admin view and edit
+    their own name/department/campus/designation/phone.
+    Deliberately does NOT allow editing 'level' or 'is_active' -- see
+    AdminProfileUpdateSerializer for why.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        return Response(AdminSerializer(request.user).data, status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs):
+        serializer = AdminProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        ActivityLog.objects.create(
+            action="Profile Updated",
+            details="Updated name, designation, department, phone, and/or campus details",
+            user=request.user,
+            user_snapshot=request.user.name,
+            log_type="info",
+            ip_address=get_client_ip(request)
+        )
+        return Response(AdminSerializer(request.user).data, status=status.HTTP_200_OK)
+
+
+class AdminViewSet(viewsets.ModelViewSet):
+    """
+    CRUD viewset for managing Admin accounts, including assigning clearance
+    levels (1 = Read Only, 2 = Limited Access, 3 = Super Admin).
+    Only Super Admins (level 3) may list, create, edit, or remove admin accounts.
+    """
+    queryset = Admin.objects.all().order_by('name')
+    permission_classes = (IsSuperAdmin,)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AdminCreateSerializer
+        return AdminSerializer
+
+    def perform_create(self, serializer):
+        new_admin = serializer.save()
+        ActivityLog.objects.create(
+            action="Admin Registered",
+            details=f"Registered new admin '{new_admin.name}' ({new_admin.email}) at level {new_admin.level}.",
+            user=self.request.user,
+            user_snapshot=self.request.user.name,
+            log_type="success",
+            ip_address=get_client_ip(self.request)
+        )
+
+    def perform_destroy(self, instance):
+        admin_name = instance.name
+        instance.delete()
+        ActivityLog.objects.create(
+            action="Admin Removed",
+            details=f"Removed admin account: {admin_name}",
+            user=self.request.user,
+            user_snapshot=self.request.user.name,
+            log_type="warning",
+            ip_address=get_client_ip(self.request)
+        )
 
 
 class DatabaseResetView(APIView):
