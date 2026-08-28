@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ header_title }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7f7f7; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <!-- Main Container Card -->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e0e0e0;">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td align="center" style="background-color: #5C0C21; padding: 30px 20px; text-align: center;">
+              <!-- Logo (uses Content-ID cid:school_logo) -->
+              <img src="cid:school_logo" alt="South Point School Logo" height="48" style="display: block; margin: 0 auto 12px auto; outline: none; border: none; height: 48px; max-height: 48px;">
+              
+              <!-- Title -->
+              <h1 style="margin: 0 0 6px 0; color: #ffffff; font-size: 22px; font-weight: 700; font-family: Georgia, serif; letter-spacing: 0.5px;">{{ header_title }}</h1>
+              
+              <!-- Subtitle / Team Name -->
+              <p style="margin: 0; color: #C5A059; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">South Point School Security Terminal</p>
+            </td>
+          </tr>
+          
+          <!-- Content Body -->
+          <tr>
+            <td style="padding: 35px 30px; background-color: #ffffff;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; font-weight: 700; color: #333333;">Dear User,</p>
+              
+              <p style="margin: 0 0 25px 0; font-size: 14px; color: #555555; line-height: 1.6;">{{ description }}</p>
+              
+              <!-- OTP Box Card -->
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FDFBF7; border: 1px solid #EFECE6; border-radius: 8px; margin-bottom: 25px; padding: 25px 20px;">
+                <tr>
+                  <td align="center">
+                    <!-- OTP Box Header -->
+                    <p style="margin: 0 0 15px 0; font-size: 11px; font-weight: 700; color: #A48248; text-transform: uppercase; letter-spacing: 1.5px;">One-Time Password (OTP)</p>
+                    
+                    <!-- OTP Dotted Border Box -->
+                    <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 15px auto;">
+                      <tr>
+                        <td align="center" style="border: 2px dashed #C5A059; border-radius: 6px; background-color: #ffffff; padding: 12px 24px;">
+                          <!-- Space out letters in OTP code -->
+                          <span style="font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 700; color: #5C0C21; letter-spacing: 6px; line-height: 1.2;">{{ otp_code }}</span>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Validity Tag -->
+                    <p style="margin: 0; font-size: 12px; font-weight: 700; color: #A82C35;">Valid for 5 minutes only.</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Instructions -->
+              <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">This OTP is valid for 5 minutes. Please do not share this OTP with anyone. If you did not request this, please ignore this email.</p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 25px 30px; background-color: #FAFAFA; border-top: 1px solid #EAEAEA; text-align: center;">
+              <p style="margin: 0 0 6px 0; font-size: 11px; color: #888888; font-weight: 600;">&copy; 2026 South Point School. All rights reserved.</p>
+              <p style="margin: 0; font-size: 11px; color: #aaaaaa;">Guwahati, Assam, India</p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

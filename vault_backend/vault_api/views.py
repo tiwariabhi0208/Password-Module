@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from .models import Admin, EncryptedBank, ActivityLog
+from .email_utils import send_otp_email
 from .serializers import (
     AdminSerializer, AdminCreateSerializer,
     EncryptedBankSerializer, ActivityLogSerializer
@@ -110,8 +111,8 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Check if 2FA/OTP is enabled
-        otp_enabled = getattr(settings, 'OTP_ENABLED', False)
+        # Check if 2FA/OTP is enabled globally OR enabled for this specific user
+        otp_enabled = getattr(settings, 'OTP_ENABLED', False) or user.tfa_enabled
 
         if otp_enabled:
             # Generate a secure 6-digit OTP code
@@ -122,13 +123,7 @@ class LoginView(APIView):
 
             # Send OTP via email
             try:
-                send_mail(
-                    subject="Your Secure Vault OTP Verification Code",
-                    message=f"Hello {user.name},\n\nYour OTP code is: {otp_code}\n\nIt is valid for 5 minutes. If you did not initiate this login, please secure your account immediately.\n\nSecure Vault Admin",
-                    from_email=None,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
+                send_otp_email(user.email, user.name, otp_code, 'login')
             except Exception as e:
                 # Fallback for development/testing: log to console if mail server isn't set up
                 print(f"SMTP Error: {str(e)}. Simulated OTP Sent to {user.email}: {otp_code}")
@@ -348,13 +343,7 @@ class PasswordResetRequestView(APIView):
 
         # Send OTP via email
         try:
-            send_mail(
-                subject="Your Secure Vault Password Reset Code",
-                message=f"Hello {user.name},\n\nYour password reset verification code is: {otp_code}\n\nIt is valid for 5 minutes. If you did not request this, please contact IT immediately.\n\nSecure Vault Admin",
-                from_email=None,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+            send_otp_email(user.email, user.name, otp_code, 'password_reset')
         except Exception as e:
             # Fallback for development/testing: log to console if mail server isn't set up
             print(f"SMTP Error: {str(e)}. Simulated Password Reset OTP Sent to {user.email}: {otp_code}")
@@ -453,13 +442,7 @@ class EmailChangeRequestView(APIView):
 
         # Send OTP to the new email address
         try:
-            send_mail(
-                subject="Verify Your New Vault Email Address",
-                message=f"Hello {request.user.name},\n\nYou requested to change your email address. Please use this verification code to confirm: {otp_code}\n\nIt is valid for 5 minutes.\n\nSecure Vault Admin",
-                from_email=None,
-                recipient_list=[new_email_clean],
-                fail_silently=False,
-            )
+            send_otp_email(new_email_clean, request.user.name, otp_code, 'email_change')
         except Exception as e:
             # Fallback for development/testing
             print(f"SMTP Error: {str(e)}. Simulated Email Change OTP Sent to {new_email_clean}: {otp_code}")
@@ -643,7 +626,7 @@ class SaltView(APIView):
     """
     Returns a secure, deterministic salt for a given email.
     Uses HMAC-SHA256 with the server's SECRET_KEY to produce the salt.
-    This ensures the salt is unique and unpredictable, without requiring database storage.
+    This ensures the salt is unique and unpredictable, and remains stable if the email changes.
     """
     permission_classes = (AllowAny,)
 
@@ -652,9 +635,34 @@ class SaltView(APIView):
         if not email:
             return Response({"detail": "Email parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
+        email_clean = email.strip().lower()
+
+        # Try to look up the admin in the database to get their original email (for stable salt)
+        try:
+            user = Admin.objects.get(email=email_clean)
+            salt_email = user.original_email if user.original_email else email_clean
+        except Admin.DoesNotExist:
+            salt_email = email_clean
+
         # Derive a 16-byte salt using HMAC
         key = settings.SECRET_KEY.encode('utf-8')
-        msg = email.strip().lower().encode('utf-8')
+        msg = salt_email.encode('utf-8')
         salt_hex = hmac.new(key, msg, hashlib.sha256).hexdigest()[:32] # 32 hex chars = 16 bytes
 
         return Response({"salt": salt_hex}, status=status.HTTP_200_OK)
+
+
+class TfaToggleView(APIView):
+    """
+    Toggles 2FA (Two-Factor Authentication) for the authenticated admin user.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        tfa_enabled = request.data.get('tfa_enabled', False)
+        request.user.tfa_enabled = bool(tfa_enabled)
+        request.user.save()
+        return Response({
+            "detail": f"2FA has been {'enabled' if request.user.tfa_enabled else 'disabled'} successfully.",
+            "tfa_enabled": request.user.tfa_enabled
+        }, status=status.HTTP_200_OK)

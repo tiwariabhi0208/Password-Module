@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, Database, AlertTriangle, Eye, EyeOff, X, Lock, ChevronDown } from "lucide-react";
 import { MAROON, MAROON_HOVER, BORDER } from "./theme";
+import { api } from "../utils/apiClient";
 
 export function Settings({
   banks,
@@ -98,9 +99,17 @@ export function Settings({
                 </span>
               </div>
               <button
-                onClick={() => {
-                  setTfaEnabled(!tfaEnabled);
-                  logActivity("Settings Updated", `2FA auth was ${!tfaEnabled ? "enabled" : "disabled"}`, "info");
+                onClick={async () => {
+                  const targetState = !tfaEnabled;
+                  try {
+                    setTfaEnabled(targetState);
+                    await api.post('/auth/tfa/toggle/', { tfa_enabled: targetState });
+                    logActivity("Settings Updated", `2FA auth was ${targetState ? "enabled" : "disabled"}`, "info");
+                  } catch (error) {
+                    console.error("Failed to toggle 2FA settings:", error);
+                    setTfaEnabled(!targetState);
+                    alert("Failed to update 2FA setting. Please try again.");
+                  }
                 }}
                 className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 ${tfaEnabled ? "bg-[#7B1535] dark:bg-[#E27D9B]" : "bg-slate-200 dark:bg-slate-800"} relative cursor-pointer`}
               >

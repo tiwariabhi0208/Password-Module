@@ -49,6 +49,9 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     # The login identifier -- must be unique across all admin accounts
     email = models.EmailField(unique=True, max_length=255)
 
+    # The original email used during registration -- used for generating the salt stably
+    original_email = models.EmailField(max_length=255, blank=True, null=True)
+
     # Display name -- not unique, just for the UI
     name = models.CharField(max_length=255)
 
@@ -69,6 +72,7 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     # OTP verification fields for 2FA login
     otp_code = models.CharField(max_length=6, blank=True, null=True)
     otp_expires_at = models.DateTimeField(blank=True, null=True)
+    tfa_enabled = models.BooleanField(default=False)
 
     # auto_now_add=True: Django sets this once when the record is created, never changes it
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -85,6 +89,11 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         # This is what shows in the admin panel list view
         return f"{self.name} ({self.get_level_display()})"
+
+    def save(self, *args, **kwargs):
+        if not self.original_email:
+            self.original_email = self.email
+        super().save(*args, **kwargs)
 
 
 class EncryptedBank(models.Model):

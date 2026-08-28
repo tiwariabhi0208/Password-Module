@@ -245,6 +245,12 @@ export function DeleteConfirmModal({ bank, onClose, onConfirm }) {
   );
 }
 
+const formatTime = (seconds) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+};
+
 const BANKS = [
   { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F", accountType: "corporate" },
   { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A", accountType: "corporate" },
@@ -432,6 +438,7 @@ export default function App() {
 
         // Save user profile state
         setCurrentAdmin(userData);
+        setTfaEnabled(userData.tfa_enabled || false);
 
         setSuccess("Login successful!");
         setTimeout(() => {
@@ -471,6 +478,7 @@ export default function App() {
 
       // Save user profile state
       setCurrentAdmin(userData);
+      setTfaEnabled(userData.tfa_enabled || false);
 
       setSuccess("Verification successful!");
       setTimeout(() => {
@@ -711,7 +719,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "forgot-step2" || resendTimer <= 0) return;
+    if ((screen !== "forgot-step2" && screen !== "login-otp") || resendTimer <= 0) return;
 
     const id = setInterval(() => {
       setResendTimer((t) => {
@@ -722,9 +730,9 @@ export default function App() {
         }
         return t - 1;
       });
-    }, 1e3);
+    }, 1000);
     return () => clearInterval(id);
-  }, [screen]);
+  }, [screen, canResend]);
 
   const handleOtpChange = (index, value) => {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -993,7 +1001,7 @@ export default function App() {
             <span className="text-sm text-[#7A6068]">
               Resend in{" "}
               <span className="font-mono font-semibold" style={{ color: MAROON }}>
-                0:{String(resendTimer).padStart(2, "0")}
+                {formatTime(resendTimer)}
               </span>
             </span>
           )}
@@ -1355,7 +1363,7 @@ export default function App() {
             <span className="text-sm text-[#7A6068]">
               Resend in{" "}
               <span className="font-mono font-semibold" style={{ color: MAROON }}>
-                0:{String(resendTimer).padStart(2, "0")}
+                {formatTime(resendTimer)}
               </span>
             </span>
           )}
@@ -2909,7 +2917,33 @@ export default function App() {
             </div>
 
             <div className="p-6 space-y-5 text-left bg-slate-50/20 dark:bg-[#101010]/20">
-              {!emailOtpState.otpSent ? (
+              {emailOtpState.success ? (
+                <div className="space-y-5 text-center">
+                  <div 
+                    className="w-14 h-14 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce"
+                    style={{ backgroundColor: `${MAROON}15`, color: MAROON }}
+                  >
+                    ✓
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mb-1.5">
+                      Email Updated Successfully
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed font-semibold">
+                      Your email address has been updated to:
+                      <span className="block mt-1 font-mono font-bold text-slate-700 dark:text-slate-350">{emailOtpState.newEmail}</span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEmailOtpState(null)}
+                    className="w-full h-11 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+                    style={{ backgroundColor: MAROON }}
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : !emailOtpState.otpSent ? (
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
@@ -3022,8 +3056,10 @@ export default function App() {
                             setCurrentAdmin({ ...currentAdmin, email: newEmail });
                           }
 
-                          setEmailOtpState(null);
-                          alert(`Email successfully updated to ${newEmail}!`);
+                          setEmailOtpState({
+                            ...emailOtpState,
+                            success: true
+                          });
                         } catch (error) {
                           console.error("Email update verification failed.", error);
                           alert(error.response?.data?.detail || "Invalid or expired OTP code.");

@@ -8,7 +8,7 @@ class AdminSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Admin
-        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'is_active', 'date_joined')
+        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'is_active', 'date_joined', 'tfa_enabled')
         read_only_fields = ('id', 'date_joined')
 
 

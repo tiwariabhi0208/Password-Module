@@ -54,10 +54,19 @@ api.interceptors.response.use(
     // If refresh fails with 401, we must NOT retry -- that creates an infinite loop.
     const isRefreshEndpoint = originalRequest.url?.includes('/auth/refresh/');
 
+    // Do not attempt to refresh on authentication-related endpoints (like login, verify, salt, etc.)
+    const isAuthRequest = 
+      originalRequest.url?.includes('/auth/login/') ||
+      originalRequest.url?.includes('/auth/login/verify/') ||
+      originalRequest.url?.includes('/auth/salt/') ||
+      originalRequest.url?.includes('/auth/password-reset/') ||
+      originalRequest.url?.includes('/auth/logout/');
+
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&  // _retry flag prevents retrying the same request twice
-      !isRefreshEndpoint          // Never retry the refresh endpoint
+      !isRefreshEndpoint &&       // Never retry the refresh endpoint
+      !isAuthRequest              // Never attempt to silent-refresh on auth endpoints
     ) {
       originalRequest._retry = true; // Mark this request as "already retried"
 
