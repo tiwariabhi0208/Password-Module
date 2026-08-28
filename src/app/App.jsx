@@ -1569,11 +1569,11 @@ export default function App() {
                   </div>
                   <div className="flex-grow min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Administrator</span>
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-tight">Abhishek Tiwari</h3>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-tight">{activeAdmin?.name || "Abhishek Tiwari"}</h3>
                     <span
                       className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-block mt-1.5 border border-slate-200 dark:border-slate-800 bg-[#FBF3F5] dark:bg-[#221015]/60 text-[#7B1535] dark:text-[#E27D9B]"
                     >
-                      Super Admin (Level 3)
+                      {activeAdmin?.level === 3 ? "Level 3 - Super Admin" : activeAdmin?.level === 2 ? "Level 2 - Limited Access" : "Level 1 - Read Only"}
                     </span>
                   </div>
                 </div>
@@ -2928,6 +2928,7 @@ export default function App() {
               setDarkMode={setDarkMode}
               defaultBanks={BANKS}
               masterPassword={password}
+              activeAdmin={activeAdmin}
             />
           )}
 

@@ -18,7 +18,8 @@ export function Settings({
   darkMode,
   setDarkMode,
   defaultBanks,
-  masterPassword
+  masterPassword,
+  activeAdmin
 }) {
   const [actionType, setActionType] = useState(null); // 'export' | 'reset' | null
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -213,24 +214,41 @@ export function Settings({
 
             <div className="h-px bg-slate-100 dark:bg-slate-800" />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
-              <div className="flex flex-col max-w-md">
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Database Maintenance</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-normal mt-0.5">
-                  Reset the vault records database back to the original standard 8 institutional bank accounts.
-                </span>
+            {activeAdmin?.level === 3 ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
+                <div className="flex flex-col max-w-md">
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Database Maintenance</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-normal mt-0.5">
+                    Reset the vault records database back to the original standard 8 institutional bank accounts.
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setActionType("reset");
+                    setConfirmPassword("");
+                    setShowPass(false);
+                  }}
+                  className="h-10 px-5 rounded-xl text-sm font-bold text-[#7B1535] dark:text-[#E27D9B] border-2 border-[#7B1535] dark:border-[#E27D9B] hover:bg-[#FBF3F5] dark:hover:bg-[#221015] transition-all cursor-pointer shrink-0"
+                >
+                  Reset Database
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setActionType("reset");
-                  setConfirmPassword("");
-                  setShowPass(false);
-                }}
-                className="h-10 px-5 rounded-xl text-sm font-bold text-[#7B1535] dark:text-[#E27D9B] border-2 border-[#7B1535] dark:border-[#E27D9B] hover:bg-[#FBF3F5] dark:hover:bg-[#221015] transition-all cursor-pointer shrink-0"
-              >
-                Reset Database
-              </button>
-            </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1 opacity-60">
+                <div className="flex flex-col max-w-md">
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Database Maintenance</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-normal mt-0.5">
+                    Resetting the vault records database is restricted to Level 3 - Super Administrators only.
+                  </span>
+                </div>
+                <button
+                  disabled
+                  className="h-10 px-5 rounded-xl text-sm font-bold text-slate-400 dark:text-slate-600 border-2 border-slate-200 dark:border-slate-800 transition-all cursor-not-allowed shrink-0 bg-slate-50 dark:bg-[#1b1b1b]"
+                >
+                  Reset Restricted
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

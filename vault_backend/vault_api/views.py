@@ -739,7 +739,7 @@ class DatabaseResetView(APIView):
     Destructive database reset endpoint.
     Deletes all EncryptedBank, Entity, and ActivityLog records, leaving Admin accounts intact.
     """
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsSuperAdmin)
 
     def post(self, request, *args, **kwargs):
         EncryptedBank.objects.all().delete()
