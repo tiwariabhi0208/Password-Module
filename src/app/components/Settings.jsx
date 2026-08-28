@@ -6,6 +6,8 @@ import { api } from "../utils/apiClient";
 export function Settings({
   banks,
   setBanks,
+  setActivities,
+  setEntities,
   logActivity,
   tfaEnabled,
   setTfaEnabled,
@@ -21,6 +23,7 @@ export function Settings({
   const [actionType, setActionType] = useState(null); // 'export' | 'reset' | null
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const targetPassword = masterPassword || "admin123";
   const isMatch = confirmPassword === targetPassword;
@@ -36,16 +39,24 @@ export function Settings({
     logActivity("Backup Exported", "Exported vault credentials database to JSON backup", "info");
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!isMatch) return;
     
     if (actionType === "export") {
       handleExportData();
-      alert("Database backup JSON file generated successfully.");
+      setSuccessMessage("Database backup JSON file generated successfully.");
     } else if (actionType === "reset") {
-      setBanks(defaultBanks);
-      logActivity("Database Reset", "Reverted vault database to standard accounts", "warning");
-      alert("Database successfully reset to original standard accounts.");
+      try {
+        await api.post('/auth/reset-database/');
+        setBanks([]);
+        setActivities([]);
+        setEntities([]);
+        logActivity("Database Reset", "Wiped all vault credentials, logs, and entities", "warning");
+        setSuccessMessage("Database successfully reset. All credentials, activity logs, and entities have been erased.");
+      } catch (error) {
+        console.error("Failed to reset database:", error);
+        alert("Failed to reset database. Please try again.");
+      }
     }
     setActionType(null);
     setConfirmPassword("");
@@ -338,6 +349,33 @@ export function Settings({
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Success Notification Modal */}
+      {successMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up text-center">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl mb-4 animate-bounce"
+              style={{ backgroundColor: `${MAROON}15`, color: MAROON }}
+            >
+              ✓
+            </div>
+            <h3 className="text-base font-black text-slate-800 dark:text-slate-200 mb-2">
+              Action Completed
+            </h3>
+            <p className="text-xs text-[#7A6068] dark:text-slate-400 mb-5 leading-relaxed font-semibold">
+              {successMessage}
+            </p>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="w-full h-10 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+              style={{ backgroundColor: MAROON }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

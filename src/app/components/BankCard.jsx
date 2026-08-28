@@ -143,14 +143,9 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit }) {
           </div>
         </div>
 
-        {/* Row 4: Branch Info (Footer) */}
         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-900 text-[9.5px] text-slate-500 dark:text-slate-400 font-bold">
           <div className="truncate">
             Branch: <span className="text-slate-700 dark:text-slate-350 font-extrabold">{branchText}</span>
-          </div>
-          <div className="flex items-center gap-1 text-[8.5px] uppercase text-[#16A34A] dark:text-[#4ADE80] font-black shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#4ADE80] animate-pulse" />
-            Verified
           </div>
         </div>
 

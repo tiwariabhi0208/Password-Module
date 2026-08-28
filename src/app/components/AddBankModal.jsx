@@ -4,7 +4,7 @@ import { MAROON, MAROON_HOVER, BORDER } from "./theme";
 
 export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entities = [] }) {
   const [name, setName] = useState("");
-  const [holder, setHolder] = useState("South Point School, Guwahati");
+  const [holder, setHolder] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [ifsc, setIfsc] = useState("");
   const [branchName, setBranchName] = useState("");
@@ -48,7 +48,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
     if (isOpen) {
       if (bankToEdit) {
         setName(bankToEdit.name || "");
-        setHolder(bankToEdit.holder || "South Point School, Guwahati");
+        setHolder(bankToEdit.holder || "");
         setAccountNumber(bankToEdit.accountNumber || "");
         setIfsc(bankToEdit.ifsc || "");
         setBranchName(bankToEdit.branchName || "");
@@ -60,7 +60,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setPhotoError("");
       } else {
         setName("");
-        setHolder("South Point School, Guwahati");
+        setHolder("");
         setAccountNumber("");
         setIfsc("");
         setBranchName("");
@@ -207,7 +207,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                 <input
                   type="text"
                   required
-                  placeholder="Account Holder's Name"
+                  placeholder="e.g. South Point School, Guwahati"
                   value={holder}
                   onChange={(e) => setHolder(e.target.value)}
                   className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"

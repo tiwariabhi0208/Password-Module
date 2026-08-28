@@ -25,12 +25,16 @@ export const setAccessToken = (token) => {
   accessToken = token;
 };
 
-// ============================================================
-// REQUEST INTERCEPTOR: Attach token before every request
-// ============================================================
 api.interceptors.request.use(
   (config) => {
-    if (accessToken) {
+    const isAuthRequest = 
+      config.url?.includes('/auth/login/') ||
+      config.url?.includes('/auth/login/verify/') ||
+      config.url?.includes('/auth/salt/') ||
+      config.url?.includes('/auth/password-reset/') ||
+      config.url?.includes('/auth/logout/');
+
+    if (accessToken && !isAuthRequest) {
       // The server reads this header: "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5..."
       config.headers.Authorization = `Bearer ${accessToken}`;
     }

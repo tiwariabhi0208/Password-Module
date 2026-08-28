@@ -4,7 +4,8 @@ from .views import (
     LoginView, LoginVerifyView, LogoutView, CustomTokenRefreshView,
     EncryptedBankViewSet, ActivityLogListView, SaltView,
     PasswordResetRequestView, PasswordResetConfirmView,
-    EmailChangeRequestView, EmailChangeConfirmView, TfaToggleView
+    EmailChangeRequestView, EmailChangeConfirmView, TfaToggleView,
+    DatabaseResetView
 )
 
 router = DefaultRouter()
@@ -28,6 +29,7 @@ urlpatterns = [
     path('auth/email-change/', EmailChangeRequestView.as_view(), name='email_change_request'),
     path('auth/email-change/verify/', EmailChangeConfirmView.as_view(), name='email_change_confirm'),
     path('auth/tfa/toggle/', TfaToggleView.as_view(), name='tfa_toggle'),
+    path('auth/reset-database/', DatabaseResetView.as_view(), name='reset_database'),
 
     # Audit Logs
     path('audit-logs/', ActivityLogListView.as_view(), name='audit_logs'),

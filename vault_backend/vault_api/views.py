@@ -666,3 +666,18 @@ class TfaToggleView(APIView):
             "detail": f"2FA has been {'enabled' if request.user.tfa_enabled else 'disabled'} successfully.",
             "tfa_enabled": request.user.tfa_enabled
         }, status=status.HTTP_200_OK)
+
+
+class DatabaseResetView(APIView):
+    """
+    Destructive database reset endpoint.
+    Deletes all EncryptedBank and ActivityLog records, leaving Admin accounts intact.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        EncryptedBank.objects.all().delete()
+        ActivityLog.objects.all().delete()
+        return Response({
+            "detail": "Database successfully reset. All credentials and activity logs have been erased."
+        }, status=status.HTTP_200_OK)

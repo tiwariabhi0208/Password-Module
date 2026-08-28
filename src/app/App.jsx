@@ -251,17 +251,7 @@ const formatTime = (seconds) => {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 };
 
-const BANKS = [
-  { id: 1, name: "HDFC Bank", initial: "H", accountNumber: "50100234567892", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati Main", username: "sps_hdfc_corp", password: "HdfcVault#2026", color: "#1E3A5F", accountType: "corporate" },
-  { id: 2, name: "ICICI Bank", initial: "I", accountNumber: "003305678901234", ifsc: "ICIC0000033", holder: "South Point School, Guwahati", branchName: "Beltola", username: "sps_icici_admin", password: "IciciSecure!99", color: "#7A4C1A", accountType: "corporate" },
-  { id: 3, name: "State Bank of India", initial: "SB", accountNumber: "38012345678901", ifsc: "SBIN0001234", holder: "South Point School, Guwahati", branchName: "Dispur", username: "sps_sbi_vault", password: "SbiPassphrase*12", color: "#1B3F5C", accountType: "corporate" },
-  { id: 4, name: "Axis Bank", initial: "A", accountNumber: "915010012345678", ifsc: "UTIB0001234", holder: "South Point School, Guwahati", branchName: "Ganeshguri", username: "sps_axis_pay", password: "AxisKey#Secure1", color: "#5C2E6B", accountType: "corporate" },
-  { id: 5, name: "Kotak Mahindra Bank", initial: "K", accountNumber: "1234567890123", ifsc: "KKBK0001234", holder: "South Point School, Guwahati", branchName: "Zoo Road", username: "sps_kotak_fin", password: "KotakPass$882", color: "#7A1A1A", accountType: "corporate" },
-  { id: 6, name: "Yes Bank", initial: "Y", accountNumber: "009876543210123", ifsc: "YESB0001234", holder: "South Point School, Guwahati", branchName: "Bhangagarh", username: "sps_yes_corp", password: "YesBank#9021", color: "#1A3F6B", accountType: "corporate" },
-  { id: 7, name: "Punjab National Bank", initial: "PN", accountNumber: "017200012345678", ifsc: "PUNB0012345", holder: "South Point School, Guwahati", branchName: "Maligaon", username: "sps_pnb_vault", password: "PnbToken@Secure", color: "#2C1A5F", accountType: "corporate" },
-  { id: 8, name: "Bank of Baroda", initial: "BB", accountNumber: "05120200000122", ifsc: "BARB0BORIVL", holder: "South Point School, Guwahati", branchName: "Paltan Bazaar", username: "sps_bob_admin", password: "BobPassword!77", color: "#5F3A0A", accountType: "corporate" },
-  { id: 9, name: "HDFC Bank", initial: "H", accountNumber: "50100987654321", ifsc: "HDFC0001234", holder: "South Point School, Guwahati", branchName: "Guwahati East", username: "sps_hdfc_retail", password: "HdfcRetail#99", color: "#1E3A5F", accountType: "retail" }
-];
+const BANKS = [];
 
 export default function App() {
   const [screen, setScreen] = useState("login");
@@ -276,7 +266,7 @@ export default function App() {
   const [focusField, setFocusField] = useState(null);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const [selectedUser, setSelectedUser] = useState("Guwahati Central Campus");
+  const [selectedUser, setSelectedUser] = useState("");
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
@@ -285,11 +275,7 @@ export default function App() {
   const [accessToken, setAccessTokenState] = useState("");
   const [masterKey, setMasterKey] = useState(null);
   const [tempLoginHash, setTempLoginHash] = useState("");
-  const [entities, setEntities] = useState([
-    { id: 1, name: "Guwahati Central Campus", phone: "+91 98450 99999", email: "central.campus@southpoint.edu.in" },
-    { id: 2, name: "Guwahati East Branch", phone: "+91 97060 88888", email: "east.branch@southpoint.edu.in" },
-    { id: 3, name: "Guwahati South Campus", phone: "+91 88760 77777", email: "south.campus@southpoint.edu.in" }
-  ]);
+  const [entities, setEntities] = useState([]);
   const [admins, setAdmins] = useState([
     {
       name: "Abhishek Tiwari",
@@ -297,7 +283,7 @@ export default function App() {
       password: "admin",
       level: 3,
       dept: "Information Security & IT Administration",
-      campus: "Guwahati Central Campus, Assam",
+      campus: "",
       clearance: "Level 3 - Super Admin",
       designation: "Director of IT Infrastructure",
       session_id: "SPS-ADM-001-ABHISHEK",
@@ -318,6 +304,7 @@ export default function App() {
   const [entitiesScrollProgress, setEntitiesScrollProgress] = useState(0);
   const [pendingTabChange, setPendingTabChange] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
+  const [showEntityWarning, setShowEntityWarning] = useState(false);
   const [duplicateEntityModal, setDuplicateEntityModal] = useState(null);
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
@@ -599,6 +586,7 @@ export default function App() {
       !!selectedGroup || 
       !!entityConfirmModal || 
       !!duplicateEntityModal || 
+      !!showEntityWarning || 
       !!emailOtpState || 
       !!pendingTabChange;
 
@@ -619,6 +607,7 @@ export default function App() {
     selectedGroup,
     entityConfirmModal,
     duplicateEntityModal,
+    showEntityWarning,
     emailOtpState,
     pendingTabChange
   ]);
@@ -674,6 +663,14 @@ export default function App() {
     }
   }, [banks, selectedGroup]);
 
+  const handleOpenAddModal = () => {
+    if (entities.length === 0) {
+      setShowEntityWarning(true);
+    } else {
+      setAddModalOpen(true);
+    }
+  };
+
   const logActivity = (action, details, type) => {
     setActivities((prev) => [
       {
@@ -681,7 +678,7 @@ export default function App() {
         time: "Just now",
         action,
         details,
-        user: selectedUser,
+        user: activeAdmin ? activeAdmin.name : "System",
         type,
         ip: "192.168.1.45"
       },
@@ -1415,7 +1412,7 @@ export default function App() {
           {activeTab === "vault" && (
             <>
               {/* Header Title section */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-slate-800" style={{ borderColor: BORDER }}>
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-slate-800" style={{ borderColor: BORDER }}>
                 <div>
                   <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Account Vault</h1>
                   <p className="text-sm text-[#7A6068] mt-0.5 font-medium">
@@ -1426,43 +1423,52 @@ export default function App() {
                 {/* Highly Visible Active User Indicator */}
                 <div className="flex items-center gap-2.5">
                   <span className="text-[11px] font-extrabold text-[#7A6068] dark:text-slate-400 uppercase tracking-widest shrink-0">Active Session:</span>
-                  <div className="relative">
-                    <button
-                      onClick={() => {
-                        const nextVal = !userDropdownOpen;
-                        setUserDropdownOpen(nextVal);
-                        if (nextVal) {
-                          setAvatarMenuOpen(false);
-                        }
-                      }}
-                      className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
-                    >
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                      </span>
-                      Viewing: {selectedUser}
-                      <ChevronDown size={15} style={{ color: GOLD }} />
-                    </button>
-
-                    {userDropdownOpen && (
+                  <div className="relative z-30">
+                    {entities.length === 0 ? (
+                      <div className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-200 dark:border-slate-800/80 text-sm font-extrabold bg-slate-100/50 dark:bg-slate-900/30 text-slate-500 dark:text-slate-400 select-none">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600" />
+                        No Entity Exists
+                      </div>
+                    ) : (
                       <>
-                        <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
-                          {entities.map((entity) => (
-                            <button
-                              key={entity.id}
-                              onClick={() => {
-                                setSelectedUser(entity.name);
-                                setUserDropdownOpen(false);
-                              }}
-                              className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${entity.name === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
-                              style={entity.name === selectedUser ? { color: MAROON } : { color: "#1A0810" }}
-                            >
-                              <span className="dark:text-slate-200">{entity.name}</span>
-                            </button>
-                          ))}
-                        </div>
+                        <button
+                          onClick={() => {
+                            const nextVal = !userDropdownOpen;
+                            setUserDropdownOpen(nextVal);
+                            if (nextVal) {
+                              setAvatarMenuOpen(false);
+                            }
+                          }}
+                          className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
+                        >
+                          <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                          </span>
+                          {selectedUser}
+                          <ChevronDown size={15} style={{ color: GOLD }} />
+                        </button>
+
+                        {userDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
+                              {entities.map((entity) => (
+                                <button
+                                  key={entity.id}
+                                  onClick={() => {
+                                    setSelectedUser(entity.name);
+                                    setUserDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${entity.name === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
+                                  style={entity.name === selectedUser ? { color: MAROON } : { color: "#1A0810" }}
+                                >
+                                  <span className="dark:text-slate-200">{entity.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
@@ -1566,7 +1572,7 @@ export default function App() {
 
                   {/* Add Account Button */}
                   <button
-                    onClick={() => setAddModalOpen(true)}
+                    onClick={handleOpenAddModal}
                     className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md cursor-pointer hover:scale-102"
                     style={{ backgroundColor: MAROON }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
@@ -1579,14 +1585,31 @@ export default function App() {
               </div>
 
               {/* Main Content Area */}
-              {filteredBanks.length === 0 ? (
-                /* Empty State */
-                <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-dashed text-center p-6" style={{ borderColor: BORDER }}>
-                  <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 mb-3">
+              {banks.length === 0 ? (
+                /* Fully Empty State */
+                <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-[#101010] rounded-2xl border border-dashed text-center p-6" style={{ borderColor: BORDER }}>
+                  <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-900/40 flex items-center justify-center text-slate-500 mb-3">
                     <AlertCircle size={24} />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800">No accounts match your search</h3>
-                  <p className="text-xs text-[#7A6068] mt-1 max-w-xs leading-relaxed">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">No accounts linked</h3>
+                  <p className="text-xs text-[#7A6068] dark:text-slate-400 mt-1 max-w-xs leading-relaxed font-semibold">
+                    There are currently no bank credentials stored in the vault terminal. Click below to add your first account.
+                  </p>
+                  <button
+                    onClick={handleOpenAddModal}
+                    className="mt-4 px-4 py-2 bg-[#7B1535] hover:bg-[#661128] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                  >
+                    Add Account
+                  </button>
+                </div>
+              ) : filteredBanks.length === 0 ? (
+                /* Search Empty State */
+                <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-[#101010] rounded-2xl border border-dashed text-center p-6" style={{ borderColor: BORDER }}>
+                  <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center text-red-500 mb-3">
+                    <AlertCircle size={24} />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">No accounts match your search</h3>
+                  <p className="text-xs text-[#7A6068] dark:text-slate-400 mt-1 max-w-xs leading-relaxed font-semibold">
                     Try checking your spelling or search terms, or clear the search to view all bank credentials.
                   </p>
                   <button
@@ -1808,6 +1831,10 @@ export default function App() {
                                   message: `Are you sure you want to delete and unregister "${entity.name}" from the system database?`,
                                   onConfirm: () => {
                                     setEntities(entities.filter(e => e.id !== entity.id));
+                                    if (selectedUser === entity.name) {
+                                      const remaining = entities.filter(e => e.id !== entity.id);
+                                      setSelectedUser(remaining.length > 0 ? remaining[0].name : "");
+                                    }
                                     logActivity("Entity Removed", `Removed entity: ${entity.name}`, "warning");
                                   }
                                 });
@@ -1909,6 +1936,9 @@ export default function App() {
                               phone
                             };
                             setEntities([...entities, newEntity]);
+                            if (selectedUser === "") {
+                              setSelectedUser(name);
+                            }
                             logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
                             targetForm.reset();
                           }
@@ -2509,7 +2539,7 @@ export default function App() {
                             password: passVal,
                             level: levelVal,
                             dept: departments[levelVal],
-                            campus: "Guwahati Central Campus, Assam",
+                            campus: "",
                             clearance: clearances[levelVal],
                             designation: designations[levelVal],
                             session_id: `SPS-ADM-00${admins.length + 1}-${name.split(" ")[0].toUpperCase()}`,
@@ -2754,6 +2784,8 @@ export default function App() {
             <Settings
               banks={banks}
               setBanks={setBanks}
+              setActivities={setActivities}
+              setEntities={setEntities}
               logActivity={logActivity}
               tfaEnabled={tfaEnabled}
               setTfaEnabled={setTfaEnabled}
@@ -2834,6 +2866,40 @@ export default function App() {
           onClose={() => setDeleteBank(null)}
           onConfirm={() => handleDeleteBank(deleteBank.id)}
         />
+      )}
+
+      {showEntityWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up text-center" style={{ borderColor: BORDER }}>
+            <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center mx-auto text-amber-500 mb-4 animate-pulse text-lg font-bold">
+              ⚠️
+            </div>
+            <h3 className="text-base font-black text-slate-800 dark:text-slate-200 mb-2">
+              Registered Entity Required
+            </h3>
+            <p className="text-xs text-[#7A6068] dark:text-slate-400 mb-5 leading-relaxed font-semibold">
+              You must register at least one school branch or entity before linking bank accounts. Please go to "My Profile" to add an entity.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowEntityWarning(false)}
+                className="flex-grow h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 transition-all border-none cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowEntityWarning(false);
+                  setActiveTab("entities");
+                }}
+                className="flex-grow h-10 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+                style={{ backgroundColor: MAROON }}
+              >
+                Go to Register Entity
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {entityConfirmModal && (

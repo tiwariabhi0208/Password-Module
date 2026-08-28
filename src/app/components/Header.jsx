@@ -9,7 +9,7 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
 
   return (
     <nav
-      className="h-20 flex items-center px-6 justify-between sticky top-0 z-20 shadow-md"
+      className="h-20 flex items-center px-6 justify-between sticky top-0 z-50 shadow-md"
       style={{ backgroundColor: MAROON, borderBottom: `2.5px solid ${GOLD}` }}
     >
       {/* Brand */}

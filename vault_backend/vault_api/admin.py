@@ -51,4 +51,5 @@ class ActivityLogAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        # Allow superusers to delete logs when resetting database
+        return request.user.is_superuser
