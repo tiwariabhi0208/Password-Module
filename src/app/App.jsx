@@ -306,6 +306,17 @@ export default function App() {
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [showEntityWarning, setShowEntityWarning] = useState(false);
   const [duplicateEntityModal, setDuplicateEntityModal] = useState(null);
+  const [bulkEntities, setBulkEntities] = useState([{ name: "", phone: "", email: "" }]);
+  const [validationError, setValidationError] = useState(null);
+
+  const handleBulkChange = (index, field, value) => {
+    setBulkEntities(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
   const [activeTab, setActiveTab] = useState("vault");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
@@ -320,13 +331,30 @@ export default function App() {
     return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
   });
 
+  // Auto-select first entity email if none is selected
+  useEffect(() => {
+    if (selectedUser === "" && entities.length > 0) {
+      setSelectedUser(entities[0].email);
+    }
+  }, [entities, selectedUser]);
+
   // Load all credentials on mount or token change
   useEffect(() => {
     if (accessToken && masterKey) {
+      fetchEntities();
       fetchBanks();
       fetchActivities();
     }
   }, [accessToken, masterKey]);
+
+  const fetchEntities = async () => {
+    try {
+      const response = await api.get('/entities/');
+      setEntities(response.data);
+    } catch (error) {
+      console.error("Failed to fetch entities:", error);
+    }
+  };
 
   const fetchBanks = async () => {
     try {
@@ -1431,44 +1459,55 @@ export default function App() {
                       </div>
                     ) : (
                       <>
-                        <button
-                          onClick={() => {
-                            const nextVal = !userDropdownOpen;
-                            setUserDropdownOpen(nextVal);
-                            if (nextVal) {
-                              setAvatarMenuOpen(false);
-                            }
-                          }}
-                          className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
-                        >
-                          <span className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                          </span>
-                          {selectedUser}
-                          <ChevronDown size={15} style={{ color: GOLD }} />
-                        </button>
+                        {(() => {
+                          const activeEntity = entities.find(e => e.email === selectedUser);
+                          const activeDisplayName = activeEntity ? activeEntity.name : "Select Entity";
 
-                        {userDropdownOpen && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
-                              {entities.map((entity) => (
-                                <button
-                                  key={entity.id}
-                                  onClick={() => {
-                                    setSelectedUser(entity.name);
-                                    setUserDropdownOpen(false);
-                                  }}
-                                  className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${entity.name === selectedUser ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
-                                  style={entity.name === selectedUser ? { color: MAROON } : { color: "#1A0810" }}
-                                >
-                                  <span className="dark:text-slate-200">{entity.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
+                          return (
+                            <>
+                              <button
+                                onClick={() => {
+                                  const nextVal = !userDropdownOpen;
+                                  setUserDropdownOpen(nextVal);
+                                  if (nextVal) {
+                                    setAvatarMenuOpen(false);
+                                  }
+                                }}
+                                className="flex items-center gap-2 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
+                              >
+                                {activeDisplayName}
+                                <ChevronDown size={15} style={{ color: GOLD }} />
+                              </button>
+
+                              {userDropdownOpen && (
+                                <>
+                                  <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
+                                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
+                                    {entities.map((entity) => {
+                                      const isSelected = entity.email === selectedUser;
+                                      return (
+                                        <button
+                                          key={entity.id}
+                                          onClick={() => {
+                                            setSelectedUser(entity.email);
+                                            setUserDropdownOpen(false);
+                                          }}
+                                          className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${isSelected ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
+                                          style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
+                                        >
+                                          <div className="flex flex-col text-left">
+                                            <span className="dark:text-slate-200">{entity.name}</span>
+                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5 truncate">{entity.email}</span>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
                       </>
                     )}
                   </div>
@@ -1829,13 +1868,21 @@ export default function App() {
                                 setEntityConfirmModal({
                                   title: "Delete Entity Confirmation",
                                   message: `Are you sure you want to delete and unregister "${entity.name}" from the system database?`,
-                                  onConfirm: () => {
-                                    setEntities(entities.filter(e => e.id !== entity.id));
-                                    if (selectedUser === entity.name) {
-                                      const remaining = entities.filter(e => e.id !== entity.id);
-                                      setSelectedUser(remaining.length > 0 ? remaining[0].name : "");
+                                  onConfirm: async () => {
+                                    try {
+                                      await api.delete(`/entities/${entity.id}/`);
+                                      setEntities(prev => {
+                                        const updated = prev.filter(e => e.id !== entity.id);
+                                        if (selectedUser === entity.email) {
+                                          setSelectedUser(updated.length > 0 ? updated[0].email : "");
+                                        }
+                                        return updated;
+                                      });
+                                      fetchActivities();
+                                    } catch (error) {
+                                      console.error("Failed to delete entity:", error);
+                                      alert("Failed to delete entity. You may not have permission.");
                                     }
-                                    logActivity("Entity Removed", `Removed entity: ${entity.name}`, "warning");
                                   }
                                 });
                               }}
@@ -1877,150 +1924,237 @@ export default function App() {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      const formData = new FormData(e.target);
-                      const name = formData.get("entityName").trim();
-                      const email = formData.get("entityEmail").trim();
-                      const phone = formData.get("entityPhone").trim();
-
-                      if (!name || !email || !phone) {
-                        alert("All fields are required.");
+                      
+                      // 1. Validate all rows are filled
+                      const hasEmpty = bulkEntities.some(ent => !ent.name.trim() || !ent.phone.trim() || !ent.email.trim());
+                      if (hasEmpty) {
+                        setValidationError("All fields are required in all rows.");
                         return;
                       }
 
-                      // Validate that entity name does not equal any admin user (case-insensitive)
-                      const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
-                      if (isAdminUser) {
-                        alert(`Error: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
-                        return;
+                      // 2. Validate row details
+                      for (let i = 0; i < bulkEntities.length; i++) {
+                        const ent = bulkEntities[i];
+                        const name = ent.name.trim();
+                        const phone = ent.phone.trim();
+                        const email = ent.email.trim();
+
+                        const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
+                        if (isAdminUser) {
+                          setValidationError(`Error in row ${i + 1}: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
+                          return;
+                        }
+
+                        const ADMIN_EMAILS = [
+                          "priya.sharma@southpoint.edu.in",
+                          "rahul.verma@southpoint.edu.in",
+                          "anita.nair@southpoint.edu.in",
+                          "deepak.mehta@southpoint.edu.in"
+                        ];
+                        const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
+                        if (isAdminEmail) {
+                          setValidationError(`Error in row ${i + 1}: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
+                          return;
+                        }
+
+                        if (!email.toLowerCase().endsWith("@gmail.com")) {
+                          setValidationError(`Error in row ${i + 1}: Email must be a valid @gmail.com address.`);
+                          return;
+                        }
+
+                        const isTenDigits = /^\d{10}$/.test(phone);
+                        if (!isTenDigits) {
+                          setValidationError(`Error in row ${i + 1}: Phone number must be exactly 10 digits (e.g. 9876543210).`);
+                          return;
+                        }
                       }
 
-                      // Validate that entity email does not equal any admin user email
-                      const ADMIN_EMAILS = [
-                        "priya.sharma@southpoint.edu.in",
-                        "rahul.verma@southpoint.edu.in",
-                        "anita.nair@southpoint.edu.in",
-                        "deepak.mehta@southpoint.edu.in"
-                      ];
-                      const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
-                      if (isAdminEmail) {
-                        alert(`Error: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
-                        return;
-                      }
+                      // 3. Check for duplicates within bulkEntities itself (email OR phone match)
+                      let internalEmailConflict = null;
+                      let internalPhoneConflict = null;
 
-                      // Validate email contains @gmail.com
-                      if (!email.toLowerCase().endsWith("@gmail.com")) {
-                        alert("Error: Email must be a valid @gmail.com address.");
-                        return;
-                      }
-
-                      // Validate phone is exactly 10 digits
-                      const isTenDigits = /^\d{10}$/.test(phone);
-                      if (!isTenDigits) {
-                        alert("Error: Phone number must be exactly 10 digits (e.g. 9876543210).");
-                        return;
-                      }
-
-                      const targetForm = e.target;
-                      const nameExists = entities.some(ent => ent.name.toLowerCase() === name.toLowerCase());
-                      const emailExists = entities.some(ent => ent.email.toLowerCase() === email.toLowerCase());
-
-                      const proceedWithRegistration = () => {
-                        setEntityConfirmModal({
-                          title: "Confirm Registration",
-                          message: `Are you sure you want to register "${name}" as a new school entity?`,
-                          onConfirm: () => {
-                            const newEntity = {
-                              id: Date.now(),
-                              name,
-                              email,
-                              phone
-                            };
-                            setEntities([...entities, newEntity]);
-                            if (selectedUser === "") {
-                              setSelectedUser(name);
-                            }
-                            logActivity("Entity Registered", `Registered new entity: ${name}`, "updated");
-                            targetForm.reset();
+                      for (let i = 0; i < bulkEntities.length; i++) {
+                        for (let j = i + 1; j < bulkEntities.length; j++) {
+                          if (bulkEntities[i].email.trim().toLowerCase() === bulkEntities[j].email.trim().toLowerCase()) {
+                            internalEmailConflict = bulkEntities[i].email.trim();
                           }
-                        });
-                      };
-
-                      if (nameExists || emailExists) {
-                        const duplicateField = nameExists && emailExists
-                          ? "name and email address"
-                          : nameExists
-                            ? "name"
-                            : "email address";
-
-                        setDuplicateEntityModal({
-                          title: "Duplicate Entity Detected",
-                          message: `An entity with this identical ${duplicateField} already exists in our system. Registering duplicate entities may cause credentials mapping conflicts and administrative confusion. Are you sure you want to proceed and enter another record with similar details?`,
-                          onConfirm: proceedWithRegistration
-                        });
-                      } else {
-                        proceedWithRegistration();
+                          if (bulkEntities[i].phone.trim() === bulkEntities[j].phone.trim()) {
+                            internalPhoneConflict = bulkEntities[i].phone.trim();
+                          }
+                        }
                       }
+
+                      if (internalEmailConflict || internalPhoneConflict) {
+                        const conflictItems = [];
+                        if (internalEmailConflict) conflictItems.push(`Email: ${internalEmailConflict}`);
+                        if (internalPhoneConflict) conflictItems.push(`Phone number: ${internalPhoneConflict}`);
+
+                        setValidationError(
+                          <div className="text-left space-y-2.5">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200">
+                              The following details are found to be matching/common in your bulk entries:
+                            </p>
+                            <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
+                              {conflictItems.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                        return;
+                      }
+
+                      // 4. Check for duplicates in existing database (email OR phone match)
+                      for (let i = 0; i < bulkEntities.length; i++) {
+                        const ent = bulkEntities[i];
+                        const email = ent.email.trim().toLowerCase();
+                        const phone = ent.phone.trim();
+
+                        const emailExists = entities.some(ex => ex.email.toLowerCase() === email);
+                        const phoneExists = entities.some(ex => ex.phone === phone);
+
+                        if (emailExists || phoneExists) {
+                          const conflictItems = [];
+                          if (emailExists) conflictItems.push(`Email: ${ent.email}`);
+                          if (phoneExists) conflictItems.push(`Phone number: ${ent.phone}`);
+
+                          setValidationError(
+                            <div className="text-left space-y-2.5">
+                              <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                The following details for row {i + 1} are found to be matching/common in the database:
+                              </p>
+                              <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
+                                {conflictItems.map((item, idx) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                          return;
+                        }
+                      }
+
+                      setEntityConfirmModal({
+                        title: "Confirm Bulk Registration",
+                        message: `Are you sure you want to register these ${bulkEntities.length} entities?`,
+                        onConfirm: async () => {
+                          try {
+                            const payload = bulkEntities.map(ent => ({
+                              name: ent.name.trim(),
+                              email: ent.email.trim(),
+                              phone: ent.phone.trim()
+                            }));
+                            const response = await api.post('/entities/bulk/', payload);
+                            const newEntitiesList = response.data;
+                            setEntities(prev => {
+                              const updated = [...prev, ...newEntitiesList];
+                              if (selectedUser === "" && updated.length > 0) {
+                                setSelectedUser(updated[0].email);
+                              }
+                              return updated;
+                            });
+                            fetchActivities();
+                            setBulkEntities([{ name: "", phone: "", email: "" }]); // Reset to 1 empty row
+                          } catch (error) {
+                            console.error("Bulk registration failed:", error);
+                            const errMsg = error.response?.data?.error || "Registration failed. Please try again.";
+                            setValidationError(errMsg);
+                          }
+                        }
+                      });
                     }}
-                    className="space-y-4 text-left"
+                    className="space-y-6 text-left"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                          Full Name / Entity Name
-                        </label>
-                        <input
-                          type="text"
-                          name="entityName"
-                          required
-                          placeholder="Your Entity Name"
-                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                          style={{ borderColor: BORDER }}
-                        />
-                      </div>
+                    <div className="space-y-4">
+                      {bulkEntities.map((ent, idx) => (
+                        <div key={idx} className="relative bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm space-y-4 animate-fade-in" style={{ borderColor: BORDER }}>
+                          {bulkEntities.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBulkEntities(prev => prev.filter((_, i) => i !== idx));
+                              }}
+                              className="absolute top-4 right-4 text-xs font-bold text-red-600 hover:text-red-750 bg-transparent border-none cursor-pointer hover:underline"
+                            >
+                              Remove Row
+                            </button>
+                          )}
+                          <div className="text-xs font-black uppercase text-[#7B1535] dark:text-[#E27D9B] tracking-wider mb-1">
+                            Entity Row #{idx + 1}
+                          </div>
 
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                          Phone Number
-                        </label>
-                        <input
-                          type="tel"
-                          name="entityPhone"
-                          required
-                          minLength={10}
-                          maxLength={10}
-                          onInput={(e) => {
-                            e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          }}
-                          placeholder="Your Phone Number"
-                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
-                          style={{ borderColor: BORDER }}
-                        />
-                      </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                                Full Name / Entity Name
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={ent.name}
+                                onChange={(e) => handleBulkChange(idx, "name", e.target.value)}
+                                placeholder="e.g. Guwahati Central Campus"
+                                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                                style={{ borderColor: BORDER }}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                                Phone Number
+                              </label>
+                              <input
+                                type="tel"
+                                required
+                                minLength={10}
+                                maxLength={10}
+                                value={ent.phone}
+                                onChange={(e) => handleBulkChange(idx, "phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                placeholder="e.g. 9876543210"
+                                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                                style={{ borderColor: BORDER }}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                              Email ID
+                            </label>
+                            <input
+                              type="email"
+                              required
+                              value={ent.email}
+                              onChange={(e) => handleBulkChange(idx, "email", e.target.value)}
+                              placeholder="e.g. branch@gmail.com"
+                              className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                              style={{ borderColor: BORDER }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                        Email ID
-                      </label>
-                      <input
-                        type="email"
-                        name="entityEmail"
-                        required
-                        placeholder="Your Email"
-                        className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
-                        style={{ borderColor: BORDER }}
-                      />
+                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBulkEntities(prev => [...prev, { name: "", phone: "", email: "" }]);
+                        }}
+                        className="flex-grow h-11 border border-dashed rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 bg-transparent border-slate-300 dark:border-slate-800 text-[#7B1535] dark:text-[#E27D9B]"
+                      >
+                        + Add More Entities
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-grow h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 border-none"
+                        style={{ backgroundColor: MAROON }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                      >
+                        Register All Entities
+                      </button>
                     </div>
-
-                    <button
-                      type="submit"
-                      className="w-full h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md mt-2 flex items-center justify-center gap-1.5 border-none"
-                      style={{ backgroundColor: MAROON }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-                    >
-                      Register Entity
-                    </button>
                   </form>
                 </div>
               </div>
@@ -2878,7 +3012,7 @@ export default function App() {
               Registered Entity Required
             </h3>
             <p className="text-xs text-[#7A6068] dark:text-slate-400 mb-5 leading-relaxed font-semibold">
-              You must register at least one school branch or entity before linking bank accounts. Please go to "My Profile" to add an entity.
+              You must register at least one school branch or entity before linking bank accounts. Please go to "Register Entity" to add an entity.
             </p>
             <div className="flex gap-3">
               <button
@@ -2898,6 +3032,29 @@ export default function App() {
                 Go to Register Entity
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {validationError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up text-center" style={{ borderColor: BORDER }}>
+            <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center mx-auto text-red-500 mb-4 animate-pulse text-lg font-bold">
+              ⚠️
+            </div>
+            <h3 className="text-base font-black text-slate-800 dark:text-slate-200 mb-2">
+              Registration Validation Error
+            </h3>
+            <div className="text-xs text-[#7A6068] dark:text-slate-400 mb-5 leading-relaxed font-semibold">
+              {validationError}
+            </div>
+            <button
+              onClick={() => setValidationError(null)}
+              className="w-full h-10 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+              style={{ backgroundColor: MAROON }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

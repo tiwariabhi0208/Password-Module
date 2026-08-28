@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.utils import timezone
 from rest_framework import permissions, viewsets, generics, status
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,11 +14,11 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
-from .models import Admin, EncryptedBank, ActivityLog
+from .models import Admin, EncryptedBank, ActivityLog, Entity
 from .email_utils import send_otp_email
 from .serializers import (
     AdminSerializer, AdminCreateSerializer,
-    EncryptedBankSerializer, ActivityLogSerializer
+    EncryptedBankSerializer, ActivityLogSerializer, EntitySerializer
 )
 
 
@@ -671,13 +672,104 @@ class TfaToggleView(APIView):
 class DatabaseResetView(APIView):
     """
     Destructive database reset endpoint.
-    Deletes all EncryptedBank and ActivityLog records, leaving Admin accounts intact.
+    Deletes all EncryptedBank, Entity, and ActivityLog records, leaving Admin accounts intact.
     """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         EncryptedBank.objects.all().delete()
+        Entity.objects.all().delete()
         ActivityLog.objects.all().delete()
         return Response({
-            "detail": "Database successfully reset. All credentials and activity logs have been erased."
+            "detail": "Database successfully reset. All credentials, registered entities, and activity logs have been erased."
         }, status=status.HTTP_200_OK)
+
+
+class EntityViewSet(viewsets.ModelViewSet):
+    """
+    CRUD Viewset for Entity.
+    """
+    queryset = Entity.objects.all().order_by('name')
+    serializer_class = EntitySerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsReadOnlyOrAbove]
+        else:
+            permission_classes = [IsSuperAdmin]
+        return [permission() for permission in permission_classes]
+
+    def perform_destroy(self, instance):
+        entity_name = instance.name
+        instance.delete()
+        ActivityLog.objects.create(
+            action="Entity Removed",
+            details=f"Unregistered school entity: {entity_name}",
+            user=self.request.user,
+            user_snapshot=self.request.user.name,
+            log_type="warning",
+            ip_address=get_client_ip(self.request)
+        )
+
+    @action(detail=False, methods=['post'], url_path='bulk')
+    def bulk(self, request):
+        """
+        Bulk register entities.
+        Expects a list of entity objects.
+        """
+        data = request.data
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of entities"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Validation
+        for idx, ent in enumerate(data):
+            name = ent.get('name', '').strip()
+            email = ent.get('email', '').strip()
+            phone = ent.get('phone', '').strip()
+
+            if not name or not email or not phone:
+                return Response({"error": f"Row {idx+1}: All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not email.lower().endswith("@gmail.com"):
+                return Response({"error": f"Row {idx+1}: Email must end with @gmail.com."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not phone.isdigit() or len(phone) != 10:
+                return Response({"error": f"Row {idx+1}: Phone must be exactly 10 digits."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check database duplicates
+            if Entity.objects.filter(email__iexact=email).exists():
+                return Response({"error": f"Row {idx+1}: The email address '{email}' is already registered to another entity."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if Entity.objects.filter(phone=phone).exists():
+                return Response({"error": f"Row {idx+1}: The phone number '{phone}' is already registered to another entity."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check internal duplicates in payload
+        emails = [ent.get('email', '').strip().lower() for ent in data]
+        phones = [ent.get('phone', '').strip() for ent in data]
+        if len(set(emails)) != len(emails):
+            return Response({"error": "Duplicate email addresses detected in your bulk entries. Each entity must have a unique email address."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(set(phones)) != len(phones):
+            return Response({"error": "Duplicate phone numbers detected in your bulk entries. Each entity must have a unique phone number."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Save
+        created_entities = []
+        for ent in data:
+            new_entity = Entity.objects.create(
+                name=ent.get('name', '').strip(),
+                email=ent.get('email', '').strip(),
+                phone=ent.get('phone', '').strip()
+            )
+            created_entities.append(new_entity)
+
+        # 3. Log activity
+        ActivityLog.objects.create(
+            action="Entities Registered (Bulk)",
+            details=f"Registered {len(created_entities)} new entities in bulk.",
+            user=request.user,
+            user_snapshot=request.user.name,
+            log_type="success",
+            ip_address=get_client_ip(request)
+        )
+
+        serializer = self.get_serializer(created_entities, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

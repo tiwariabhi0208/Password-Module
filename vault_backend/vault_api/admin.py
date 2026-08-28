@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Admin, EncryptedBank, ActivityLog
+from .models import Admin, EncryptedBank, ActivityLog, Entity
 
 
 @admin.register(Admin)
@@ -53,3 +53,10 @@ class ActivityLogAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Allow superusers to delete logs when resetting database
         return request.user.is_superuser
+
+
+@admin.register(Entity)
+class EntityAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'phone', 'created_at')
+    search_fields = ('name', 'email', 'phone')
+    ordering = ('name',)

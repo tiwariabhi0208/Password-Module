@@ -5,7 +5,7 @@ from .views import (
     EncryptedBankViewSet, ActivityLogListView, SaltView,
     PasswordResetRequestView, PasswordResetConfirmView,
     EmailChangeRequestView, EmailChangeConfirmView, TfaToggleView,
-    DatabaseResetView
+    DatabaseResetView, EntityViewSet
 )
 
 router = DefaultRouter()
@@ -16,6 +16,7 @@ router = DefaultRouter()
 # PUT/PATCH /api/v1/vault/<id>/ -> update
 # DELETE /api/v1/vault/<id>/ -> destroy
 router.register(r'vault', EncryptedBankViewSet, basename='vault')
+router.register(r'entities', EntityViewSet, basename='entities')
 
 urlpatterns = [
     # Auth Endpoints

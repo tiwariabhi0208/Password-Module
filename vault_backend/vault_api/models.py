@@ -1,5 +1,7 @@
 import uuid
+import re
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
@@ -186,3 +188,32 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.timestamp} | {self.action} | {self.user_snapshot}"
+
+
+class Entity(models.Model):
+    # UUID primary key -- unguessable
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True, max_length=255)
+    phone = models.CharField(max_length=15)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.email})"
+
+    def clean(self):
+        # 1. Validate email ends with @gmail.com
+        if self.email and not self.email.lower().endswith("@gmail.com"):
+            raise ValidationError({'email': "Email must be a valid @gmail.com address."})
+
+        # 2. Validate phone is exactly 10 digits
+        if self.phone:
+            phone_clean = re.sub(r'\D', '', self.phone)
+            if len(phone_clean) != 10:
+                raise ValidationError({'phone': "Phone number must be exactly 10 digits."})
+            self.phone = phone_clean
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Force model-level validation (e.g. clean) before saving
+        super().save(*args, **kwargs)
+

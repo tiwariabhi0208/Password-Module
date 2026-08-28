@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Admin, EncryptedBank, ActivityLog
+from .models import Admin, EncryptedBank, ActivityLog, Entity
 
 class AdminSerializer(serializers.ModelSerializer):
     """
@@ -53,3 +53,10 @@ class ActivityLogSerializer(serializers.ModelSerializer):
         model = ActivityLog
         fields = ('id', 'timestamp', 'action', 'details', 'user', 'user_snapshot', 'log_type', 'ip_address')
         read_only_fields = fields
+
+
+class EntitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entity
+        fields = ('id', 'name', 'email', 'phone', 'created_at')
+        read_only_fields = ('id', 'created_at')
