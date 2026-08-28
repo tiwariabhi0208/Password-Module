@@ -303,6 +303,7 @@ export default function App() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [entitiesScrollProgress, setEntitiesScrollProgress] = useState(0);
   const [pendingTabChange, setPendingTabChange] = useState(null);
+  const [adminSuccessMessage, setAdminSuccessMessage] = useState(null);
   const [entityConfirmModal, setEntityConfirmModal] = useState(null);
   const [showEntityWarning, setShowEntityWarning] = useState(false);
   const [duplicateEntityModal, setDuplicateEntityModal] = useState(null);
@@ -616,6 +617,8 @@ export default function App() {
       !!duplicateEntityModal || 
       !!showEntityWarning || 
       !!emailOtpState || 
+      !!validationError ||
+      !!adminSuccessMessage ||
       !!pendingTabChange;
 
     if (isAnyModalOpen) {
@@ -637,6 +640,8 @@ export default function App() {
     duplicateEntityModal,
     showEntityWarning,
     emailOtpState,
+    validationError,
+    adminSuccessMessage,
     pendingTabChange
   ]);
 
@@ -2674,10 +2679,10 @@ export default function App() {
                             setAdmins([...admins, response.data]);
                             logActivity("Admin Registered", `Registered new administrator: ${name} (Level ${levelVal})`, "updated");
                             targetForm.reset();
-                            alert(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
+                            setAdminSuccessMessage(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
                           } catch (err) {
                             console.error("Admin registration failed.", err);
-                            alert(err.response?.data?.email?.[0] || err.response?.data?.detail || "Failed to register administrator. Please try again.");
+                            setValidationError(err.response?.data?.email?.[0] || err.response?.data?.detail || "Failed to register administrator. Please try again.");
                           }
                         }
                       });
@@ -3042,6 +3047,29 @@ export default function App() {
             </div>
             <button
               onClick={() => setValidationError(null)}
+              className="w-full h-10 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
+              style={{ backgroundColor: MAROON }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {adminSuccessMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up text-center" style={{ borderColor: BORDER }}>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center mx-auto text-emerald-500 mb-4 animate-pulse text-lg font-bold">
+              ✓
+            </div>
+            <h3 className="text-base font-black text-slate-800 dark:text-slate-200 mb-2">
+              Registration Successful
+            </h3>
+            <p className="text-xs text-[#7A6068] dark:text-slate-400 mb-5 leading-relaxed font-semibold">
+              {adminSuccessMessage}
+            </p>
+            <button
+              onClick={() => setAdminSuccessMessage(null)}
               className="w-full h-10 text-xs font-black rounded-xl text-white transition-all shadow-sm hover:shadow-md cursor-pointer border-none"
               style={{ backgroundColor: MAROON }}
             >
