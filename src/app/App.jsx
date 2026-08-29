@@ -1704,7 +1704,11 @@ export default function App() {
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
                         {filteredBanks.map((bank) => (
-                          <tr key={bank.id} className="hover:bg-slate-50/70 dark:hover:bg-[#1c1c1c]/40 transition-colors group">
+                          <tr
+                            key={bank.id}
+                            onClick={() => handleViewBank(bank)}
+                            className="hover:bg-[#7B1535]/5 dark:hover:bg-[#E27D9B]/5 cursor-pointer transition-colors group"
+                          >
                             {/* Bank Name */}
                             <td className="py-3.5 px-5 font-semibold text-slate-800 dark:text-slate-200">
                               <div className="flex items-center gap-2.5">
@@ -1758,21 +1762,20 @@ export default function App() {
                             <td className="py-3.5 px-5 text-right pr-6">
                               <div className="flex items-center justify-end gap-2">
                                 <button
-                                  onClick={() => handleViewBank(bank)}
-                                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
-                                  title="View Details"
-                                >
-                                  <Eye size={15} />
-                                </button>
-                                <button
-                                  onClick={() => handleOpenEditModal(bank)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenEditModal(bank);
+                                  }}
                                   className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
                                   title="Edit Account Details"
                                 >
                                   <Edit2 size={15} />
                                 </button>
                                 <button
-                                  onClick={() => setDeleteBank(bank)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteBank(bank);
+                                  }}
                                   className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
                                   title="Delete Account"
                                 >
