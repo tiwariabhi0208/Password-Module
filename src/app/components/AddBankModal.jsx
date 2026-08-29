@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { X, Plus, Shield, Edit2, ChevronDown } from "lucide-react";
 import { MAROON, MAROON_HOVER, BORDER } from "./theme";
 
-export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entities = [] }) {
+export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entities = [], defaultEntityId }) {
   const [name, setName] = useState("");
   const [holder, setHolder] = useState("");
+  const [entityId, setEntityId] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [ifsc, setIfsc] = useState("");
   const [branchName, setBranchName] = useState("");
@@ -49,6 +50,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
       if (bankToEdit) {
         setName(bankToEdit.name || "");
         setHolder(bankToEdit.holder || "");
+        setEntityId(bankToEdit.entityId || "");
         setAccountNumber(bankToEdit.accountNumber || "");
         setIfsc(bankToEdit.ifsc || "");
         setBranchName(bankToEdit.branchName || "");
@@ -61,6 +63,11 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
       } else {
         setName("");
         setHolder("");
+        setEntityId(defaultEntityId || "");
+        const defaultEnt = entities.find(e => e.id === defaultEntityId);
+        if (defaultEnt) {
+          setHolder(defaultEnt.name);
+        }
         setAccountNumber("");
         setIfsc("");
         setBranchName("");
@@ -72,7 +79,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setPhotoError("");
       }
     }
-  }, [isOpen, bankToEdit]);
+  }, [isOpen, bankToEdit, defaultEntityId, entities]);
 
   if (!isOpen) return null;
 
@@ -90,6 +97,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         ...bankToEdit,
         name,
         initial,
+        entityId,
         accountNumber,
         ifsc,
         holder,
@@ -108,6 +116,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         id: Date.now(),
         name,
         initial,
+        entityId,
         accountNumber,
         ifsc,
         holder,
@@ -122,6 +131,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
     }
 
     setName("");
+    setEntityId("");
     setAccountNumber("");
     setIfsc("");
     setBranchName("");
@@ -178,18 +188,20 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                 </label>
                 <div className="relative">
                   <select
+                    value={entityId}
                     onChange={(e) => {
-                      const selectedName = e.target.value;
-                      if (selectedName) {
-                        setHolder(selectedName);
+                      const selectedId = e.target.value;
+                      setEntityId(selectedId);
+                      const ent = entities.find(el => el.id === selectedId);
+                      if (ent) {
+                        setHolder(ent.name);
                       }
                     }}
-                    defaultValue=""
                     className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
                   >
-                    <option value="" disabled>-- Select registered entity to pre-fill --</option>
+                    <option value="" disabled>-- Select registered entity --</option>
                     {entities.map((ent) => (
-                      <option key={ent.id} value={ent.name}>
+                      <option key={ent.id} value={ent.id}>
                         {ent.name}
                       </option>
                     ))}
@@ -348,7 +360,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
               <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400">
                 Account Photo / Logo <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
               </label>
-              
+
               <div className="flex flex-col sm:flex-row items-center gap-4 p-4.5 bg-[#FDFAFB] dark:bg-[#181818] border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl">
                 {photo ? (
                   <div className="relative shrink-0 w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-[#101010] flex items-center justify-center">
@@ -367,7 +379,7 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                     <Plus size={20} />
                   </div>
                 )}
-                
+
                 <div className="flex-grow text-left w-full sm:w-auto">
                   <input
                     type="file"

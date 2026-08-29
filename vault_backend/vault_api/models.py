@@ -108,6 +108,15 @@ class EncryptedBank(models.Model):
     # UUID primary key -- unguessable, same reason as Admin model
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
+    # Relationship linking the bank account to a specific organizational entity
+    entity = models.ForeignKey(
+        'Entity',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='bank_accounts'
+    )
+
     # --- PLAINTEXT FIELDS (safe to store unencrypted) ---
     # These are UI metadata. You need them to display the card without decrypting.
     # An attacker knowing "HDFC Bank - Main Branch" cannot access the bank account.

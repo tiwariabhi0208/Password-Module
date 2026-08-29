@@ -364,6 +364,7 @@ export default function App() {
       const decryptedBanks = await Promise.all(response.data.map(async (bank) => {
         return {
           id: bank.id,
+          entityId: bank.entity,
           name: bank.name,
           initial: bank.initial,
           color: bank.color || "#7B1535",
@@ -422,7 +423,7 @@ export default function App() {
 
       // Step 2: Derive master key and login hash hex
       const derived = await deriveKeyAndHash(password.trim(), serverSaltHex);
-      
+
       // Step 3: Login Phase 1
       const loginResponse = await api.post('/auth/login/', {
         email: email.trim(),
@@ -434,7 +435,7 @@ export default function App() {
         setTempLoginHash(derived.loginHashHex);
         setMasterKey(derived.masterKey);
         setSuccess("OTP sent to your registered email address.");
-        
+
         // Transition to OTP verification screen
         setResendTimer(60);
         setCanResend(false);
@@ -512,6 +513,7 @@ export default function App() {
   const handleAddBank = async (bankData) => {
     try {
       const payload = {
+        entity: bankData.entityId || null,
         name: bankData.name,
         initial: bankData.initial,
         color: bankData.color || "#7B1535",
@@ -539,6 +541,7 @@ export default function App() {
   const handleEditBank = async (bankData) => {
     try {
       const payload = {
+        entity: bankData.entityId || null,
         name: bankData.name,
         initial: bankData.initial,
         color: bankData.color || "#7B1535",
@@ -607,16 +610,16 @@ export default function App() {
 
   // Centralized effect to block document body scroll when any modal popup is open
   useEffect(() => {
-    const isAnyModalOpen = 
-      addModalOpen || 
-      !!selectedBank || 
-      !!editingBank || 
-      !!deleteBank || 
-      !!selectedGroup || 
-      !!entityConfirmModal || 
-      !!duplicateEntityModal || 
-      !!showEntityWarning || 
-      !!emailOtpState || 
+    const isAnyModalOpen =
+      addModalOpen ||
+      !!selectedBank ||
+      !!editingBank ||
+      !!deleteBank ||
+      !!selectedGroup ||
+      !!entityConfirmModal ||
+      !!duplicateEntityModal ||
+      !!showEntityWarning ||
+      !!emailOtpState ||
       !!validationError ||
       !!adminSuccessMessage ||
       !!pendingTabChange;
@@ -898,7 +901,7 @@ export default function App() {
       });
 
       setSuccess("Password has been reset successfully. Please log in with your new password.");
-      
+
       // Clear password states and redirect to login
       setNewPassword("");
       setPassword("");
@@ -934,6 +937,10 @@ export default function App() {
   );
 
   const filteredBanks = banks.filter((bank) => {
+    const activeEntity = entities.find(e => e.email === selectedUser);
+    if (activeEntity && bank.entityId && bank.entityId !== activeEntity.id) {
+      return false;
+    }
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
     return (
@@ -1906,14 +1913,14 @@ export default function App() {
                       {/* Custom Scroll Indicator Bar */}
                       {entities.length > 1 && (
                         <div className="flex justify-center mt-4 select-none">
-                          <div 
+                          <div
                             className="w-40 h-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-full relative overflow-hidden"
                           >
-                            <div 
+                            <div
                               className="absolute top-0 bottom-0 bg-[#7B1535] dark:bg-[#E27D9B] rounded-full transition-all duration-75"
-                              style={{ 
+                              style={{
                                 left: `${(entitiesScrollProgress / 100) * 112}px`, // sliding within 160px - 48px = 112px
-                                width: '48px' 
+                                width: '48px'
                               }}
                             />
                           </div>
@@ -1932,7 +1939,7 @@ export default function App() {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      
+
                       // 1. Validate all rows are filled
                       const hasEmpty = bulkEntities.some(ent => !ent.name.trim() || !ent.phone.trim() || !ent.email.trim());
                       if (hasEmpty) {
@@ -2990,6 +2997,7 @@ export default function App() {
           setEditingBank(null);
         }}
         entities={entities}
+        defaultEntityId={entities.find(e => e.email === selectedUser)?.id}
         bankToEdit={editingBank}
         onAdd={handleAddBank}
         onEdit={handleEditBank}
@@ -3166,7 +3174,7 @@ export default function App() {
             <div className="p-6 space-y-5 text-left bg-slate-50/20 dark:bg-[#101010]/20">
               {emailOtpState.success ? (
                 <div className="space-y-5 text-center">
-                  <div 
+                  <div
                     className="w-14 h-14 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce"
                     style={{ backgroundColor: `${MAROON}15`, color: MAROON }}
                   >

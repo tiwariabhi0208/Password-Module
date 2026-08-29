@@ -57,7 +57,7 @@ class EncryptedBankSerializer(serializers.ModelSerializer):
     class Meta:
         model = EncryptedBank
         fields = (
-            'id', 'name', 'initial', 'color', 'account_type', 'branch_name',
+            'id', 'entity', 'name', 'initial', 'color', 'account_type', 'branch_name',
             'encrypted_holder', 'encrypted_account_number', 'encrypted_ifsc',
             'encrypted_username', 'encrypted_password', 'encrypted_transaction_password',
             'photo_payload', 'created_at', 'updated_at'
