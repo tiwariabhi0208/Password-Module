@@ -58,12 +58,6 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
             }}
             className="flex items-center gap-2.5 h-11 px-3 rounded-lg transition-colors hover:bg-white/10 active:scale-[0.98]"
           >
-            <div
-              className="w-8.5 h-8.5 rounded-full flex items-center justify-center border-2 shrink-0"
-              style={{ backgroundColor: "rgba(201,162,39,0.2)", borderColor: GOLD }}
-            >
-              <User size={15} style={{ color: GOLD }} />
-            </div>
             <span className="text-base text-white font-extrabold tracking-wide hidden sm:inline">{activeAdmin?.name || "Abhishek Tiwari"}</span>
             <ChevronDown size={14} className="text-white/60" />
           </button>

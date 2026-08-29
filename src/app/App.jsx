@@ -1445,7 +1445,7 @@ export default function App() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onLogout={handleLogout}
-          vaultCount={banks.length}
+          vaultCount={filteredBanks.length}
         />
 
         <main className="flex-grow min-w-0 px-4 sm:px-8 py-5 pb-24 md:pb-5">
@@ -1536,12 +1536,12 @@ export default function App() {
                   <div className="flex-grow">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Bank Accounts</span>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">{banks.length}</span>
+                      <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">{filteredBanks.length}</span>
                       <span className="text-xs font-semibold text-[#16A34A] dark:text-[#18c459]">Monitored</span>
                     </div>
                     {/* Mini Progress Bar */}
                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                      <div className="bg-[#7B1535] dark:bg-[#E27D9B] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((banks.length / 12) * 100, 100)}%` }} />
+                      <div className="bg-[#7B1535] dark:bg-[#E27D9B] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min((filteredBanks.length / 12) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>
@@ -1555,13 +1555,13 @@ export default function App() {
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Unique Bank Accounts</span>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">
-                        {new Set(banks.map(b => b.name.trim().toLowerCase())).size}
+                        {new Set(filteredBanks.map(b => b.name.trim().toLowerCase())).size}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400 font-mono">UNIFIED</span>
                     </div>
                     <p className="text-[10.5px] text-[#7A6068] dark:text-slate-400 mt-2 font-medium leading-none flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A5F] dark:bg-[#6FA4E3] animate-pulse"></span>
-                      Managing {banks.length} total accounts
+                      Managing {filteredBanks.length} total accounts
                     </p>
                   </div>
                 </div>
@@ -2511,12 +2511,6 @@ export default function App() {
                     {/* Profile Main Header Information Panel */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-8 border-b border-slate-200/60 dark:border-slate-800/80">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                        <div
-                          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-black shadow-inner bg-[#F5ECEE] dark:bg-[#221015]/60 shrink-0"
-                          style={{ color: MAROON }}
-                        >
-                          <User size={36} />
-                        </div>
                         <div>
                           <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 leading-none">{profile.name}</h2>
                           <div className="flex flex-wrap items-center gap-2 mt-2.5">
