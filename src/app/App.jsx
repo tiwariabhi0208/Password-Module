@@ -811,7 +811,7 @@ export default function App() {
         details,
         user: activeAdmin ? activeAdmin.name : "System",
         type,
-        ip: "192.168.1.45"
+        ip: activeAdmin?.ip || "127.0.0.1"
       },
       ...prev
     ]);
