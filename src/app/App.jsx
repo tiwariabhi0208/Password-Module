@@ -283,16 +283,13 @@ export default function App() {
     {
       name: "Abhishek Tiwari",
       email: "admin@southpoint.edu.in",
-      password: "admin",
       level: 3,
       dept: "Information Security & IT Administration",
       campus: "",
       clearance: "Level 3 - Super Admin",
       designation: "Director of IT Infrastructure",
-      session_id: "SPS-ADM-001-ABHISHEK",
       auth_time: "25 Aug 2026, 09:30 AM",
-      ip: "192.168.1.1",
-      publicKey: "sha256:abhishektiwari7b1535b4a9b227cf842d0c321e6d7821c3b5f842d0",
+      ip: "127.0.0.1",
       status: "Active / Administrator Verified"
     }
   ]);
@@ -823,7 +820,7 @@ export default function App() {
         details,
         user: activeAdmin ? activeAdmin.name : "System",
         type,
-        ip: activeAdmin?.ip || "127.0.0.1"
+        ip: ""
       },
       ...prev
     ]);
@@ -2436,7 +2433,7 @@ export default function App() {
                             <div className="flex items-center gap-4 text-sm font-bold text-[#7A6068] sm:text-right">
                               <div>
                                 <span className="block text-sm text-slate-900 dark:text-slate-200 font-extrabold">{log.user}</span>
-                                <span className="block text-xs text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>
+                                {log.ip && <span className="block text-xs text-[#7A6068]/80 font-mono mt-0.5">{log.ip}</span>}
                               </div>
                             </div>
                           </div>
