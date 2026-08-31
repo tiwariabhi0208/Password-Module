@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     LoginView, LoginVerifyView, LogoutView, CustomTokenRefreshView,
     EncryptedBankViewSet, ActivityLogListView, SaltView,
-    PasswordResetRequestView, PasswordResetConfirmView,
+    PasswordResetRequestView, PasswordResetConfirmView, PasswordResetKeyView,
     EmailChangeRequestView, EmailChangeConfirmView, TfaToggleView,
     DatabaseResetView, EntityViewSet, AdminProfileView, AdminViewSet
 )
@@ -28,6 +28,7 @@ urlpatterns = [
     path('auth/refresh/', CustomTokenRefreshView.as_view(), name='auth_token_refresh'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('auth/password-reset/verify/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('auth/password-reset/key/', PasswordResetKeyView.as_view(), name='password_reset_key'),
     path('auth/email-change/', EmailChangeRequestView.as_view(), name='email_change_request'),
     path('auth/email-change/verify/', EmailChangeConfirmView.as_view(), name='email_change_confirm'),
     path('auth/tfa/toggle/', TfaToggleView.as_view(), name='tfa_toggle'),

@@ -261,6 +261,8 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
@@ -295,6 +297,7 @@ export default function App() {
   ]);
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const activeAdmin = currentAdmin || admins[0];
+  const isOtpScreen = screen === "login-otp" || screen === "forgot-step2";
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [emailOtpState, setEmailOtpState] = useState(null);
@@ -357,7 +360,7 @@ export default function App() {
     }
   };
 
-  const fetchBanks = useCallback(async () => {
+  const fetchBanks = async () => {
     try {
       const response = await api.get('/vault/');
       const activeKey = vaultKey;
@@ -414,7 +417,7 @@ export default function App() {
     } catch (error) {
       console.error("Failed fetching credential vault.", error);
     }
-  }, [vaultKey]);
+  };
 
   const fetchActivities = async () => {
     try {
@@ -856,13 +859,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "forgot-step2" && screen !== "login-otp") {
+    if (!isOtpScreen) {
       setTimerResetTrigger(0);
     }
-  }, [screen]);
+  }, [isOtpScreen]);
 
   useEffect(() => {
-    if ((screen !== "forgot-step2" && screen !== "login-otp") || resendTimer <= 0) return;
+    if (!isOtpScreen || resendTimer <= 0) return;
 
     const id = setInterval(() => {
       setResendTimer((t) => {
@@ -875,7 +878,7 @@ export default function App() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [screen, timerResetTrigger]);
+  }, [isOtpScreen, timerResetTrigger]);
 
   const handleOtpChange = (index, value) => {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -1012,23 +1015,72 @@ export default function App() {
       setError("Please enter your new master password.");
       return;
     }
+    if (newPassword.trim().length < 10) {
+      setError("For security, your master password must be at least 10 characters long.");
+      return;
+    }
 
     setError("");
     setSuccess("");
     setLoading(true);
     try {
-      // Step 1: Request the salt for this email first (to derive the correct new hash)
+      // Step 1: Request the salt for this email first (to derive the correct keys)
       const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(forgotEmail.trim())}`);
       const serverSaltHex = saltResponse.data.salt;
 
-      // Step 2: Derive Key A and Hash B from the NEW password and salt
+      // Step 2: Validate OTP and retrieve the encrypted vault key
+      let encryptedVaultKey = null;
+      try {
+        const keyResponse = await api.post('/auth/password-reset/key/', {
+          email: forgotEmail.trim(),
+          otp: otpCode
+        });
+        encryptedVaultKey = keyResponse.data.encrypted_vault_key;
+      } catch (keyErr) {
+        throw new Error(keyErr.response?.data?.detail || "Invalid OTP code.");
+      }
+
+      // Step 3: Handle vault key re-wrapping if old password was provided
+      let newEncryptedVaultKey = undefined;
+      if (oldPassword.trim()) {
+        if (encryptedVaultKey) {
+          try {
+            // Derive old master key to decrypt the vault key
+            const oldDerived = await deriveKeyAndHash(oldPassword.trim(), serverSaltHex);
+            const decryptedHexKey = await decryptData(encryptedVaultKey, oldDerived.masterKey);
+            const rawVKey = hexToArrayBuffer(decryptedHexKey);
+
+            // Derive new master key to re-encrypt
+            const newDerived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
+            newEncryptedVaultKey = await encryptData(arrayBufferToHex(rawVKey), newDerived.masterKey);
+          } catch (decryptErr) {
+            setError("Incorrect current master password. Please verify your current password, or leave it blank to reset vault access (warning: this will lock existing credentials).");
+            setLoading(false);
+            return;
+          }
+        }
+      } else {
+        // If old password not provided, warn the user about permanent vault locking
+        const proceed = window.confirm(
+          "WARNING: You did not enter your current master password. Resetting your password without it will permanently lock you out of all currently saved credentials. Are you sure you want to proceed?"
+        );
+        if (!proceed) {
+          setLoading(false);
+          return;
+        }
+        // Explicitly pass null to clear the encrypted vault key
+        newEncryptedVaultKey = null;
+      }
+
+      // Step 4: Derive the new login hash
       const derived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
 
-      // Step 3: Send the reset confirm request to the backend with the new login hash
-      const response = await api.post('/auth/password-reset/verify/', {
+      // Step 5: Send the reset confirm request to the backend with new login hash and re-wrapped key
+      await api.post('/auth/password-reset/verify/', {
         email: forgotEmail.trim(),
         otp: otpCode,
-        new_password: derived.loginHashHex
+        new_password: derived.loginHashHex,
+        encrypted_vault_key: newEncryptedVaultKey
       });
 
       setSuccess("Password has been reset successfully. Please log in with your new password.");
@@ -1036,6 +1088,7 @@ export default function App() {
       // Clear password states and redirect to login
       setNewPassword("");
       setPassword("");
+      setOldPassword("");
       setTimeout(() => {
         setScreen("login");
         setSuccess("");
@@ -1043,7 +1096,7 @@ export default function App() {
 
     } catch (err) {
       console.error("Password reset confirmation failed.", err);
-      setError(err.response?.data?.detail || "Failed to reset password. Please check your OTP and try again.");
+      setError(err.message || err.response?.data?.detail || "Failed to reset password. Please check your OTP and try again.");
     } finally {
       setLoading(false);
     }
@@ -1503,6 +1556,30 @@ export default function App() {
         </div>
 
         <div style={{ marginBottom: 14, textAlign: "left" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <FormLabel text="Current Master Password" />
+            <span style={{ fontSize: 9, color: "#9CA3AF", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Optional</span>
+          </div>
+          <CustomInput
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            }
+            type={showOldPassword ? "text" : "password"}
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            placeholder="Required to preserve saved credentials..."
+            showPasswordToggle={true}
+            onToggleShowPassword={() => setShowOldPassword(!showOldPassword)}
+          />
+          <p className="text-[10px] text-slate-400 mt-1 font-medium leading-tight">
+            ⚠️ If you forgot your password, leave this blank. Your account will reset but existing vault credentials will be locked.
+          </p>
+        </div>
+
+        <div style={{ marginBottom: 14, textAlign: "left" }}>
           <FormLabel text="New Master Password" />
           <CustomInput
             icon={
@@ -1555,6 +1632,7 @@ export default function App() {
         passwordHash={passwordHash}
         setStealthMode={setStealthMode}
         setScreen={setScreen}
+        onLogout={handleLogout}
       />
     );
   }

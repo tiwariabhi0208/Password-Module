@@ -11,12 +11,13 @@ export function StealthLockScreen({
   setStealthError,
   passwordHash,
   setStealthMode,
-  setScreen
+  setScreen,
+  onLogout
 }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const enteredHash = await hashPasswordSHA256(stealthPassword);
-    const targetHash = passwordHash || "01b307acba4f54f55aafc433b7c5b11d857fbcb798835848ab22c7104b2c1592"; // default "admin123"
+    const targetHash = passwordHash;
 
     if (enteredHash === targetHash) {
       setStealthMode(false);
@@ -112,7 +113,11 @@ export function StealthLockScreen({
                 setStealthMode(false);
                 setStealthPassword("");
                 setStealthError("");
-                setScreen("login");
+                if (onLogout) {
+                  onLogout();
+                } else {
+                  setScreen("login");
+                }
               }}
               className="text-xs font-semibold hover:underline text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-250"
               style={{ border: "none", background: "none", cursor: "pointer" }}

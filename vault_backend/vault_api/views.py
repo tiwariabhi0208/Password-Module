@@ -208,8 +208,8 @@ class LoginVerifyView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Verify OTP code and expiration
-        if not user.otp_code or user.otp_code != otp_submitted:
+        # Verify OTP code and expiration in constant-time
+        if not user.otp_code or not hmac.compare_digest(user.otp_code, otp_submitted.strip() if otp_submitted else ""):
             ActivityLog.objects.create(
                 action="OTP Verification Failed",
                 details=f"Invalid OTP code submitted for {email}",
@@ -316,6 +316,7 @@ class PasswordResetRequestView(APIView):
     Validation: Checks if email is registered. If not, returns 404.
     """
     permission_classes = (AllowAny,)
+    throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
@@ -360,13 +361,16 @@ class PasswordResetRequestView(APIView):
 class PasswordResetConfirmView(APIView):
     """
     Verifies the OTP and resets the password.
+    Supports optional re-wrapped encrypted_vault_key to prevent data loss.
     """
     permission_classes = (AllowAny,)
+    throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         otp_submitted = request.data.get('otp')
         new_password = request.data.get('new_password')
+        encrypted_vault_key = request.data.get('encrypted_vault_key')
         ip = get_client_ip(request)
 
         if not email or not otp_submitted or not new_password:
@@ -380,8 +384,8 @@ class PasswordResetConfirmView(APIView):
         if not user.is_active:
             return Response({"detail": "This account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Verify OTP code and expiration
-        if not user.otp_code or user.otp_code != otp_submitted.strip():
+        # Verify OTP code in constant-time
+        if not user.otp_code or not hmac.compare_digest(user.otp_code, otp_submitted.strip() if otp_submitted else ""):
             ActivityLog.objects.create(
                 action="Password Reset Failed",
                 details=f"Invalid password reset OTP code submitted for {email}",
@@ -400,8 +404,10 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # OTP is valid, update password and clear OTP fields
+        # OTP is valid, update password and optionally re-wrapped encrypted_vault_key, then clear OTP fields
         user.set_password(new_password)
+        if 'encrypted_vault_key' in request.data:
+            user.encrypted_vault_key = encrypted_vault_key
         user.otp_code = None
         user.otp_expires_at = None
         user.save()
@@ -417,6 +423,43 @@ class PasswordResetConfirmView(APIView):
         )
 
         return Response({"detail": "Password has been reset successfully. Please log in with your new password."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetKeyView(APIView):
+    """
+    Verifies the password-reset OTP and returns the user's encrypted vault key.
+    This enables the client to decrypt it (using the old password) and re-encrypt
+    it (using the new password) before completing the reset, preventing permanent data loss.
+    Protected by the login rate limiter.
+    """
+    permission_classes = (AllowAny,)
+    throttle_scope = 'login'
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        otp_submitted = request.data.get('otp')
+        
+        if not email or not otp_submitted:
+            return Response({"detail": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            user = Admin.objects.get(email=email.strip().lower())
+        except Admin.DoesNotExist:
+            return Response({"detail": "Invalid OTP code."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if not user.is_active:
+            return Response({"detail": "This account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Verify OTP code in constant time
+        if not user.otp_code or not hmac.compare_digest(user.otp_code, otp_submitted.strip() if otp_submitted else ""):
+            return Response({"detail": "Invalid OTP code."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if timezone.now() > user.otp_expires_at:
+            return Response({"detail": "OTP code has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        return Response({
+            "encrypted_vault_key": user.encrypted_vault_key
+        }, status=status.HTTP_200_OK)
 
 
 class EmailChangeRequestView(APIView):
@@ -473,8 +516,8 @@ class EmailChangeConfirmView(APIView):
         new_email_clean = new_email.strip().lower()
         user = request.user
 
-        # Verify OTP code and expiration
-        if not user.otp_code or user.otp_code != otp_submitted.strip():
+        # Verify OTP code and expiration in constant-time
+        if not user.otp_code or not hmac.compare_digest(user.otp_code, otp_submitted.strip() if otp_submitted else ""):
             return Response(
                 {"detail": "Invalid OTP code."},
                 status=status.HTTP_400_BAD_REQUEST

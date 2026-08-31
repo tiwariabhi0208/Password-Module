@@ -44,9 +44,8 @@ export function Settings({
     };
   }, [confirmPassword]);
 
-  const defaultHash = "01b307acba4f54f55aafc433b7c5b11d857fbcb798835848ab22c7104b2c1592"; // SHA-256 of "admin123"
-  const targetPasswordHash = masterPasswordHash || defaultHash;
-  const isMatch = confirmPasswordHash === targetPasswordHash;
+  const targetPasswordHash = masterPasswordHash;
+  const isMatch = confirmPasswordHash && targetPasswordHash && confirmPasswordHash === targetPasswordHash;
 
   const handleExportData = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(banks, null, 2));
