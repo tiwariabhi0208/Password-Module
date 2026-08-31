@@ -1058,13 +1058,16 @@ export default function App() {
     }
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
-    return (
-      bank.name.toLowerCase().includes(q) ||
-      (bank.holder && bank.holder.toLowerCase().includes(q)) ||
-      bank.accountNumber.includes(q) ||
-      (bank.ifsc && bank.ifsc.toLowerCase().includes(q)) ||
-      (bank.branchName && bank.branchName.toLowerCase().includes(q))
-    );
+
+    const matchesName = bank.name.toLowerCase().includes(q);
+    const matchesBranch = bank.branchName && bank.branchName.toLowerCase().includes(q);
+
+    // Only search in sensitive fields if they were successfully decrypted (not placeholders)
+    const matchesHolder = bank.isDecrypted && bank.holder && bank.holder.toLowerCase().includes(q);
+    const matchesAccountNumber = bank.isDecrypted && bank.accountNumber && bank.accountNumber.includes(q);
+    const matchesIfsc = bank.isDecrypted && bank.ifsc && bank.ifsc.toLowerCase().includes(q);
+
+    return matchesName || matchesBranch || matchesHolder || matchesAccountNumber || matchesIfsc;
   });
 
   const groupedBanks = React.useMemo(() => {
