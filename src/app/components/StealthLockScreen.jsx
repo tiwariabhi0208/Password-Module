@@ -1,6 +1,6 @@
 import React from "react";
 import { Lock, LogIn } from "lucide-react";
-import schoolLogo from "../../../images(1).png";
+import schoolLogo from "../../../sps_logo.png";
 import { MAROON, GOLD, BORDER, T, font, MAROON_HOVER, shadow } from "./theme";
 import { hashPasswordSHA256 } from "../utils/cryptoHelper";
 

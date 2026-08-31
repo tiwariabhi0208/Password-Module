@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, Settings, LogOut, ShieldCheck, User } from "lucide-react";
-import schoolLogo from "../../../images(1).png";
+import schoolLogo from "../../../sps_logo.png";
 import { MAROON, GOLD, BORDER } from "./theme";
 
 

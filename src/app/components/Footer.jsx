@@ -1,5 +1,5 @@
 import React from "react";
-import schoolLogo from "../../../images(1).png";
+import schoolLogo from "../../../sps_logo.png";
 import { MAROON, GOLD } from "./theme";
 
 export function Footer() {

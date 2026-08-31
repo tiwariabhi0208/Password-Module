@@ -1,5 +1,5 @@
 import React from "react";
-import schoolLogo from "../../../images(1).png";
+import schoolLogo from "../../../sps_logo.png";
 import campusBg from "../../../school_campus.jpg";
 import { T, font } from "./theme";
 
