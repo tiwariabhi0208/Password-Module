@@ -180,3 +180,14 @@ export function hexToArrayBuffer(hexString) {
   const bytes = new Uint8Array(pairs.map(byte => parseInt(byte, 16)));
   return bytes.buffer;
 }
+
+export async function hashPasswordSHA256(password) {
+  if (!password) return "";
+  const enc = new TextEncoder();
+  const msgBuffer = enc.encode(password);
+  const hashBuffer = await window.crypto.subtle.digest("SHA-256", msgBuffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+

@@ -17,7 +17,7 @@ import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 
 import { api, setAccessToken } from "./utils/apiClient";
-import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer } from "./utils/cryptoHelper";
+import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer, hashPasswordSHA256 } from "./utils/cryptoHelper";
 
 // --- INLINED COMPONENTS ---
 
@@ -257,6 +257,7 @@ export default function App() {
   const [screen, setScreen] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordHash, setPasswordHash] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -466,6 +467,11 @@ export default function App() {
         setMasterKey(derived.masterKey);
         setSuccess("OTP sent to your registered email address.");
 
+        // Compute secure SHA-256 hash of password for local validation and clear plaintext
+        const pHash = await hashPasswordSHA256(password.trim());
+        setPasswordHash(pHash);
+        setPassword("");
+
         // Transition to OTP verification screen
         setResendTimer(60);
         setCanResend(false);
@@ -510,6 +516,11 @@ export default function App() {
         // Save user profile state
         setCurrentAdmin(userData);
         setTfaEnabled(userData.tfa_enabled || false);
+
+        // Compute secure SHA-256 hash of password for local validation and clear plaintext
+        const pHash = await hashPasswordSHA256(password.trim());
+        setPasswordHash(pHash);
+        setPassword("");
 
         setSuccess("Login successful!");
         setTimeout(() => {
@@ -668,6 +679,7 @@ export default function App() {
       setAccessTokenState("");
       setMasterKey(null);
       setTempLoginHash("");
+      setPasswordHash("");
       setBanks([]);
       setActivities([]);
       setScreen("login");
@@ -1498,7 +1510,7 @@ export default function App() {
         setStealthPassword={setStealthPassword}
         stealthError={stealthError}
         setStealthError={setStealthError}
-        password={password}
+        passwordHash={passwordHash}
         setStealthMode={setStealthMode}
         setScreen={setScreen}
       />
@@ -3041,7 +3053,7 @@ export default function App() {
               darkMode={darkMode}
               setDarkMode={setDarkMode}
               defaultBanks={BANKS}
-              masterPassword={password}
+              masterPasswordHash={passwordHash}
               activeAdmin={activeAdmin}
             />
           )}

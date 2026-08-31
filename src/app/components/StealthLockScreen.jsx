@@ -2,19 +2,23 @@ import React from "react";
 import { Lock, LogIn } from "lucide-react";
 import schoolLogo from "../../../images(1).png";
 import { MAROON, GOLD, BORDER, T, font, MAROON_HOVER, shadow } from "./theme";
+import { hashPasswordSHA256 } from "../utils/cryptoHelper";
 
 export function StealthLockScreen({
   stealthPassword,
   setStealthPassword,
   stealthError,
   setStealthError,
-  password,
+  passwordHash,
   setStealthMode,
   setScreen
 }) {
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (stealthPassword === password) {
+    const enteredHash = await hashPasswordSHA256(stealthPassword);
+    const targetHash = passwordHash || "01b307acba4f54f55aafc433b7c5b11d857fbcb798835848ab22c7104b2c1592"; // default "admin123"
+
+    if (enteredHash === targetHash) {
       setStealthMode(false);
       setStealthPassword("");
       setStealthError("");

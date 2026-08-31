@@ -10,8 +10,8 @@ export function getDirectLoginUrl(bankName, accountType = "corporate") {
   const type = accountType.toLowerCase();
 
   if (name.includes("icici")) {
-    return type === "retail" 
-      ? "https://infinity.icicibank.com/" 
+    return type === "retail"
+      ? "https://infinity.icicibank.com/"
       : "https://cib.icicibank.com/";
   }
   if (name.includes("hdfc")) {
@@ -61,8 +61,8 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div 
-        className="w-[640px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up" 
+      <div
+        className="w-[640px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up"
         style={{ borderColor: BORDER }}
       >
         {/* Maroon modal header with brand identity gradient */}
@@ -72,16 +72,16 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
         >
           <div className="flex items-center gap-3">
             {bank.photo ? (
-              <img 
-                src={bank.photo} 
-                alt={bank.name} 
-                className="h-20 w-20 rounded-xl object-contain shrink-0 bg-white" 
+              <img
+                src={bank.photo}
+                alt={bank.name}
+                className="h-20 w-20 rounded-xl object-contain shrink-0 bg-white"
               />
             ) : logoUrl ? (
-              <img 
-                src={logoUrl} 
-                alt={bank.name} 
-                className="h-20 w-auto object-contain shrink-0" 
+              <img
+                src={logoUrl}
+                alt={bank.name}
+                className="h-20 w-auto object-contain shrink-0"
               />
             ) : (
               <div
@@ -96,8 +96,8 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
             <div className="flex flex-col text-left">
               <div className="flex items-center gap-2">
                 <span className="text-[17px] font-black tracking-wide leading-none">{bank.name}</span>
-                <button 
-                  className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5" 
+                <button
+                  className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5"
                   title="Open official login portal"
                   onClick={() => window.open(getDirectLoginUrl(bank.name, bank.accountType), "_blank")}
                 >
@@ -109,7 +109,7 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
               </span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onDelete(bank)}
