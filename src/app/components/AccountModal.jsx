@@ -44,7 +44,7 @@ export function getDirectLoginUrl(bankName, accountType = "corporate") {
   return `https://www.google.com/search?q=${encodeURIComponent(bankName + " " + type + " banking login")}`;
 }
 
-export function AccountModal({ bank, onClose, onDelete, onEdit }) {
+export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
   const logoUrl = getBankLogo(bank.name);
   useEffect(() => {
     const onKey = (e) => {
@@ -111,20 +111,24 @@ export function AccountModal({ bank, onClose, onDelete, onEdit }) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => onDelete(bank)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
-              title="Delete Account"
-            >
-              <Trash2 size={14} />
-            </button>
-            <button
-              onClick={() => onEdit(bank)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
-              title="Edit Account Details"
-            >
-              <Edit2 size={14} />
-            </button>
+            {activeAdmin?.level === 3 && (
+              <button
+                onClick={() => onDelete(bank)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
+                title="Delete Account"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+            {activeAdmin?.level >= 2 && (
+              <button
+                onClick={() => onEdit(bank)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
+                title="Edit Account Details"
+              >
+                <Edit2 size={14} />
+              </button>
+            )}
             <button
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-white/85 hover:text-white transition-all cursor-pointer border-none"

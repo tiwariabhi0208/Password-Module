@@ -3124,6 +3124,7 @@ export default function App() {
       {selectedBank && (
         <AccountModal
           bank={selectedBank}
+          activeAdmin={activeAdmin}
           onClose={() => setSelectedBank(null)}
           onDelete={(bankObj) => {
             setDeleteBank(bankObj);
