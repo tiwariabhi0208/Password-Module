@@ -805,6 +805,13 @@ class EntityViewSet(viewsets.ModelViewSet):
             if not phone.isdigit() or len(phone) != 10:
                 return Response({"error": f"Row {idx+1}: Phone must be exactly 10 digits."}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Check if email or name belongs to an administrator
+            if Admin.objects.filter(email__iexact=email).exists():
+                return Response({"error": f"Row {idx+1}: '{email}' is registered as an Administrator email. Entities cannot have the same email as an administrator."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if Admin.objects.filter(name__iexact=name).exists():
+                return Response({"error": f"Row {idx+1}: '{name}' is registered as an Administrator. Entities cannot have the same name as an administrator."}, status=status.HTTP_400_BAD_REQUEST)
+
             # Check database duplicates
             if Entity.objects.filter(email__iexact=email).exists():
                 return Response({"error": f"Row {idx+1}: The email address '{email}' is already registered to another entity."}, status=status.HTTP_400_BAD_REQUEST)

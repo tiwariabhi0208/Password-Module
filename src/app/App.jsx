@@ -2086,19 +2086,13 @@ export default function App() {
                           const phone = ent.phone.trim();
                           const email = ent.email.trim();
 
-                          const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
+                          const isAdminUser = admins.some(adm => adm.name.toLowerCase() === name.toLowerCase());
                           if (isAdminUser) {
                             setValidationError(`Error in row ${i + 1}: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
                             return;
                           }
 
-                          const ADMIN_EMAILS = [
-                            "priya.sharma@southpoint.edu.in",
-                            "rahul.verma@southpoint.edu.in",
-                            "anita.nair@southpoint.edu.in",
-                            "deepak.mehta@southpoint.edu.in"
-                          ];
-                          const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
+                          const isAdminEmail = admins.some(adm => adm.email.toLowerCase() === email.toLowerCase());
                           if (isAdminEmail) {
                             setValidationError(`Error in row ${i + 1}: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
                             return;
