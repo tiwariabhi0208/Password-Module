@@ -3541,26 +3541,30 @@ export default function App() {
           <span className="text-[10px] font-bold">Vault</span>
         </button>
 
-        <button
-          onClick={() => handleTabChange("entities")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "entities" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-            }`}
-        >
-          <UserPlus size={20} />
-          <span className="text-[10px] font-bold">Entities</span>
-        </button>
+        {activeAdmin?.level >= 2 && (
+          <button
+            onClick={() => handleTabChange("entities")}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${activeTab === "entities" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+              }`}
+          >
+            <UserPlus size={20} />
+            <span className="text-[10px] font-bold">Entities</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => handleTabChange("activity")}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative ${activeTab === "activity" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
-            }`}
-        >
-          <History size={20} />
-          <span className="text-[10px] font-bold">Logs</span>
-          {activities.length > 0 && (
-            <span className="absolute top-1.5 right-[35%] w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
-          )}
-        </button>
+        {activeAdmin?.level >= 2 && (
+          <button
+            onClick={() => handleTabChange("activity")}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative ${activeTab === "activity" ? "text-[#7B1535] dark:text-[#E27D9B]" : "text-[#7A6068] dark:text-slate-400"
+              }`}
+          >
+            <History size={20} />
+            <span className="text-[10px] font-bold">Logs</span>
+            {activities.length > 0 && (
+              <span className="absolute top-1.5 right-[35%] w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
+            )}
+          </button>
+        )}
 
         <button
           onClick={() => handleTabChange("profile")}
