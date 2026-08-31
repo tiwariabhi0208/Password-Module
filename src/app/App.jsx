@@ -873,11 +873,31 @@ export default function App() {
     }
   };
 
-  const handleResend = () => {
-    setOtpValues(["", "", "", "", "", ""]);
-    setResendTimer(60);
-    setCanResend(false);
-    setTimeout(() => otpRefs.current[0]?.focus(), 50);
+  const handleResend = async () => {
+    setError("");
+    setSuccess("");
+    try {
+      if (screen === "login-otp") {
+        await api.post('/auth/login/', {
+          email: email.trim(),
+          password: tempLoginHash
+        });
+        setSuccess("A new login OTP code has been sent to your email.");
+      } else if (screen === "forgot-step2") {
+        await api.post('/auth/password-reset/', {
+          email: forgotEmail.trim()
+        });
+        setSuccess("A new password reset OTP code has been sent to your email.");
+      }
+
+      setOtpValues(["", "", "", "", "", ""]);
+      setResendTimer(60);
+      setCanResend(false);
+      setTimeout(() => otpRefs.current[0]?.focus(), 50);
+    } catch (err) {
+      console.error("Failed to resend OTP code:", err);
+      setError(err.response?.data?.detail || "Failed to resend OTP. Please try again later.");
+    }
   };
 
   const handleEntitiesScroll = (e) => {
