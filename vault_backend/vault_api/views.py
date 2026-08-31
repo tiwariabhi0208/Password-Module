@@ -4,6 +4,8 @@ import secrets
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import permissions, viewsets, generics, status
 from rest_framework.decorators import action
@@ -795,8 +797,10 @@ class EntityViewSet(viewsets.ModelViewSet):
             if not name or not email or not phone:
                 return Response({"error": f"Row {idx+1}: All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-            if not email.lower().endswith("@gmail.com"):
-                return Response({"error": f"Row {idx+1}: Email must end with @gmail.com."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response({"error": f"Row {idx+1}: Email must be a valid email address."}, status=status.HTTP_400_BAD_REQUEST)
 
             if not phone.isdigit() or len(phone) != 10:
                 return Response({"error": f"Row {idx+1}: Phone must be exactly 10 digits."}, status=status.HTTP_400_BAD_REQUEST)

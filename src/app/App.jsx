@@ -2104,8 +2104,9 @@ export default function App() {
                             return;
                           }
 
-                          if (!email.toLowerCase().endsWith("@gmail.com")) {
-                            setValidationError(`Error in row ${i + 1}: Email must be a valid @gmail.com address.`);
+                          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                          if (!emailRegex.test(email)) {
+                            setValidationError(`Error in row ${i + 1}: Email must be a valid email address.`);
                             return;
                           }
 
