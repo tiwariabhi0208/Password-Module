@@ -8,9 +8,7 @@ export function AccountSelectorModal({
   onClose,
   bankName,
   accounts,
-  onViewDetails,
-  onEdit,
-  onDelete
+  onViewDetails
 }) {
   const logoUrl = getBankLogo(bankName);
 

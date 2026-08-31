@@ -3182,12 +3182,6 @@ export default function App() {
             onViewDetails={(acc) => {
               handleViewBank(acc);
             }}
-            onEdit={(acc) => {
-              handleOpenEditModal(acc);
-            }}
-            onDelete={(acc) => {
-              setDeleteBank(acc);
-            }}
           />
         );
       })()}
