@@ -629,7 +629,18 @@ class SaltView(APIView):
     """
     Returns a secure, deterministic salt for a given email.
     Uses HMAC-SHA256 with the server's SECRET_KEY to produce the salt.
-    This ensures the salt is unique and unpredictable, and remains stable if the email changes.
+
+    Security note: No database lookup is performed here intentionally.
+    Previously, this view looked up the Admin record to use 'original_email'
+    for salt stability across email changes. However, that created a user
+    enumeration oracle: a registered admin who had changed their email would
+    return a DIFFERENT salt than an unregistered email, allowing an unauthenticated
+    attacker to distinguish the two.
+
+    The salt is now always derived from the input email directly. This means
+    the salt is identical for registered and unregistered emails (no enumeration),
+    and any admin who changes their email must re-encrypt their vault key with
+    the new salt (handled by the email-change confirmation flow on the client).
     """
     permission_classes = (AllowAny,)
 
@@ -640,17 +651,13 @@ class SaltView(APIView):
 
         email_clean = email.strip().lower()
 
-        # Try to look up the admin in the database to get their original email (for stable salt)
-        try:
-            user = Admin.objects.get(email=email_clean)
-            salt_email = user.original_email if user.original_email else email_clean
-        except Admin.DoesNotExist:
-            salt_email = email_clean
-
-        # Derive a 16-byte salt using HMAC
+        # Derive a 16-byte salt using HMAC -- no DB lookup performed.
+        # Both registered and unregistered emails produce identically-structured
+        # output, giving an unauthenticated caller zero information about whether
+        # the email is registered in this system.
         key = settings.SECRET_KEY.encode('utf-8')
-        msg = salt_email.encode('utf-8')
-        salt_hex = hmac.new(key, msg, hashlib.sha256).hexdigest()[:32] # 32 hex chars = 16 bytes
+        msg = email_clean.encode('utf-8')
+        salt_hex = hmac.new(key, msg, hashlib.sha256).hexdigest()[:32]  # 32 hex chars = 16 bytes
 
         return Response({"salt": salt_hex}, status=status.HTTP_200_OK)
 
@@ -744,9 +751,26 @@ class DatabaseResetView(APIView):
     permission_classes = (IsAuthenticated, IsSuperAdmin)
 
     def post(self, request, *args, **kwargs):
+        ip = get_client_ip(request)
+
+        # CRITICAL: Write the audit entry BEFORE wiping ActivityLog.
+        # If we log after the delete, the entry is gone the moment it is created
+        # because we are deleting the entire table. This entry is the only
+        # permanent record that a database wipe occurred and who performed it.
+        ActivityLog.objects.create(
+            action="Database Reset",
+            details=f"Admin {request.user.name} performed a full database reset. All credentials, entities, and logs have been permanently erased.",
+            user=request.user,
+            user_snapshot=request.user.name,
+            log_type="warning",
+            ip_address=ip
+        )
+
         EncryptedBank.objects.all().delete()
         Entity.objects.all().delete()
-        ActivityLog.objects.all().delete()
+        # Preserve only the reset entry we just wrote so the wipe is traceable
+        ActivityLog.objects.exclude(action="Database Reset").delete()
+
         return Response({
             "detail": "Database successfully reset. All credentials, registered entities, and activity logs have been erased."
         }, status=status.HTTP_200_OK)
