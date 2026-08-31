@@ -2927,13 +2927,67 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Left: Form Inputs */}
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
-                      setPassword(newPasswordVal);
-                      logActivity("Security Alert", "Master password updated successfully", "warning");
-                      alert("Master password updated successfully!");
-                      setNewPasswordVal("");
-                      e.target.reset();
+                      
+                      const currentVal = e.target.elements["currentPassword"].value;
+                      const confirmVal = e.target.elements["confirmPassword"].value;
+
+                      // 1. Verify current password matches locally
+                      const currentHash = await hashPasswordSHA256(currentVal);
+                      if (currentHash !== passwordHash) {
+                        alert("Error: Current password is incorrect.");
+                        return;
+                      }
+
+                      // 2. Verify new password matches confirmation
+                      if (newPasswordVal !== confirmVal) {
+                        alert("Error: New password and confirmation password do not match.");
+                        return;
+                      }
+
+                      // 3. Check complexity rules
+                      if (newPasswordVal.length < 10) {
+                        alert("Error: New password must be at least 10 characters long.");
+                        return;
+                      }
+
+                      try {
+                        // 4. Retrieve salt
+                        const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(activeAdmin.email)}`);
+                        const serverSalt = saltResponse.data.salt;
+
+                        // 5. Derive new masterKey and new loginHashHex
+                        const derived = await deriveKeyAndHash(newPasswordVal, serverSalt);
+
+                        // 6. Re-encrypt the current decrypted vaultKey using the new derived masterKey
+                        if (!vaultKey) {
+                          alert("Error: Vault encryption key is not loaded in this session.");
+                          return;
+                        }
+                        const hexVaultKey = arrayBufferToHex(vaultKey);
+                        const newEncryptedVaultKey = await encryptData(hexVaultKey, derived.masterKey);
+
+                        // 7. Call the backend API patch endpoint
+                        await api.patch('/auth/profile/', {
+                          password: derived.loginHashHex,
+                          encrypted_vault_key: newEncryptedVaultKey
+                        });
+
+                        // 8. Update local cryptographic states
+                        setMasterKey(derived.masterKey);
+                        const newLocalHash = await hashPasswordSHA256(newPasswordVal);
+                        setPasswordHash(newLocalHash);
+
+                        logActivity("Security Alert", "Master password updated successfully on server", "warning");
+                        alert("Master password updated successfully!");
+
+                        setNewPasswordVal("");
+                        e.target.reset();
+                      } catch (err) {
+                        console.error("Password change failed.", err);
+                        alert(err.response?.data?.detail || "Failed to update master password on server. Please try again.");
+                      }
                     }}
                     className="lg:col-span-2 space-y-5"
                   >
@@ -2943,6 +2997,7 @@ export default function App() {
                       </label>
                       <input
                         type="password"
+                        name="currentPassword"
                         required
                         placeholder="Your Current Password"
                         className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
@@ -2955,6 +3010,7 @@ export default function App() {
                       </label>
                       <input
                         type="password"
+                        name="newPassword"
                         required
                         placeholder="Your New Password"
                         value={newPasswordVal}
@@ -2969,6 +3025,7 @@ export default function App() {
                       </label>
                       <input
                         type="password"
+                        name="confirmPassword"
                         required
                         placeholder="Confirm Your New Password"
                         className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"

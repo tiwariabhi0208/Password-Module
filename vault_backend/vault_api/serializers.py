@@ -20,9 +20,11 @@ class AdminProfileUpdateSerializer(serializers.ModelSerializer):
     never be able to promote themselves or reactivate/deactivate their own account.
     Email changes go through the dedicated OTP-verified EmailChange flow instead.
     """
+    password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
+
     class Meta:
         model = Admin
-        fields = ('name', 'dept', 'campus', 'designation', 'phone', 'encrypted_vault_key')
+        fields = ('name', 'dept', 'campus', 'designation', 'phone', 'encrypted_vault_key', 'password')
 
     def validate_phone(self, value):
         if not value:
@@ -31,6 +33,12 @@ class AdminProfileUpdateSerializer(serializers.ModelSerializer):
         if len(phone_clean) != 10:
             raise serializers.ValidationError("Phone number must be exactly 10 digits.")
         return phone_clean
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 
 class AdminCreateSerializer(serializers.ModelSerializer):
