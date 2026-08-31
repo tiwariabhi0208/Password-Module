@@ -678,10 +678,13 @@ export default function App() {
       setAccessToken("");
       setAccessTokenState("");
       setMasterKey(null);
+      setVaultKey(null);
       setTempLoginHash("");
       setPasswordHash("");
+      setCurrentAdmin(null);
       setBanks([]);
       setActivities([]);
+      setEntities([]);
       setScreen("login");
       setActiveTab("vault");
     }
