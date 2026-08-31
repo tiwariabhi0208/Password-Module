@@ -607,7 +607,10 @@ export default function App() {
 
   const handleAddBank = async (bankData) => {
     try {
-      const activeKey = vaultKey || masterKey;
+      const activeKey = vaultKey;
+      if (!activeKey) {
+        throw new Error("No active vault encryption key loaded. Please log in again.");
+      }
       const payload = {
         entity: bankData.entityId || null,
         name: bankData.name,
@@ -636,7 +639,10 @@ export default function App() {
 
   const handleEditBank = async (bankData) => {
     try {
-      const activeKey = vaultKey || masterKey;
+      const activeKey = vaultKey;
+      if (!activeKey) {
+        throw new Error("No active vault encryption key loaded. Please log in again.");
+      }
       const payload = {
         entity: bankData.entityId || null,
         name: bankData.name,

@@ -2,7 +2,7 @@ import uuid
 import re
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, validate_email
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
@@ -213,9 +213,12 @@ class Entity(models.Model):
         return f"{self.name} ({self.email})"
 
     def clean(self):
-        # 1. Validate email ends with @gmail.com
-        if self.email and not self.email.lower().endswith("@gmail.com"):
-            raise ValidationError({'email': "Email must be a valid @gmail.com address."})
+        # 1. Validate email
+        if self.email:
+            try:
+                validate_email(self.email)
+            except ValidationError:
+                raise ValidationError({'email': "Email must be a valid email address."})
 
         # 2. Validate phone is exactly 10 digits
         if self.phone:
