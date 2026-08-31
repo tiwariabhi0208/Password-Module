@@ -267,6 +267,7 @@ export default function App() {
   const [focusField, setFocusField] = useState(null);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [timerResetTrigger, setTimerResetTrigger] = useState(0);
   const [selectedUser, setSelectedUser] = useState("");
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
@@ -362,10 +363,11 @@ export default function App() {
   const fetchBanks = async () => {
     try {
       const response = await api.get('/vault/');
-      const activeKey = vaultKey || masterKey;
+      const activeKey = vaultKey;
       
       if (!activeKey) {
         console.warn("No active encryption key found. Skipping bank decryption.");
+        setError("Decryption Error: No active vault encryption key loaded. Please log in again.");
         return;
       }
 
@@ -497,6 +499,8 @@ export default function App() {
             vKey = hexToArrayBuffer(hexKey);
           } catch (err) {
             console.error("Failed to decrypt vault key:", err);
+            vKey = null;
+            setError("Decryption Failure: The shared vault key could not be decrypted with your credentials.");
           }
         } else {
           // If no encrypted_vault_key exists and this is the super admin, self-initialize
@@ -566,6 +570,8 @@ export default function App() {
           vKey = hexToArrayBuffer(hexKey);
         } catch (err) {
           console.error("Failed to decrypt vault key:", err);
+          vKey = null;
+          setError("Decryption Failure: The shared vault key could not be decrypted with your credentials.");
         }
       } else {
         // If no encrypted_vault_key exists and this is the super admin, self-initialize
@@ -860,7 +866,7 @@ export default function App() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [screen, canResend]);
+  }, [screen, timerResetTrigger]);
 
   const handleOtpChange = (index, value) => {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -896,6 +902,7 @@ export default function App() {
       setOtpValues(["", "", "", "", "", ""]);
       setResendTimer(60);
       setCanResend(false);
+      setTimerResetTrigger(prev => prev + 1);
       setTimeout(() => otpRefs.current[0]?.focus(), 50);
     } catch (err) {
       console.error("Failed to resend OTP code:", err);
