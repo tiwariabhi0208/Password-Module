@@ -412,7 +412,7 @@ class PasswordResetConfirmView(APIView):
             details=f"Admin {user.name} successfully reset their master password via OTP validation",
             user=user,
             user_snapshot=user.name,
-            log_type="warning",
+            log_type="success",
             ip_address=ip
         )
 

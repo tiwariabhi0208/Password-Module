@@ -3,7 +3,6 @@ import { ChevronDown, Settings, LogOut, ShieldCheck, User } from "lucide-react";
 import schoolLogo from "../../../images(1).png";
 import { MAROON, GOLD, BORDER } from "./theme";
 
-export const USERS = ["Priya Sharma", "Rahul Verma", "Anita Nair", "Deepak Mehta"];
 
 export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, setStealthMode, onNavigate, avatarMenuOpen, setAvatarMenuOpen, setUserDropdownOpen, onLogout }) {
 

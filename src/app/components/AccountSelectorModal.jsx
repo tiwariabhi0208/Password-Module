@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { X, Shield, Eye, Edit2, Trash2 } from "lucide-react";
+import { X, Shield } from "lucide-react";
 import { MAROON, GOLD, BORDER } from "./theme";
 import { getBankLogo } from "./BankCard";
 

@@ -6,7 +6,7 @@ import { BoyCharacter } from "./components/BoyCharacter";
 import { AuthCard } from "./components/AuthCard";
 import { AccountModal } from "./components/AccountModal";
 import { AddBankModal } from "./components/AddBankModal";
-import { Header, USERS } from "./components/Header";
+import { Header } from "./components/Header";
 import { StealthLockScreen } from "./components/StealthLockScreen";
 import { BankCard, getBankLogo } from "./components/BankCard";
 import { AccountSelectorModal } from "./components/AccountSelectorModal";
