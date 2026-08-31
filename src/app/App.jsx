@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus, Edit2, AlertTriangle, X } from "lucide-react";
 
 import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius, font } from "./components/theme";
@@ -357,7 +357,7 @@ export default function App() {
     }
   };
 
-  const fetchBanks = async () => {
+  const fetchBanks = useCallback(async () => {
     try {
       const response = await api.get('/vault/');
       const activeKey = vaultKey;
@@ -414,7 +414,7 @@ export default function App() {
     } catch (error) {
       console.error("Failed fetching credential vault.", error);
     }
-  };
+  }, [vaultKey]);
 
   const fetchActivities = async () => {
     try {
@@ -854,6 +854,12 @@ export default function App() {
       }
     } catch (e) { }
   }, []);
+
+  useEffect(() => {
+    if (screen !== "forgot-step2" && screen !== "login-otp") {
+      setTimerResetTrigger(0);
+    }
+  }, [screen]);
 
   useEffect(() => {
     if ((screen !== "forgot-step2" && screen !== "login-otp") || resendTimer <= 0) return;
