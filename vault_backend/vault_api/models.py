@@ -76,6 +76,7 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     otp_code = models.CharField(max_length=6, blank=True, null=True)
     otp_expires_at = models.DateTimeField(blank=True, null=True)
     tfa_enabled = models.BooleanField(default=False)
+    encrypted_vault_key = models.TextField(blank=True, null=True)
 
     # auto_now_add=True: Django sets this once when the record is created, never changes it
     date_joined = models.DateTimeField(auto_now_add=True)

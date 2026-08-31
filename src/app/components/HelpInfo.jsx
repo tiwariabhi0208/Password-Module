@@ -166,7 +166,7 @@ export function HelpInfo() {
               </div>
               <div className="flex gap-2">
                 <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />
-                <span>Key derivation: **PBKDF2** with **100,000 iterations** using user master passcodes.</span>
+                <span>Key derivation: **PBKDF2** with **600,000 iterations** using user master passcodes.</span>
               </div>
               <div className="flex gap-2">
                 <ChevronRight size={14} className="text-[#7B1535] dark:text-[#E27D9B] shrink-0 mt-0.5" />

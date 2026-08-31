@@ -17,7 +17,7 @@ import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 
 import { api, setAccessToken } from "./utils/apiClient";
-import { deriveKeyAndHash, encryptData, decryptData } from "./utils/cryptoHelper";
+import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer } from "./utils/cryptoHelper";
 
 // --- INLINED COMPONENTS ---
 
@@ -274,6 +274,7 @@ export default function App() {
   const [activities, setActivities] = useState([]);
   const [accessToken, setAccessTokenState] = useState("");
   const [masterKey, setMasterKey] = useState(null);
+  const [vaultKey, setVaultKey] = useState(null);
   const [tempLoginHash, setTempLoginHash] = useState("");
   const [entities, setEntities] = useState([]);
   const [admins, setAdmins] = useState([
@@ -341,12 +342,12 @@ export default function App() {
 
   // Load all credentials on mount or token change
   useEffect(() => {
-    if (accessToken && masterKey) {
+    if (accessToken && vaultKey) {
       fetchEntities();
       fetchBanks();
       fetchActivities();
     }
-  }, [accessToken, masterKey]);
+  }, [accessToken, vaultKey]);
 
   const fetchEntities = async () => {
     try {
@@ -360,25 +361,54 @@ export default function App() {
   const fetchBanks = async () => {
     try {
       const response = await api.get('/vault/');
+      const activeKey = vaultKey || masterKey;
+      
+      if (!activeKey) {
+        console.warn("No active encryption key found. Skipping bank decryption.");
+        return;
+      }
+
       // Decrypt credentials client-side on-the-fly
       const decryptedBanks = await Promise.all(response.data.map(async (bank) => {
-        return {
-          id: bank.id,
-          entityId: bank.entity,
-          name: bank.name,
-          initial: bank.initial,
-          color: bank.color || "#7B1535",
-          accountType: bank.account_type,
-          branchName: bank.branch_name,
-          holder: await decryptData(bank.encrypted_holder, masterKey),
-          accountNumber: await decryptData(bank.encrypted_account_number, masterKey),
-          ifsc: await decryptData(bank.encrypted_ifsc, masterKey),
-          username: await decryptData(bank.encrypted_username, masterKey),
-          password: await decryptData(bank.encrypted_password, masterKey),
-          transactionPassword: bank.encrypted_transaction_password 
-            ? await decryptData(bank.encrypted_transaction_password, masterKey) 
-            : ""
-        };
+        try {
+          return {
+            id: bank.id,
+            entityId: bank.entity,
+            name: bank.name,
+            initial: bank.initial,
+            color: bank.color || "#7B1535",
+            accountType: bank.account_type,
+            branchName: bank.branch_name,
+            holder: await decryptData(bank.encrypted_holder, activeKey),
+            accountNumber: await decryptData(bank.encrypted_account_number, activeKey),
+            ifsc: await decryptData(bank.encrypted_ifsc, activeKey),
+            username: await decryptData(bank.encrypted_username, activeKey),
+            password: await decryptData(bank.encrypted_password, activeKey),
+            transactionPassword: bank.encrypted_transaction_password 
+              ? await decryptData(bank.encrypted_transaction_password, activeKey) 
+              : "",
+            isDecrypted: true
+          };
+        } catch (decryptError) {
+          console.error(`Failed to decrypt bank card ${bank.name}:`, decryptError);
+          // Fallback to masked values if decryption key is not valid for this card
+          return {
+            id: bank.id,
+            entityId: bank.entity,
+            name: bank.name,
+            initial: bank.initial,
+            color: bank.color || "#7B1535",
+            accountType: bank.account_type,
+            branchName: bank.branch_name,
+            holder: "[Locked / Encrypted]",
+            accountNumber: "•••• •••• •••• " + (bank.id && typeof bank.id === 'string' ? bank.id.slice(-4) : "0000"),
+            ifsc: "[Locked]",
+            username: "[Locked]",
+            password: "[Locked]",
+            transactionPassword: "",
+            isDecrypted: false
+          };
+        }
       }));
       setBanks(decryptedBanks);
     } catch (error) {
@@ -453,6 +483,30 @@ export default function App() {
         // Store master key in state for decryption
         setMasterKey(derived.masterKey);
 
+        // Derive vaultKey
+        let vKey = derived.masterKey;
+        if (userData.encrypted_vault_key) {
+          try {
+            const hexKey = await decryptData(userData.encrypted_vault_key, derived.masterKey);
+            vKey = hexToArrayBuffer(hexKey);
+          } catch (err) {
+            console.error("Failed to decrypt vault key:", err);
+          }
+        } else {
+          // If no encrypted_vault_key exists and this is the super admin, self-initialize
+          if (userData.level === 3) {
+            try {
+              const hexKey = arrayBufferToHex(derived.masterKey);
+              const encVKey = await encryptData(hexKey, derived.masterKey);
+              await api.patch('/auth/profile/', { encrypted_vault_key: encVKey });
+              userData.encrypted_vault_key = encVKey;
+            } catch (err) {
+              console.error("Failed to self-initialize encrypted vault key:", err);
+            }
+          }
+        }
+        setVaultKey(vKey);
+
         // Save user profile state
         setCurrentAdmin(userData);
         setTfaEnabled(userData.tfa_enabled || false);
@@ -493,6 +547,30 @@ export default function App() {
       setAccessToken(token);
       setAccessTokenState(token);
 
+      // Derive vaultKey
+      let vKey = masterKey;
+      if (userData.encrypted_vault_key) {
+        try {
+          const hexKey = await decryptData(userData.encrypted_vault_key, masterKey);
+          vKey = hexToArrayBuffer(hexKey);
+        } catch (err) {
+          console.error("Failed to decrypt vault key:", err);
+        }
+      } else {
+        // If no encrypted_vault_key exists and this is the super admin, self-initialize
+        if (userData.level === 3 && masterKey) {
+          try {
+            const hexKey = arrayBufferToHex(masterKey);
+            const encVKey = await encryptData(hexKey, masterKey);
+            await api.patch('/auth/profile/', { encrypted_vault_key: encVKey });
+            userData.encrypted_vault_key = encVKey;
+          } catch (err) {
+            console.error("Failed to self-initialize encrypted vault key:", err);
+          }
+        }
+      }
+      setVaultKey(vKey);
+
       // Save user profile state
       setCurrentAdmin(userData);
       setTfaEnabled(userData.tfa_enabled || false);
@@ -512,6 +590,7 @@ export default function App() {
 
   const handleAddBank = async (bankData) => {
     try {
+      const activeKey = vaultKey || masterKey;
       const payload = {
         entity: bankData.entityId || null,
         name: bankData.name,
@@ -519,13 +598,13 @@ export default function App() {
         color: bankData.color || "#7B1535",
         account_type: bankData.accountType,
         branch_name: bankData.branchName,
-        encrypted_holder: await encryptData(bankData.holder, masterKey),
-        encrypted_account_number: await encryptData(bankData.accountNumber, masterKey),
-        encrypted_ifsc: await encryptData(bankData.ifsc, masterKey),
-        encrypted_username: await encryptData(bankData.username, masterKey),
-        encrypted_password: await encryptData(bankData.password, masterKey),
+        encrypted_holder: await encryptData(bankData.holder, activeKey),
+        encrypted_account_number: await encryptData(bankData.accountNumber, activeKey),
+        encrypted_ifsc: await encryptData(bankData.ifsc, activeKey),
+        encrypted_username: await encryptData(bankData.username, activeKey),
+        encrypted_password: await encryptData(bankData.password, activeKey),
         encrypted_transaction_password: bankData.transactionPassword 
-          ? await encryptData(bankData.transactionPassword, masterKey) 
+          ? await encryptData(bankData.transactionPassword, activeKey) 
           : null,
         photo_payload: bankData.photoPayload || null
       };
@@ -540,6 +619,7 @@ export default function App() {
 
   const handleEditBank = async (bankData) => {
     try {
+      const activeKey = vaultKey || masterKey;
       const payload = {
         entity: bankData.entityId || null,
         name: bankData.name,
@@ -547,13 +627,13 @@ export default function App() {
         color: bankData.color || "#7B1535",
         account_type: bankData.accountType,
         branch_name: bankData.branchName,
-        encrypted_holder: await encryptData(bankData.holder, masterKey),
-        encrypted_account_number: await encryptData(bankData.accountNumber, masterKey),
-        encrypted_ifsc: await encryptData(bankData.ifsc, masterKey),
-        encrypted_username: await encryptData(bankData.username, masterKey),
-        encrypted_password: await encryptData(bankData.password, masterKey),
+        encrypted_holder: await encryptData(bankData.holder, activeKey),
+        encrypted_account_number: await encryptData(bankData.accountNumber, activeKey),
+        encrypted_ifsc: await encryptData(bankData.ifsc, activeKey),
+        encrypted_username: await encryptData(bankData.username, activeKey),
+        encrypted_password: await encryptData(bankData.password, activeKey),
         encrypted_transaction_password: bankData.transactionPassword 
-          ? await encryptData(bankData.transactionPassword, masterKey) 
+          ? await encryptData(bankData.transactionPassword, activeKey) 
           : null,
         photo_payload: bankData.photoPayload || null
       };
@@ -1446,6 +1526,7 @@ export default function App() {
           onTabChange={handleTabChange}
           onLogout={handleLogout}
           vaultCount={filteredBanks.length}
+          activeAdmin={activeAdmin}
         />
 
         <main className="flex-grow min-w-0 px-4 sm:px-8 py-5 pb-24 md:pb-5">
@@ -1622,16 +1703,18 @@ export default function App() {
                   </div>
 
                   {/* Add Account Button */}
-                  <button
-                    onClick={handleOpenAddModal}
-                    className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md cursor-pointer hover:scale-102"
-                    style={{ backgroundColor: MAROON }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-                  >
-                    <Plus size={14} />
-                    Add Account
-                  </button>
+                  {activeAdmin?.level === 3 && (
+                    <button
+                      onClick={handleOpenAddModal}
+                      className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md cursor-pointer hover:scale-102"
+                      style={{ backgroundColor: MAROON }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                    >
+                      <Plus size={14} />
+                      Add Account
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1646,12 +1729,14 @@ export default function App() {
                   <p className="text-xs text-[#7A6068] dark:text-slate-400 mt-1 max-w-xs leading-relaxed font-semibold">
                     There are currently no bank credentials stored in the vault terminal. Click below to add your first account.
                   </p>
-                  <button
-                    onClick={handleOpenAddModal}
-                    className="mt-4 px-4 py-2 bg-[#7B1535] hover:bg-[#661128] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-                  >
-                    Add Account
-                  </button>
+                  {activeAdmin?.level === 3 && (
+                    <button
+                      onClick={handleOpenAddModal}
+                      className="mt-4 px-4 py-2 bg-[#7B1535] hover:bg-[#661128] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                    >
+                      Add Account
+                    </button>
+                  )}
                 </div>
               ) : filteredBanks.length === 0 ? (
                 /* Search Empty State */
@@ -1690,6 +1775,7 @@ export default function App() {
                         onClick={handleClick}
                         onConfirmDelete={(bankObj) => setDeleteBank(bankObj)}
                         onEdit={handleOpenEditModal}
+                        activeAdminLevel={activeAdmin?.level}
                       />
                     );
                   })}
@@ -1706,7 +1792,9 @@ export default function App() {
                           <th className="py-3.5 px-5">Account Number</th>
                           <th className="py-3.5 px-5">IFSC Code</th>
                           <th className="py-3.5 px-5">Branch</th>
-                          <th className="py-3.5 px-5 text-right pr-6">Actions</th>
+                          {activeAdmin?.level > 1 && (
+                            <th className="py-3.5 px-5 text-right pr-6">Actions</th>
+                          )}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
@@ -1766,30 +1854,36 @@ export default function App() {
                             <td className="py-3.5 px-5 text-slate-500 dark:text-slate-400 font-semibold">{bank.branchName}</td>
 
                             {/* Actions */}
-                            <td className="py-3.5 px-5 text-right pr-6">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenEditModal(bank);
-                                  }}
-                                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
-                                  title="Edit Account Details"
-                                >
-                                  <Edit2 size={15} />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteBank(bank);
-                                  }}
-                                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
-                                  title="Delete Account"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                            </td>
+                            {activeAdmin?.level > 1 && (
+                              <td className="py-3.5 px-5 text-right pr-6">
+                                <div className="flex items-center justify-end gap-2">
+                                  {activeAdmin?.level >= 2 && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenEditModal(bank);
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202020] text-slate-500 hover:text-[#7B1535] dark:hover:text-[#E27D9B] transition-colors cursor-pointer"
+                                      title="Edit Account Details"
+                                    >
+                                      <Edit2 size={15} />
+                                    </button>
+                                  )}
+                                  {activeAdmin?.level === 3 && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteBank(bank);
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                                      title="Delete Account"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -1878,34 +1972,36 @@ export default function App() {
                               </div>
                             </div>
 
-                            <button
-                              onClick={() => {
-                                setEntityConfirmModal({
-                                  title: "Delete Entity Confirmation",
-                                  message: `Are you sure you want to delete and unregister "${entity.name}" from the system database?`,
-                                  onConfirm: async () => {
-                                    try {
-                                      await api.delete(`/entities/${entity.id}/`);
-                                      setEntities(prev => {
-                                        const updated = prev.filter(e => e.id !== entity.id);
-                                        if (selectedUser === entity.email) {
-                                          setSelectedUser(updated.length > 0 ? updated[0].email : "");
-                                        }
-                                        return updated;
-                                      });
-                                      fetchActivities();
-                                    } catch (error) {
-                                      console.error("Failed to delete entity:", error);
-                                      alert("Failed to delete entity. You may not have permission.");
+                            {activeAdmin?.level === 3 && (
+                              <button
+                                onClick={() => {
+                                  setEntityConfirmModal({
+                                    title: "Delete Entity Confirmation",
+                                    message: `Are you sure you want to delete and unregister "${entity.name}" from the system database?`,
+                                    onConfirm: async () => {
+                                      try {
+                                        await api.delete(`/entities/${entity.id}/`);
+                                        setEntities(prev => {
+                                          const updated = prev.filter(e => e.id !== entity.id);
+                                          if (selectedUser === entity.email) {
+                                            setSelectedUser(updated.length > 0 ? updated[0].email : "");
+                                          }
+                                          return updated;
+                                        });
+                                        fetchActivities();
+                                      } catch (error) {
+                                        console.error("Failed to delete entity:", error);
+                                        alert("Failed to delete entity. You may not have permission.");
+                                      }
                                     }
-                                  }
-                                });
-                              }}
-                              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
-                              title="Remove Entity"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                                  });
+                                }}
+                                className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
+                                title="Remove Entity"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1931,112 +2027,84 @@ export default function App() {
                 </div>
 
                 {/* Bottom Section: Add Entity Form */}
-                <div className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full" style={{ borderColor: BORDER }}>
-                  <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-5">
-                    Add New Entity
-                  </h3>
+                {activeAdmin?.level === 3 && (
+                  <div className="bg-white dark:bg-[#101010] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm w-full" style={{ borderColor: BORDER }}>
+                    <h3 className="text-sm font-black text-[#7B1535] dark:text-[#E27D9B] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-5">
+                      Add New Entity
+                    </h3>
 
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
 
-                      // 1. Validate all rows are filled
-                      const hasEmpty = bulkEntities.some(ent => !ent.name.trim() || !ent.phone.trim() || !ent.email.trim());
-                      if (hasEmpty) {
-                        setValidationError("All fields are required in all rows.");
-                        return;
-                      }
-
-                      // 2. Validate row details
-                      for (let i = 0; i < bulkEntities.length; i++) {
-                        const ent = bulkEntities[i];
-                        const name = ent.name.trim();
-                        const phone = ent.phone.trim();
-                        const email = ent.email.trim();
-
-                        const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
-                        if (isAdminUser) {
-                          setValidationError(`Error in row ${i + 1}: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
+                        // 1. Validate all rows are filled
+                        const hasEmpty = bulkEntities.some(ent => !ent.name.trim() || !ent.phone.trim() || !ent.email.trim());
+                        if (hasEmpty) {
+                          setValidationError("All fields are required in all rows.");
                           return;
                         }
 
-                        const ADMIN_EMAILS = [
-                          "priya.sharma@southpoint.edu.in",
-                          "rahul.verma@southpoint.edu.in",
-                          "anita.nair@southpoint.edu.in",
-                          "deepak.mehta@southpoint.edu.in"
-                        ];
-                        const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
-                        if (isAdminEmail) {
-                          setValidationError(`Error in row ${i + 1}: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
-                          return;
-                        }
+                        // 2. Validate row details
+                        for (let i = 0; i < bulkEntities.length; i++) {
+                          const ent = bulkEntities[i];
+                          const name = ent.name.trim();
+                          const phone = ent.phone.trim();
+                          const email = ent.email.trim();
 
-                        if (!email.toLowerCase().endsWith("@gmail.com")) {
-                          setValidationError(`Error in row ${i + 1}: Email must be a valid @gmail.com address.`);
-                          return;
-                        }
-
-                        const isTenDigits = /^\d{10}$/.test(phone);
-                        if (!isTenDigits) {
-                          setValidationError(`Error in row ${i + 1}: Phone number must be exactly 10 digits (e.g. 9876543210).`);
-                          return;
-                        }
-                      }
-
-                      // 3. Check for duplicates within bulkEntities itself (email OR phone match)
-                      let internalEmailConflict = null;
-                      let internalPhoneConflict = null;
-
-                      for (let i = 0; i < bulkEntities.length; i++) {
-                        for (let j = i + 1; j < bulkEntities.length; j++) {
-                          if (bulkEntities[i].email.trim().toLowerCase() === bulkEntities[j].email.trim().toLowerCase()) {
-                            internalEmailConflict = bulkEntities[i].email.trim();
+                          const isAdminUser = USERS.some(u => u.toLowerCase() === name.toLowerCase());
+                          if (isAdminUser) {
+                            setValidationError(`Error in row ${i + 1}: "${name}" is registered as an Administrator. Entities cannot have the same name as an administrator.`);
+                            return;
                           }
-                          if (bulkEntities[i].phone.trim() === bulkEntities[j].phone.trim()) {
-                            internalPhoneConflict = bulkEntities[i].phone.trim();
+
+                          const ADMIN_EMAILS = [
+                            "priya.sharma@southpoint.edu.in",
+                            "rahul.verma@southpoint.edu.in",
+                            "anita.nair@southpoint.edu.in",
+                            "deepak.mehta@southpoint.edu.in"
+                          ];
+                          const isAdminEmail = ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
+                          if (isAdminEmail) {
+                            setValidationError(`Error in row ${i + 1}: "${email}" is registered as an Administrator email. Entities cannot have the same email as an administrator.`);
+                            return;
+                          }
+
+                          if (!email.toLowerCase().endsWith("@gmail.com")) {
+                            setValidationError(`Error in row ${i + 1}: Email must be a valid @gmail.com address.`);
+                            return;
+                          }
+
+                          const isTenDigits = /^\d{10}$/.test(phone);
+                          if (!isTenDigits) {
+                            setValidationError(`Error in row ${i + 1}: Phone number must be exactly 10 digits (e.g. 9876543210).`);
+                            return;
                           }
                         }
-                      }
 
-                      if (internalEmailConflict || internalPhoneConflict) {
-                        const conflictItems = [];
-                        if (internalEmailConflict) conflictItems.push(`Email: ${internalEmailConflict}`);
-                        if (internalPhoneConflict) conflictItems.push(`Phone number: ${internalPhoneConflict}`);
+                        // 3. Check for duplicates within bulkEntities itself (email OR phone match)
+                        let internalEmailConflict = null;
+                        let internalPhoneConflict = null;
 
-                        setValidationError(
-                          <div className="text-left space-y-2.5">
-                            <p className="font-semibold text-slate-800 dark:text-slate-200">
-                              The following details are found to be matching/common in your bulk entries:
-                            </p>
-                            <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
-                              {conflictItems.map((item, idx) => (
-                                <li key={idx}>{item}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        );
-                        return;
-                      }
+                        for (let i = 0; i < bulkEntities.length; i++) {
+                          for (let j = i + 1; j < bulkEntities.length; j++) {
+                            if (bulkEntities[i].email.trim().toLowerCase() === bulkEntities[j].email.trim().toLowerCase()) {
+                              internalEmailConflict = bulkEntities[i].email.trim();
+                            }
+                            if (bulkEntities[i].phone.trim() === bulkEntities[j].phone.trim()) {
+                              internalPhoneConflict = bulkEntities[i].phone.trim();
+                            }
+                          }
+                        }
 
-                      // 4. Check for duplicates in existing database (email OR phone match)
-                      for (let i = 0; i < bulkEntities.length; i++) {
-                        const ent = bulkEntities[i];
-                        const email = ent.email.trim().toLowerCase();
-                        const phone = ent.phone.trim();
-
-                        const emailExists = entities.some(ex => ex.email.toLowerCase() === email);
-                        const phoneExists = entities.some(ex => ex.phone === phone);
-
-                        if (emailExists || phoneExists) {
+                        if (internalEmailConflict || internalPhoneConflict) {
                           const conflictItems = [];
-                          if (emailExists) conflictItems.push(`Email: ${ent.email}`);
-                          if (phoneExists) conflictItems.push(`Phone number: ${ent.phone}`);
+                          if (internalEmailConflict) conflictItems.push(`Email: ${internalEmailConflict}`);
+                          if (internalPhoneConflict) conflictItems.push(`Phone number: ${internalPhoneConflict}`);
 
                           setValidationError(
                             <div className="text-left space-y-2.5">
                               <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                The following details for row {i + 1} are found to be matching/common in the database:
+                                The following details are found to be matching/common in your bulk entries:
                               </p>
                               <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
                                 {conflictItems.map((item, idx) => (
@@ -2047,131 +2115,161 @@ export default function App() {
                           );
                           return;
                         }
-                      }
 
-                      setEntityConfirmModal({
-                        title: "Confirm Bulk Registration",
-                        message: `Are you sure you want to register these ${bulkEntities.length} entities?`,
-                        onConfirm: async () => {
-                          try {
-                            const payload = bulkEntities.map(ent => ({
-                              name: ent.name.trim(),
-                              email: ent.email.trim(),
-                              phone: ent.phone.trim()
-                            }));
-                            const response = await api.post('/entities/bulk/', payload);
-                            const newEntitiesList = response.data;
-                            setEntities(prev => {
-                              const updated = [...prev, ...newEntitiesList];
-                              if (selectedUser === "" && updated.length > 0) {
-                                setSelectedUser(updated[0].email);
-                              }
-                              return updated;
-                            });
-                            fetchActivities();
-                            setBulkEntities([{ name: "", phone: "", email: "" }]); // Reset to 1 empty row
-                          } catch (error) {
-                            console.error("Bulk registration failed:", error);
-                            const errMsg = error.response?.data?.error || "Registration failed. Please try again.";
-                            setValidationError(errMsg);
+                        // 4. Check for duplicates in existing database (email OR phone match)
+                        for (let i = 0; i < bulkEntities.length; i++) {
+                          const ent = bulkEntities[i];
+                          const email = ent.email.trim().toLowerCase();
+                          const phone = ent.phone.trim();
+
+                          const emailExists = entities.some(ex => ex.email.toLowerCase() === email);
+                          const phoneExists = entities.some(ex => ex.phone === phone);
+
+                          if (emailExists || phoneExists) {
+                            const conflictItems = [];
+                            if (emailExists) conflictItems.push(`Email: ${ent.email}`);
+                            if (phoneExists) conflictItems.push(`Phone number: ${ent.phone}`);
+
+                            setValidationError(
+                              <div className="text-left space-y-2.5">
+                                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                  The following details for row {i + 1} are found to be matching/common in the database:
+                                </p>
+                                <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
+                                  {conflictItems.map((item, idx) => (
+                                    <li key={idx}>{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                            return;
                           }
                         }
-                      });
-                    }}
-                    className="space-y-6 text-left"
-                  >
-                    <div className="space-y-4">
-                      {bulkEntities.map((ent, idx) => (
-                        <div key={idx} className="relative bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm space-y-4 animate-fade-in" style={{ borderColor: BORDER }}>
-                          {bulkEntities.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setBulkEntities(prev => prev.filter((_, i) => i !== idx));
-                              }}
-                              className="absolute top-4 right-4 text-xs font-bold text-red-600 hover:text-red-750 bg-transparent border-none cursor-pointer hover:underline"
-                            >
-                              Remove Row
-                            </button>
-                          )}
-                          <div className="text-xs font-black uppercase text-[#7B1535] dark:text-[#E27D9B] tracking-wider mb-1">
-                            Entity Row #{idx + 1}
-                          </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                                Full Name / Entity Name
-                              </label>
-                              <input
-                                type="text"
-                                required
-                                value={ent.name}
-                                onChange={(e) => handleBulkChange(idx, "name", e.target.value)}
-                                placeholder="e.g. Guwahati Central Campus"
-                                className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                                style={{ borderColor: BORDER }}
-                              />
+                        setEntityConfirmModal({
+                          title: "Confirm Bulk Registration",
+                          message: `Are you sure you want to register these ${bulkEntities.length} entities?`,
+                          onConfirm: async () => {
+                            try {
+                              const payload = bulkEntities.map(ent => ({
+                                name: ent.name.trim(),
+                                email: ent.email.trim(),
+                                phone: ent.phone.trim()
+                              }));
+                              const response = await api.post('/entities/bulk/', payload);
+                              const newEntitiesList = response.data;
+                              setEntities(prev => {
+                                const updated = [...prev, ...newEntitiesList];
+                                if (selectedUser === "" && updated.length > 0) {
+                                  setSelectedUser(updated[0].email);
+                                }
+                                return updated;
+                              });
+                              fetchActivities();
+                              setBulkEntities([{ name: "", phone: "", email: "" }]); // Reset to 1 empty row
+                            } catch (error) {
+                              console.error("Bulk registration failed:", error);
+                              const errMsg = error.response?.data?.error || "Registration failed. Please try again.";
+                              setValidationError(errMsg);
+                            }
+                          }
+                        });
+                      }}
+                      className="space-y-6 text-left"
+                    >
+                      <div className="space-y-4">
+                        {bulkEntities.map((ent, idx) => (
+                          <div key={idx} className="relative bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm space-y-4 animate-fade-in" style={{ borderColor: BORDER }}>
+                            {bulkEntities.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setBulkEntities(prev => prev.filter((_, i) => i !== idx));
+                                }}
+                                className="absolute top-4 right-4 text-xs font-bold text-red-600 hover:text-red-750 bg-transparent border-none cursor-pointer hover:underline"
+                              >
+                                Remove Row
+                              </button>
+                            )}
+                            <div className="text-xs font-black uppercase text-[#7B1535] dark:text-[#E27D9B] tracking-wider mb-1">
+                              Entity Row #{idx + 1}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                                  Full Name / Entity Name
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={ent.name}
+                                  onChange={(e) => handleBulkChange(idx, "name", e.target.value)}
+                                  placeholder="e.g. Guwahati Central Campus"
+                                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                                  style={{ borderColor: BORDER }}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
+                                  Phone Number
+                                </label>
+                                <input
+                                  type="tel"
+                                  required
+                                  minLength={10}
+                                  maxLength={10}
+                                  value={ent.phone}
+                                  onChange={(e) => handleBulkChange(idx, "phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                  placeholder="e.g. 9876543210"
+                                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                                  style={{ borderColor: BORDER }}
+                                />
+                              </div>
                             </div>
 
                             <div>
                               <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                                Phone Number
+                                Email ID
                               </label>
                               <input
-                                type="tel"
+                                type="email"
                                 required
-                                minLength={10}
-                                maxLength={10}
-                                value={ent.phone}
-                                onChange={(e) => handleBulkChange(idx, "phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
-                                placeholder="e.g. 9876543210"
+                                value={ent.email}
+                                onChange={(e) => handleBulkChange(idx, "email", e.target.value)}
+                                placeholder="e.g. branch@gmail.com"
                                 className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
                                 style={{ borderColor: BORDER }}
                               />
                             </div>
                           </div>
+                        ))}
+                      </div>
 
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                              Email ID
-                            </label>
-                            <input
-                              type="email"
-                              required
-                              value={ent.email}
-                              onChange={(e) => handleBulkChange(idx, "email", e.target.value)}
-                              placeholder="e.g. branch@gmail.com"
-                              className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
-                              style={{ borderColor: BORDER }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBulkEntities(prev => [...prev, { name: "", phone: "", email: "" }]);
-                        }}
-                        className="flex-grow h-11 border border-dashed rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 bg-transparent border-slate-300 dark:border-slate-800 text-[#7B1535] dark:text-[#E27D9B]"
-                      >
-                        + Add More Entities
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-grow h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 border-none"
-                        style={{ backgroundColor: MAROON }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-                      >
-                        Register All Entities
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                      <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBulkEntities(prev => [...prev, { name: "", phone: "", email: "" }]);
+                          }}
+                          className="flex-grow h-11 border border-dashed rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 bg-transparent border-slate-300 dark:border-slate-800 text-[#7B1535] dark:text-[#E27D9B]"
+                        >
+                          + Add More Entities
+                        </button>
+                        <button
+                          type="submit"
+                          className="flex-grow h-11 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 border-none"
+                          style={{ backgroundColor: MAROON }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                        >
+                          Register All Entities
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -2263,11 +2361,11 @@ export default function App() {
                     <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
                       {filteredActivities.map((log) => {
                         const badgeStyles = {
-                          success: { text: "#16A34A", bg: "#F0FDF4", darkBg: "#122a18", border: "border-l-[#16A34A]" },
-                          info: { text: "#1E3A5F", bg: "#E8F0F8", darkBg: "#101f30", border: "border-l-[#1E3A5F]" },
-                          warning: { text: "#C9A227", bg: "#FDF8E8", darkBg: "#2c2512", border: "border-l-[#C9A227]" },
-                          error: { text: "#DC2626", bg: "#FDF2F2", darkBg: "#321515", border: "border-l-[#DC2626]" }
-                        }[log.type] || { text: "#7A6068", bg: "#F5ECEE", darkBg: "#221a1a", border: "border-l-slate-300" };
+                          success: { text: "#16A34A", darkText: "#4ADE80", bg: "#F0FDF4", darkBg: "#122a18", border: "border-l-[#16A34A]" },
+                          info: { text: "#1E3A5F", darkText: "#6FA4E3", bg: "#E8F0F8", darkBg: "#101f30", border: "border-l-[#1E3A5F]" },
+                          warning: { text: "#C9A227", darkText: "#FBBF24", bg: "#FDF8E8", darkBg: "#2c2512", border: "border-l-[#C9A227]" },
+                          error: { text: "#DC2626", darkText: "#F87171", bg: "#FDF2F2", darkBg: "#321515", border: "border-l-[#DC2626]" }
+                        }[log.type] || { text: "#7A6068", darkText: "#A1A1AA", bg: "#F5ECEE", darkBg: "#221a1a", border: "border-l-slate-300" };
 
                         return (
                           <div
@@ -2278,7 +2376,10 @@ export default function App() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span
                                   className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full dark:bg-opacity-30"
-                                  style={{ color: badgeStyles.text, backgroundColor: document.documentElement.classList.contains("dark") ? badgeStyles.darkBg : badgeStyles.bg }}
+                                  style={{
+                                    color: darkMode ? badgeStyles.darkText : badgeStyles.text,
+                                    backgroundColor: darkMode ? badgeStyles.darkBg : badgeStyles.bg
+                                  }}
                                 >
                                   {log.action}
                                 </span>
@@ -2668,16 +2769,25 @@ export default function App() {
                             // The server never sees the plaintext password -- derive the
                             // same login-hash the sign-in flow sends, using that email's salt.
                             const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(email)}`);
-                            const derived = await deriveKeyAndHash(passVal, saltResponse.data.salt);
+                            const newAdminDerived = await deriveKeyAndHash(passVal, saltResponse.data.salt);
+
+                            // Encrypt the current shared vaultKey with the new admin's masterKey
+                            const activeVaultKey = vaultKey || masterKey;
+                            let encryptedVKeyForNewAdmin = null;
+                            if (activeVaultKey) {
+                              const hexVaultKey = arrayBufferToHex(activeVaultKey);
+                              encryptedVKeyForNewAdmin = await encryptData(hexVaultKey, newAdminDerived.masterKey);
+                            }
 
                             const response = await api.post('/admins/', {
                               name,
                               email,
-                              password: derived.loginHashHex,
+                              password: newAdminDerived.loginHashHex,
                               level: levelVal,
                               dept: departments[levelVal],
                               campus: "",
-                              designation: designations[levelVal]
+                              designation: designations[levelVal],
+                              encrypted_vault_key: encryptedVKeyForNewAdmin
                             });
 
                             setAdmins([...admins, response.data]);

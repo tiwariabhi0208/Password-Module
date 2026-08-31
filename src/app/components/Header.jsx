@@ -69,16 +69,18 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
                 <p className="text-base font-bold text-[#7B1535] dark:text-[#E27D9B]">{activeAdmin?.name || "Abhishek Tiwari"}</p>
                 <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5">{activeAdmin?.email || "admin@southpoint.edu.in"}</p>
               </div>
-              <button
-                onClick={() => {
-                  setAvatarMenuOpen(false);
-                  if (onNavigate) onNavigate("register-admin");
-                }}
-                className="w-full text-left px-3.5 py-3 text-base text-[#1A0810] dark:text-slate-200 hover:bg-[#FBF3F5] dark:hover:bg-[#221015] flex items-center gap-2.5 transition-colors cursor-pointer"
-              >
-                <ShieldCheck size={14} className="text-[#7B1535] dark:text-[#E27D9B]" />
-                Register Admin
-              </button>
+              {activeAdmin?.level === 3 && (
+                <button
+                  onClick={() => {
+                    setAvatarMenuOpen(false);
+                    if (onNavigate) onNavigate("register-admin");
+                  }}
+                  className="w-full text-left px-3.5 py-3 text-base text-[#1A0810] dark:text-slate-200 hover:bg-[#FBF3F5] dark:hover:bg-[#221015] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <ShieldCheck size={14} className="text-[#7B1535] dark:text-[#E27D9B]" />
+                  Register Admin
+                </button>
+              )}
               <button
                 onClick={() => {
                   setAvatarMenuOpen(false);

@@ -24,7 +24,7 @@ export function getBankLogo(bankName) {
   return null;
 }
 
-export function BankCard({ accounts, onClick, onConfirmDelete, onEdit }) {
+export function BankCard({ accounts, onClick, onConfirmDelete, onEdit, activeAdminLevel }) {
   const bank = accounts[0];
   const isMultiple = accounts.length > 1;
 
@@ -177,26 +177,30 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit }) {
           >
             <Eye size={12} /> View
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(accounts[0]);
-            }}
-            className="flex items-center gap-1 bg-[#7B1535] hover:bg-[#600f27] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
-            title="Edit Details"
-          >
-            <Edit2 size={12} /> Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onConfirmDelete(accounts[0]);
-            }}
-            className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
-            title="Delete Account"
-          >
-            <Trash2 size={12} /> Delete
-          </button>
+          {activeAdminLevel >= 2 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(accounts[0]);
+              }}
+              className="flex items-center gap-1 bg-[#7B1535] hover:bg-[#600f27] text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+              title="Edit Details"
+            >
+              <Edit2 size={12} /> Edit
+            </button>
+          )}
+          {activeAdminLevel === 3 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onConfirmDelete(accounts[0]);
+              }}
+              className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white text-[11px] font-black px-2.5 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-none"
+              title="Delete Account"
+            >
+              <Trash2 size={12} /> Delete
+            </button>
+          )}
         </div>
       )}
     </div>

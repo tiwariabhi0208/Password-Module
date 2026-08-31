@@ -166,3 +166,17 @@ function uint8ArrayToBase64(bytes) {
   }
   return btoa(binary);
 }
+
+export function arrayBufferToHex(buffer) {
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export function hexToArrayBuffer(hexString) {
+  if (!hexString) return new ArrayBuffer(0);
+  const pairs = hexString.match(/.{1,2}/g);
+  if (!pairs) return new ArrayBuffer(0);
+  const bytes = new Uint8Array(pairs.map(byte => parseInt(byte, 16)));
+  return bytes.buffer;
+}

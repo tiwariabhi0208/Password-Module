@@ -2,21 +2,21 @@ import React from "react";
 import { Landmark, History, User, Lock, LogOut, ShieldCheck, Settings, UserPlus, HelpCircle } from "lucide-react";
 import { GOLD, BORDER } from "./theme";
 
-export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount }) {
+export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount, activeAdmin }) {
   const menuGroups = [
     {
       title: "MAIN",
       items: [
         { id: "vault", label: "Account Vault", icon: Landmark },
         { id: "entities", label: "Register Entity", icon: UserPlus },
-        { id: "activity", label: "Activity Log", icon: History }
+        ...(activeAdmin?.level >= 2 ? [{ id: "activity", label: "Activity Log", icon: History }] : [])
       ]
     },
     {
       title: "SETTINGS",
       items: [
         { id: "profile", label: "My Profile", icon: User },
-        { id: "register-admin", label: "Register Admin", icon: ShieldCheck },
+        ...(activeAdmin?.level === 3 ? [{ id: "register-admin", label: "Register Admin", icon: ShieldCheck }] : []),
         { id: "password", label: "Change Password", icon: Lock },
         { id: "settings", label: "General Settings", icon: Settings },
         { id: "help", label: "Help & Information", icon: HelpCircle },
