@@ -6,10 +6,14 @@ export function HelpDeskModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in cursor-pointer"
+      onClick={onClose}
+    >
       <div 
-        className="relative w-full max-w-lg bg-white dark:bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 animate-scale-up text-left"
+        className="relative w-full max-w-lg bg-white dark:bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 animate-scale-up text-left cursor-default"
         style={{ borderColor: BORDER }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
         <div 
@@ -113,23 +117,6 @@ export function HelpDeskModal({ isOpen, onClose }) {
             </div>
           </div>
 
-        </div>
-
-        {/* Footer Actions */}
-        <div 
-          className="flex items-center justify-end px-6 py-3.5 bg-slate-50 dark:bg-[#181818] border-t border-slate-100 dark:border-slate-800"
-          style={{ borderColor: BORDER }}
-        >
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 text-xs font-extrabold rounded-xl text-white transition-all shadow-sm cursor-pointer active:scale-95"
-            style={{ backgroundColor: MAROON }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = MAROON_HOVER)}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = MAROON)}
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>
