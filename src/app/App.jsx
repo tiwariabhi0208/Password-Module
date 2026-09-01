@@ -16,6 +16,7 @@ import { CopyButton } from "./components/ModalDetailRow";
 import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 import { HelpDeskModal } from "./components/HelpDeskModal";
+import { LoadingScreen } from "./components/LoadingScreen";
 
 import { api, setAccessToken } from "./utils/apiClient";
 import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer, hashPasswordSHA256 } from "./utils/cryptoHelper";
@@ -316,6 +317,7 @@ export default function App() {
   const [regAdminLevel, setRegAdminLevel] = useState("1");
   const [regAdminLevelDropdownOpen, setRegAdminLevelDropdownOpen] = useState(false);
   const [isHelpDeskOpen, setIsHelpDeskOpen] = useState(false);
+  const [loadingScreen, setLoadingScreen] = useState(null);
 
   const handleBulkChange = (index, field, value) => {
     setBulkEntities(prev => {
@@ -531,10 +533,12 @@ export default function App() {
         setPassword("");
 
         setSuccess("Login successful!");
+        setLoadingScreen({ mode: "login", message: "Authenticating & Loading Secure Vault..." });
         setTimeout(() => {
-          goToDashboard();
+          setScreen("dashboard");
+          setLoadingScreen(null);
           setSuccess("");
-        }, 400);
+        }, 1200);
       }
     } catch (err) {
       console.error("Login initialization failed.", err);
@@ -597,10 +601,12 @@ export default function App() {
       setTfaEnabled(userData.tfa_enabled || false);
 
       setSuccess("Verification successful!");
+      setLoadingScreen({ mode: "login", message: "Authenticating & Loading Secure Vault..." });
       setTimeout(() => {
-        goToDashboard();
+        setScreen("dashboard");
+        setLoadingScreen(null);
         setSuccess("");
-      }, 400);
+      }, 1200);
     } catch (err) {
       console.error("OTP verification failed.", err);
       setError(err.response?.data?.detail || "Invalid OTP code or expired session.");
@@ -685,25 +691,29 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout/');
-    } catch (err) {
-      console.error("Logout failed on server.", err);
-    } finally {
-      // Clear client session regardless of server success
-      setAccessToken("");
-      setAccessTokenState("");
-      setMasterKey(null);
-      setVaultKey(null);
-      setTempLoginHash("");
-      setPasswordHash("");
-      setCurrentAdmin(null);
-      setBanks([]);
-      setActivities([]);
-      setEntities([]);
-      setScreen("login");
-      setActiveTab("vault");
-    }
+    setLoadingScreen({ mode: "logout", message: "Securing Vault & Terminating Session..." });
+    setTimeout(async () => {
+      try {
+        await api.post('/auth/logout/');
+      } catch (err) {
+        console.error("Logout failed on server.", err);
+      } finally {
+        // Clear client session regardless of server success
+        setAccessToken("");
+        setAccessTokenState("");
+        setMasterKey(null);
+        setVaultKey(null);
+        setTempLoginHash("");
+        setPasswordHash("");
+        setCurrentAdmin(null);
+        setBanks([]);
+        setActivities([]);
+        setEntities([]);
+        setScreen("login");
+        setActiveTab("vault");
+        setLoadingScreen(null);
+      }
+    }, 1200);
   };
 
   const entitiesCarouselRef = useRef(null);
@@ -1238,6 +1248,10 @@ export default function App() {
         {primaryBtn("Verify & Log In", handleLoginOtpVerify, undefined, !otpComplete || loading)}
       </AuthCard>
     );
+  }
+
+  if (loadingScreen) {
+    return <LoadingScreen mode={loadingScreen.mode} message={loadingScreen.message} />;
   }
 
   if (screen === "login") {
