@@ -147,12 +147,12 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
     >
       <div
-        className="w-[720px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up"
+        className="w-[880px] max-w-[95vw] max-h-[94vh] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up flex flex-col"
         style={{ borderColor: BORDER }}
       >
         {/* Maroon modal header with brand gradient */}
         <div
-          className="flex items-center justify-between px-6 py-5 text-white"
+          className="flex items-center justify-between p-4 sm:px-6 sm:py-4 text-white shrink-0"
           style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
           <div className="flex items-center gap-2.5">
@@ -177,237 +177,240 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5 bg-slate-50/20 dark:bg-[#101010]/20">
-          <div className="space-y-4 bg-white dark:bg-[#121212] p-5 rounded-2xl border shadow-sm text-left animate-fade-in" style={{ borderColor: BORDER }}>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-grow min-h-0 overflow-hidden bg-slate-50/20 dark:bg-[#101010]/20">
+          <div className="p-4 sm:px-6 sm:py-4 space-y-3.5 overflow-y-auto flex-grow text-left">
+            <div className="space-y-3 sm:space-y-3.5 bg-white dark:bg-[#121212] p-4 sm:p-4.5 rounded-2xl border shadow-sm text-left animate-fade-in" style={{ borderColor: BORDER }}>
 
-            {/* Row 1: Select Registered Entity & Account Holder */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Select Registered Entity
-                </label>
-                <div className="relative">
-                  <select
-                    value={entityId}
-                    onChange={(e) => {
-                      const selectedId = e.target.value;
-                      setEntityId(selectedId);
-                      const ent = entities.find(el => el.id === selectedId);
-                      if (ent) {
-                        setHolder(ent.name);
-                      }
-                    }}
-                    className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>-- Select registered entity --</option>
-                    {entities.map((ent) => (
-                      <option key={ent.id} value={ent.id}>
-                        {ent.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
-                    <ChevronDown size={16} />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Account Holder Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. South Point School, Guwahati"
-                  value={holder}
-                  onChange={(e) => setHolder(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Row 2: Bank Name & Branch Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Bank Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. HDFC Bank"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Branch Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Guwahati Main"
-                  value={branchName}
-                  onChange={(e) => setBranchName(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Row 3: Account Number & IFSC Code */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="A/C Number"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  IFSC Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="IFSC Code"
-                  value={ifsc}
-                  onChange={(e) => setIfsc(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Row 4: Net Banking Username & Password */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Corporate Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Password
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Portal Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Row 5: Account Login Type & Transaction Password */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Account Login Type
-                </label>
-                <div className="relative">
-                  <select
-                    value={accountType}
-                    onChange={(e) => setAccountType(e.target.value)}
-                    className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
-                  >
-                    <option value="corporate">Corporate Banking Login</option>
-                    <option value="retail">Retail / Personal Banking Login</option>
-                  </select>
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
-                    <ChevronDown size={16} />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
-                  Transaction Password <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Transaction Password (if any)"
-                  value={transactionPassword}
-                  onChange={(e) => setTransactionPassword(e.target.value)}
-                  className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Row 6: Upload Account Photo */}
-            <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400">
-                Account Photo / Logo <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
-              </label>
-
-              <div className="flex flex-col sm:flex-row items-center gap-4 p-4.5 bg-[#FDFAFB] dark:bg-[#181818] border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl">
-                {photo ? (
-                  <div className="relative shrink-0 w-16 h-16 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-[#101010] flex items-center justify-center">
-                    <img src={photo} alt="Preview" className="w-full h-full object-contain" />
-                    <button
-                      type="button"
-                      onClick={() => setPhoto(null)}
-                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center text-[10px] font-black border-none cursor-pointer shadow active:scale-90"
-                      title="Remove Photo"
+              {/* Row 1: Select Registered Entity & Account Holder */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Select Registered Entity
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={entityId}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setEntityId(selectedId);
+                        const ent = entities.find(el => el.id === selectedId);
+                        if (ent) {
+                          setHolder(ent.name);
+                        }
+                      }}
+                      className="w-full h-10 px-3 pr-10 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
                     >
-                      ×
-                    </button>
+                      <option value="" disabled>-- Select registered entity --</option>
+                      {entities.map((ent) => (
+                        <option key={ent.id} value={ent.id}>
+                          {ent.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
+                      <ChevronDown size={15} />
+                    </div>
                   </div>
-                ) : (
-                  <div className="shrink-0 w-16 h-16 rounded-xl border border-dashed border-slate-300 dark:border-slate-850 bg-slate-50/50 dark:bg-[#101010]/30 flex items-center justify-center text-slate-400 dark:text-slate-600">
-                    <Plus size={20} />
-                  </div>
-                )}
+                </div>
 
-                <div className="flex-grow text-left w-full sm:w-auto">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Account Holder Name
+                  </label>
                   <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,image/jpeg,image/jpg,image/png"
-                    onChange={handlePhotoChange}
-                    className="block w-full text-xs text-slate-500 dark:text-slate-400
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-xl file:border-0
-                      file:text-xs file:font-black
-                      file:bg-[#7B1535]/10 file:text-[#7B1535]
-                      dark:file:bg-[#E27D9B]/10 dark:file:text-[#E27D9B]
-                      hover:file:bg-[#7B1535]/15 dark:hover:file:bg-[#E27D9B]/15
-                      file:cursor-pointer cursor-pointer"
+                    type="text"
+                    required
+                    placeholder="e.g. South Point School, Guwahati"
+                    value={holder}
+                    onChange={(e) => setHolder(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                   />
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
-                    Allowed formats: JPEG, JPG, PNG (Max size: 5 MB)
-                  </p>
-                  {photoError && (
-                    <p className="text-[10.5px] font-semibold text-red-600 dark:text-red-400 mt-1">
-                      ⚠️ {photoError}
-                    </p>
+                </div>
+              </div>
+
+              {/* Row 2: Bank Name & Branch Name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. HDFC Bank"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Branch Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Guwahati Main"
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: Account Number & IFSC Code */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Account Number
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="A/C Number"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    IFSC Code
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="IFSC Code"
+                    value={ifsc}
+                    onChange={(e) => setIfsc(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-mono font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Net Banking Username & Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Corporate Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Portal Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Account Login Type & Transaction Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Account Login Type
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={accountType}
+                      onChange={(e) => setAccountType(e.target.value)}
+                      className="w-full h-10 px-3 pr-10 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
+                    >
+                      <option value="corporate">Corporate Banking Login</option>
+                      <option value="retail">Retail / Personal Banking Login</option>
+                    </select>
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
+                      <ChevronDown size={15} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                    Transaction Password <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Transaction Password (if any)"
+                    value={transactionPassword}
+                    onChange={(e) => setTransactionPassword(e.target.value)}
+                    className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Row 6: Upload Account Photo */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400">
+                  Account Photo / Logo <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+                </label>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 p-3.5 bg-[#FDFAFB] dark:bg-[#181818] border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl">
+                  {photo ? (
+                    <div className="relative shrink-0 w-12 h-12 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-[#101010] flex items-center justify-center">
+                      <img src={photo} alt="Preview" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setPhoto(null)}
+                        className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center text-[10px] font-black border-none cursor-pointer shadow active:scale-90"
+                        title="Remove Photo"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="shrink-0 w-12 h-12 rounded-xl border border-dashed border-slate-300 dark:border-slate-850 bg-slate-50/50 dark:bg-[#101010]/30 flex items-center justify-center text-slate-400 dark:text-slate-600">
+                      <Plus size={18} />
+                    </div>
                   )}
+
+                  <div className="flex-grow text-left w-full sm:w-auto">
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,image/jpeg,image/jpg,image/png"
+                      onChange={handlePhotoChange}
+                      className="block w-full text-xs text-slate-500 dark:text-slate-400
+                        file:mr-4 file:py-1.5 file:px-3
+                        file:rounded-xl file:border-0
+                        file:text-xs file:font-black
+                        file:bg-[#7B1535]/10 file:text-[#7B1535]
+                        dark:file:bg-[#E27D9B]/10 dark:file:text-[#E27D9B]
+                        hover:file:bg-[#7B1535]/15 dark:hover:file:bg-[#E27D9B]/15
+                        file:cursor-pointer cursor-pointer"
+                    />
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium">
+                      Allowed formats: JPEG, JPG, PNG (Max size: 5 MB)
+                    </p>
+                    {photoError && (
+                      <p className="text-[10.5px] font-semibold text-red-600 dark:text-red-400 mt-1">
+                        ⚠️ {photoError}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4 pt-2">
+          {/* Fixed Pinned Footer Buttons - Always Visible Without Scrolling */}
+          <div className="px-4 sm:px-6 py-3 bg-white dark:bg-[#141414] border-t border-slate-200 dark:border-slate-800 flex gap-3 shrink-0 z-10" style={{ borderColor: BORDER }}>
             <button
               type="button"
               onClick={onClose}

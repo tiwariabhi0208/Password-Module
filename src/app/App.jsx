@@ -1661,24 +1661,24 @@ export default function App() {
           activeAdmin={activeAdmin}
         />
 
-        <main className="flex-grow min-w-0 px-4 sm:px-8 py-5 pb-24 md:pb-5">
+        <main className="flex-grow min-w-0 px-3 sm:px-8 py-4 sm:py-5 pb-24 md:pb-5">
           {activeTab === "vault" && (
             <>
               {/* Header Title section */}
-              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-slate-800" style={{ borderColor: BORDER }}>
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-5 pb-4 border-b border-slate-200 dark:border-slate-800" style={{ borderColor: BORDER }}>
                 <div>
-                  <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>Account Vault</h1>
-                  <p className="text-sm text-[#7A6068] mt-0.5 font-medium">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: MAROON }}>Account Vault</h1>
+                  <p className="text-xs sm:text-sm text-[#7A6068] mt-0.5 font-medium">
                     Linked bank credentials — South Point School, Guwahati
                   </p>
                 </div>
 
                 {/* Highly Visible Active User Indicator */}
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[11px] font-extrabold text-[#7A6068] dark:text-slate-400 uppercase tracking-widest shrink-0">Active Session:</span>
+                <div className="flex items-center justify-between sm:justify-start gap-2.5">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold text-[#7A6068] dark:text-slate-400 uppercase tracking-widest shrink-0">Active Session:</span>
                   <div className="relative z-30">
                     {entities.length === 0 ? (
-                      <div className="flex items-center gap-2.5 h-12 px-5 rounded-xl border border-slate-200 dark:border-slate-800/80 text-sm font-extrabold bg-slate-100/50 dark:bg-slate-900/30 text-slate-500 dark:text-slate-400 select-none">
+                      <div className="flex items-center gap-2.5 h-10 sm:h-12 px-3 sm:px-5 rounded-xl border border-slate-200 dark:border-slate-800/80 text-xs sm:text-sm font-extrabold bg-slate-100/50 dark:bg-slate-900/30 text-slate-500 dark:text-slate-400 select-none">
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600" />
                         No Entity Exists
                       </div>
@@ -1698,7 +1698,7 @@ export default function App() {
                                     setAvatarMenuOpen(false);
                                   }
                                 }}
-                                className="flex items-center gap-2 h-12 px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
+                                className="flex items-center gap-2 h-10 sm:h-12 px-3 sm:px-5 rounded-xl border border-slate-250 dark:border-slate-800 text-xs sm:text-sm font-black transition-all bg-[#FBF3F5] dark:bg-[#221015]/60 hover:bg-[#F5ECEE] dark:hover:bg-[#2a131a] border-[#7B1535]/30 hover:border-[#7B1535]/50 text-[#7B1535] dark:text-[#E27D9B] cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98]"
                               >
                                 {activeDisplayName}
                                 <ChevronDown size={15} style={{ color: GOLD }} />
@@ -1740,13 +1740,13 @@ export default function App() {
               </div>
 
               {/* Stats Grid Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 mb-5 sm:mb-6">
                 {/* Stats Card 1: Total Vault Accounts */}
-                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FBF3F5] dark:bg-[#221015]/60" style={{ color: MAROON }}>
+                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4 sm:p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3.5 sm:gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FBF3F5] dark:bg-[#221015]/60 shrink-0" style={{ color: MAROON }}>
                     <Users size={20} />
                   </div>
-                  <div className="flex-grow">
+                  <div className="flex-grow min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Bank Accounts</span>
                     <div className="mt-1">
                       <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">{filteredBanks.length}</span>
@@ -1759,11 +1759,11 @@ export default function App() {
                 </div>
 
                 {/* Stats Card 2: Unique Bank Accounts */}
-                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/20 text-[#1E3A5F] dark:text-[#6FA4E3]">
+                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4 sm:p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3.5 sm:gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/20 text-[#1E3A5F] dark:text-[#6FA4E3] shrink-0">
                     <Landmark size={20} />
                   </div>
-                  <div className="flex-grow">
+                  <div className="flex-grow min-w-0">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Unique Bank Accounts</span>
                     <div className="mt-1">
                       <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">
@@ -1774,9 +1774,9 @@ export default function App() {
                 </div>
 
                 {/* Stats Card 3: Active Session Info */}
-                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 hover:shadow-md" style={{ borderColor: BORDER }}>
+                <div className="bg-white dark:bg-[#101010] rounded-2xl p-4 sm:p-4.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3.5 sm:gap-4 transition-all duration-300 hover:shadow-md sm:col-span-2 md:col-span-1" style={{ borderColor: BORDER }}>
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black border bg-[#FBF3F5] dark:bg-[#221015] border-slate-200 dark:border-slate-800 shrink-0"
                     style={{ color: MAROON }}
                   >
                     <User size={18} />
@@ -1794,16 +1794,16 @@ export default function App() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 p-4 bg-white dark:bg-[#101010] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm" style={{ borderColor: BORDER }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6 p-3 sm:p-4 bg-white dark:bg-[#101010] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm" style={{ borderColor: BORDER }}>
                 {/* Left: Search input */}
-                <div className="relative flex-grow max-w-md">
+                <div className="relative flex-grow max-w-full sm:max-w-md">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search by bank name, cardholder, account #..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-10 pl-10 pr-4 text-sm border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-colors"
+                    className="w-full h-10 pl-10 pr-4 text-xs sm:text-sm border bg-white dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-colors"
                     style={{ borderColor: BORDER }}
                   />
                 </div>
@@ -1883,7 +1883,7 @@ export default function App() {
                 </div>
               ) : viewMode === "grid" ? (
                 /* Grid View (Redesigned Premium Cards) */
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
                   {groupedBanks.map((group) => {
                     const accounts = group.accounts;
                     const handleClick = () => {

@@ -26,7 +26,7 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount, activeAd
   ];
 
   return (
-    <aside className="w-64 bg-white dark:bg-[#101010] flex-shrink-0 flex flex-col justify-between py-6 px-5 border-r border-slate-100 dark:border-[#222222] min-h-[calc(100vh-80px)] shadow-sm transition-colors duration-200">
+    <aside className="hidden md:flex w-64 bg-white dark:bg-[#101010] flex-shrink-0 flex-col justify-between py-6 px-5 border-r border-slate-100 dark:border-[#222222] min-h-[calc(100vh-80px)] shadow-sm transition-colors duration-200">
       {/* Top Menu Links */}
       <div className="flex flex-col gap-6">
         {menuGroups.map((group) => (

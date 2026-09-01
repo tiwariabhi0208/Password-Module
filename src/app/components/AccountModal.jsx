@@ -62,59 +62,59 @@ export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
       }}
     >
       <div
-        className="w-[640px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up"
+        className="w-[640px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up max-h-[90vh] flex flex-col"
         style={{ borderColor: BORDER }}
       >
         {/* Maroon modal header with brand identity gradient */}
         <div
-          className="flex items-center justify-between px-6 py-5 text-white"
+          className="flex items-center justify-between p-4 sm:px-6 sm:py-5 text-white shrink-0"
           style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #4a0d20 100%)` }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {bank.photo ? (
               <img
                 src={bank.photo}
                 alt={bank.name}
-                className="h-20 w-20 rounded-xl object-contain shrink-0 bg-white"
+                className="h-12 w-12 sm:h-20 sm:w-20 rounded-xl object-contain shrink-0 bg-white"
               />
             ) : logoUrl ? (
               <img
                 src={logoUrl}
                 alt={bank.name}
-                className="h-20 w-auto object-contain shrink-0"
+                className="h-12 sm:h-20 w-auto object-contain shrink-0"
               />
             ) : (
               <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
+                className="w-12 h-12 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
                 style={{ color: GOLD }}
               >
-                <span className="text-xl font-black tracking-wider leading-none">
+                <span className="text-sm sm:text-xl font-black tracking-wider leading-none">
                   {bank.initial || bank.name.slice(0, 2).toUpperCase()}
                 </span>
               </div>
             )}
-            <div className="flex flex-col text-left">
-              <div className="flex items-center gap-2">
-                <span className="text-[17px] font-black tracking-wide leading-none">{bank.name}</span>
+            <div className="flex flex-col text-left min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-sm sm:text-[17px] font-black tracking-wide leading-none truncate">{bank.name}</span>
                 <button
-                  className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5"
+                  className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5 shrink-0"
                   title="Open official login portal"
                   onClick={() => window.open(getDirectLoginUrl(bank.name, bank.accountType), "_blank")}
                 >
                   <ExternalLink size={12} />
                 </button>
               </div>
-              <span className="text-[8.5px] uppercase tracking-widest text-white/50 font-black mt-1 flex items-center gap-1">
+              <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-widest text-white/50 font-black mt-1 flex items-center gap-1">
                 <Shield size={10} className="text-[#C9A227]" /> Secured Vault Node
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {activeAdmin?.level === 3 && (
               <button
                 onClick={() => onDelete(bank)}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-red-300 transition-all cursor-pointer border-none"
                 title="Delete Account"
               >
                 <Trash2 size={14} />
@@ -123,7 +123,7 @@ export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
             {activeAdmin?.level >= 2 && (
               <button
                 onClick={() => onEdit(bank)}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-[#C9A227] hover:text-[#ffe066] transition-all cursor-pointer border-none"
                 title="Edit Account Details"
               >
                 <Edit2 size={14} />
@@ -131,7 +131,7 @@ export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
             )}
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-white/85 hover:text-white transition-all cursor-pointer border-none"
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 text-white/85 hover:text-white transition-all cursor-pointer border-none"
               title="Close modal"
             >
               <X size={16} />
@@ -140,8 +140,8 @@ export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
         </div>
 
         {/* Info Grid */}
-        <div className="max-h-[50vh] overflow-y-auto custom-scrollbar text-left">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5 px-6 py-5">
+        <div className="max-h-[60vh] overflow-y-auto custom-scrollbar text-left flex-grow">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4.5 p-4 sm:px-6 sm:py-5">
             <ModalDetailRow label="Account Holder" value={bank.holder} />
             <ModalDetailRow label="Account Number" value={bank.accountNumber} isMonospaced={true} />
             <ModalDetailRow label="IFSC Code" value={bank.ifsc} isMonospaced={true} />
@@ -154,7 +154,7 @@ export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
           </div>
         </div>
 
-        <div className="flex gap-4 px-6 py-4.5 border-t bg-slate-50/50 dark:bg-[#151515]/80" style={{ borderColor: BORDER }}>
+        <div className="flex gap-4 p-4 sm:px-6 sm:py-4.5 border-t bg-slate-50/50 dark:bg-[#151515]/80 shrink-0" style={{ borderColor: BORDER }}>
           <button
             onClick={() => window.open(getDirectLoginUrl(bank.name, bank.accountType), "_blank")}
             className="flex-grow h-10 border border-[#7B1535] dark:border-[#E27D9B] text-xs font-black rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2 bg-transparent text-[#7B1535] dark:text-[#E27D9B] hover:bg-[#7B1535] hover:text-white dark:hover:bg-[#E27D9B] dark:hover:text-[#101010] active:scale-[0.98]"

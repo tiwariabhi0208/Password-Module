@@ -8,20 +8,20 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
 
   return (
     <nav
-      className="h-20 flex items-center px-6 justify-between sticky top-0 z-50 shadow-md"
+      className="h-16 sm:h-20 flex items-center px-3 sm:px-6 justify-between sticky top-0 z-50 shadow-md"
       style={{ backgroundColor: MAROON, borderBottom: `2.5px solid ${GOLD}` }}
     >
       {/* Brand */}
-      <div className="flex items-center gap-3.5 flex-shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
         <img
           src={schoolLogo}
           alt="South Point School Logo"
-          style={{ height: 40, width: "auto", objectFit: "contain" }}
+          className="h-8 sm:h-10 w-auto object-contain"
         />
         <div className="flex flex-col text-left">
-          <span className="text-white text-base font-black tracking-wide leading-tight">South Point School</span>
+          <span className="text-white text-xs sm:text-base font-black tracking-wide leading-tight">South Point School</span>
           <span
-            className="text-xs font-black tracking-widest uppercase mt-0.5"
+            className="text-[9px] sm:text-xs font-black tracking-widest uppercase mt-0.5"
             style={{ color: GOLD }}
           >
             GUWAHATI
@@ -30,19 +30,19 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
       </div>
 
       {/* Actions (Stealth Button & Avatar Menu) */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 sm:gap-5">
         {/* Lock Screen Button */}
         <button
           onClick={() => setStealthMode(true)}
-          className="flex items-center gap-2 h-11 px-5 rounded-lg border text-base font-black transition-all hover:bg-white/10 text-white shadow-sm hover:shadow active:scale-[0.98]"
+          className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-11 px-2.5 sm:px-5 rounded-lg border text-xs sm:text-base font-black transition-all hover:bg-white/10 text-white shadow-sm hover:shadow active:scale-[0.98]"
           style={{ borderColor: "rgba(255,255,255,0.35)", cursor: "pointer", letterSpacing: "0.02em" }}
           title="Activate Lock Screen (Quick Lock)"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          Lock Screen
+          <span className="hidden sm:inline">Lock Screen</span>
         </button>
 
         {/* Avatar menu */}

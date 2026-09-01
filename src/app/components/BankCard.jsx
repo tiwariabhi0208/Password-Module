@@ -45,7 +45,7 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit, activeAdm
   return (
     <div
       onClick={onClick}
-      className="group relative overflow-hidden w-full aspect-[1.586/1] rounded-2xl transition-all duration-300 cursor-pointer shadow-md select-none border border-slate-200 dark:border-slate-800 flex flex-col justify-between p-5 text-slate-850 dark:text-slate-200 bg-white dark:bg-[#121212]"
+      className="group relative overflow-hidden w-full min-h-[200px] sm:aspect-[1.586/1] rounded-2xl transition-all duration-300 cursor-pointer shadow-md select-none border border-slate-200 dark:border-slate-800 flex flex-col justify-between p-3.5 sm:p-5 text-slate-850 dark:text-slate-200 bg-white dark:bg-[#121212]"
       style={{
         boxShadow: "0 4px 15px -2px rgba(0, 0, 0, 0.05)"
       }}
@@ -71,38 +71,38 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit, activeAdm
         
         {/* Row 1: Header (Bank Info & Account Tag) */}
         <div className="flex items-center justify-between w-full pb-2 border-b border-slate-100 dark:border-slate-900">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             {bank.photo ? (
               <img 
                 src={bank.photo} 
                 alt={bank.name} 
-                className="h-14 w-14 rounded-xl object-contain shrink-0 bg-white" 
+                className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl object-contain shrink-0 bg-white" 
               />
             ) : logoUrl ? (
               <img 
                 src={logoUrl} 
                 alt={bank.name} 
-                className="h-14 w-auto object-contain shrink-0" 
+                className="h-10 sm:h-14 w-auto object-contain shrink-0" 
               />
             ) : (
               <div 
-                className="w-14 h-14 rounded-xl flex items-center justify-center text-sm font-black bg-slate-100 dark:bg-slate-900 shrink-0 text-slate-650 dark:text-slate-350"
+                className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-xs sm:text-sm font-black bg-slate-100 dark:bg-slate-900 shrink-0 text-slate-650 dark:text-slate-350"
               >
                 {initial}
               </div>
             )}
             <div className="flex flex-col min-w-0">
-              <span className="text-[13px] font-extrabold text-slate-800 dark:text-slate-100 truncate tracking-wide">
+              <span className="text-xs sm:text-[13px] font-extrabold text-slate-800 dark:text-slate-100 truncate tracking-wide">
                 {bank.name}
               </span>
-              <span className="text-[9.5px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
+              <span className="text-[8.5px] sm:text-[9.5px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
                 OFFICIAL BANK CARD
               </span>
             </div>
           </div>
           
           <div 
-            className="px-2 py-0.5 rounded-md text-[8.5px] font-extrabold tracking-wider border shrink-0 bg-slate-50 dark:bg-slate-900/50 uppercase"
+            className="px-1.5 sm:px-2 py-0.5 rounded-md text-[7.5px] sm:text-[8.5px] font-extrabold tracking-wider border shrink-0 bg-slate-50 dark:bg-slate-900/50 uppercase"
             style={{ 
               color: bank.color, 
               borderColor: `${bank.color}35`, 
