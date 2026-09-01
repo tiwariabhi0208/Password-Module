@@ -15,6 +15,7 @@ import { Sidebar } from "./components/Sidebar";
 import { CopyButton } from "./components/ModalDetailRow";
 import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
+import { HelpDeskModal } from "./components/HelpDeskModal";
 
 import { api, setAccessToken } from "./utils/apiClient";
 import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer, hashPasswordSHA256 } from "./utils/cryptoHelper";
@@ -314,6 +315,7 @@ export default function App() {
   const [validationError, setValidationError] = useState(null);
   const [regAdminLevel, setRegAdminLevel] = useState("1");
   const [regAdminLevelDropdownOpen, setRegAdminLevelDropdownOpen] = useState(false);
+  const [isHelpDeskOpen, setIsHelpDeskOpen] = useState(false);
 
   const handleBulkChange = (index, field, value) => {
     setBulkEntities(prev => {
@@ -3261,10 +3263,15 @@ export default function App() {
           )}
 
           {activeTab === "help" && (
-            <HelpInfo />
+            <HelpInfo onOpenHelpDesk={() => setIsHelpDeskOpen(true)} />
           )}
         </main>
       </div>
+
+      <HelpDeskModal
+        isOpen={isHelpDeskOpen}
+        onClose={() => setIsHelpDeskOpen(false)}
+      />
 
       {selectedBank && (
         <AccountModal
@@ -3703,7 +3710,7 @@ export default function App() {
         </button>
       </div>
 
-      {activeTab === "vault" && <Footer />}
+      {activeTab === "vault" && <Footer onOpenHelpDesk={() => setIsHelpDeskOpen(true)} />}
 
       {/* Custom Leave Profile Confirmation Modal */}
       {pendingTabChange && (

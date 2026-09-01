@@ -11,11 +11,12 @@ import {
   ChevronRight, 
   Info,
   Lock,
-  Layers
+  Layers,
+  Headphones
 } from "lucide-react";
-import { MAROON, GOLD, BORDER } from "./theme";
+import { MAROON, MAROON_HOVER, GOLD, BORDER } from "./theme";
 
-export function HelpInfo() {
+export function HelpInfo({ onOpenHelpDesk }) {
   const [activeSection, setActiveSection] = useState("all");
 
   const accessLevels = [
@@ -102,6 +103,19 @@ export function HelpInfo() {
             </p>
           </div>
         </div>
+
+        {/* Contact Help Desk Button */}
+        <button
+          type="button"
+          onClick={onOpenHelpDesk}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-xs text-white shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+          style={{ backgroundColor: MAROON }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = MAROON_HOVER)}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = MAROON)}
+        >
+          <Headphones size={16} />
+          <span>Help Desk Support</span>
+        </button>
       </div>
 
       {/* Grid: Main Concepts & Access levels */}

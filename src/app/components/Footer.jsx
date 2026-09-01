@@ -2,7 +2,7 @@ import React from "react";
 import schoolLogo from "../../../sps_logo.png";
 import { MAROON, GOLD } from "./theme";
 
-export function Footer() {
+export function Footer({ onOpenHelpDesk }) {
   return (
     <footer
       className="w-full py-5 pl-6 pr-8 border-t text-white shadow-inner flex items-center"
@@ -46,9 +46,16 @@ export function Footer() {
           <a href="#" className="transition-colors hover:underline text-white/80 hover:text-white">
             Security Policy
           </a>
-          <a href="#" className="transition-colors hover:underline text-white/80 hover:text-white">
+          <button 
+            type="button" 
+            onClick={(e) => {
+              e.preventDefault();
+              if (onOpenHelpDesk) onOpenHelpDesk();
+            }} 
+            className="transition-colors hover:underline text-white/80 hover:text-white cursor-pointer"
+          >
             Help Desk
-          </a>
+          </button>
         </div>
 
         {/* Right Column: Aligned Warning & Copyright */}
