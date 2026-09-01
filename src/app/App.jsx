@@ -1748,9 +1748,8 @@ export default function App() {
                   </div>
                   <div className="flex-grow">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Active Bank Accounts</span>
-                    <div className="flex items-baseline gap-2 mt-1">
+                    <div className="mt-1">
                       <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">{filteredBanks.length}</span>
-                      <span className="text-xs font-semibold text-[#16A34A] dark:text-[#18c459]">Monitored</span>
                     </div>
                     {/* Mini Progress Bar */}
                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
@@ -1766,16 +1765,11 @@ export default function App() {
                   </div>
                   <div className="flex-grow">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7A6068] dark:text-slate-400">Unique Bank Accounts</span>
-                    <div className="flex items-baseline gap-2 mt-1">
+                    <div className="mt-1">
                       <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 leading-none">
                         {new Set(filteredBanks.map(b => b.name.trim().toLowerCase())).size}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400 font-mono">UNIFIED</span>
                     </div>
-                    <p className="text-[10.5px] text-[#7A6068] dark:text-slate-400 mt-2 font-medium leading-none flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A5F] dark:bg-[#6FA4E3] animate-pulse"></span>
-                      Managing {filteredBanks.length} total accounts
-                    </p>
                   </div>
                 </div>
 
