@@ -17,11 +17,114 @@ import { Settings } from "./components/Settings";
 import { HelpInfo } from "./components/HelpInfo";
 import { HelpDeskModal } from "./components/HelpDeskModal";
 import { LoadingScreen } from "./components/LoadingScreen";
-
 import { api, setAccessToken } from "./utils/apiClient";
 import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer, hashPasswordSHA256 } from "./utils/cryptoHelper";
 
 // --- INLINED COMPONENTS ---
+
+export function NotificationModal({ isOpen, onClose, title, message, type = "error" }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const isSuccess = type === "success";
+  const isInfo = type === "info";
+
+  const defaultTitle = isSuccess 
+    ? "Success" 
+    : isInfo 
+    ? "Information" 
+    : "Validation Alert";
+
+  return (
+    <div 
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-md animate-fade-in select-none cursor-pointer"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-md bg-white dark:bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-scale-up text-center cursor-default flex flex-col"
+        style={{ borderColor: BORDER }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Accent Top Line */}
+        <div 
+          className={`h-1.5 w-full ${
+            isSuccess 
+              ? "bg-gradient-to-r from-emerald-500 to-teal-600" 
+              : isInfo 
+              ? "bg-gradient-to-r from-[#C9A227] to-[#7B1535]" 
+              : "bg-gradient-to-r from-red-500 to-[#7B1535]"
+          }`} 
+        />
+
+        {/* Top Close Button */}
+        <div className="flex justify-end pt-3 pr-3">
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer border-none bg-transparent"
+            title="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Card Body Content */}
+        <div className="px-6 pb-6 pt-1 flex flex-col items-center text-center">
+          
+          {/* Animated Icon Circle */}
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 shadow-sm animate-pulse ${
+            isSuccess 
+              ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400" 
+              : isInfo 
+              ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-[#C9A227]" 
+              : "bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 text-red-600 dark:text-red-400"
+          }`}>
+            {isSuccess ? (
+              <CheckCircle2 size={28} />
+            ) : isInfo ? (
+              <Info size={28} />
+            ) : (
+              <AlertTriangle size={28} />
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mb-2">
+            {title || defaultTitle}
+          </h3>
+
+          {/* Description Message */}
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-350 leading-relaxed font-semibold mb-6 max-w-sm">
+            {message}
+          </p>
+
+          {/* Action Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-11 text-xs sm:text-sm font-extrabold rounded-xl text-white transition-all shadow-md active:scale-95 cursor-pointer border-none"
+            style={{ 
+              backgroundColor: isSuccess ? "#059669" : MAROON 
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSuccess ? "#047857" : MAROON_HOVER)}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isSuccess ? "#059669" : MAROON)}
+          >
+            {isSuccess ? "Continue" : "OK, Got It"}
+          </button>
+
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function FormLabel({ text }) {
   return (
@@ -318,6 +421,11 @@ export default function App() {
   const [regAdminLevelDropdownOpen, setRegAdminLevelDropdownOpen] = useState(false);
   const [isHelpDeskOpen, setIsHelpDeskOpen] = useState(false);
   const [loadingScreen, setLoadingScreen] = useState(null);
+  const [notificationModal, setNotificationModal] = useState(null);
+
+  const showAlert = (message, title = "", type = "error") => {
+    setNotificationModal({ message, title, type });
+  };
 
   const handleBulkChange = (index, field, value) => {
     setBulkEntities(prev => {
@@ -3109,19 +3217,19 @@ export default function App() {
                       // 1. Verify current password matches locally
                       const currentHash = await hashPasswordSHA256(currentVal);
                       if (currentHash !== passwordHash) {
-                        alert("Error: Current password is incorrect.");
+                        showAlert("Current master password is incorrect. Please enter your valid current password.", "Password Error", "error");
                         return;
                       }
 
                       // 2. Verify new password matches confirmation
                       if (newPasswordVal !== confirmVal) {
-                        alert("Error: New password and confirmation password do not match.");
+                        showAlert("New password and confirmation password do not match. Please ensure both fields match exactly.", "Password Mismatch", "error");
                         return;
                       }
 
                       // 3. Check complexity rules
                       if (newPasswordVal.length < 10) {
-                        alert("Error: New password must be at least 10 characters long.");
+                        showAlert("New master password must be at least 10 characters long for vault security.", "Password Too Short", "error");
                         return;
                       }
 
@@ -3135,7 +3243,7 @@ export default function App() {
 
                         // 6. Re-encrypt the current decrypted vaultKey using the new derived masterKey
                         if (!vaultKey) {
-                          alert("Error: Vault encryption key is not loaded in this session.");
+                          showAlert("Vault encryption key is not loaded in this session. Please log in again.", "Encryption Error", "error");
                           return;
                         }
                         const hexVaultKey = arrayBufferToHex(vaultKey);
@@ -3153,13 +3261,13 @@ export default function App() {
                         setPasswordHash(newLocalHash);
 
                         logActivity("Security Alert", "Master password updated successfully on server", "warning");
-                        alert("Master password updated successfully!");
+                        showAlert("Master password updated successfully on the server!", "Password Updated", "success");
 
                         setNewPasswordVal("");
                         e.target.reset();
                       } catch (err) {
                         console.error("Password change failed.", err);
-                        alert(err.response?.data?.detail || "Failed to update master password on server. Please try again.");
+                        showAlert(err.response?.data?.detail || "Failed to update master password on server. Please try again.", "Server Error", "error");
                       }
                     }}
                     className="lg:col-span-2 space-y-5"
@@ -3811,6 +3919,16 @@ export default function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {notificationModal && (
+        <NotificationModal
+          isOpen={!!notificationModal}
+          onClose={() => setNotificationModal(null)}
+          title={notificationModal.title}
+          message={notificationModal.message}
+          type={notificationModal.type || "error"}
+        />
       )}
     </div>
   );
