@@ -54,6 +54,7 @@ class AdminCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Uses the custom create_user method in AdminManager which handles Argon2id hashing
+        validated_data.setdefault('is_staff', True)
         return Admin.objects.create_user(**validated_data)
 
 

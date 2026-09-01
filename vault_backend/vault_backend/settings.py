@@ -34,6 +34,11 @@ else:
 # ============================================================
 AUTH_USER_MODEL = 'vault_api.Admin'
 
+AUTHENTICATION_BACKENDS = [
+    'vault_api.backends.VaultAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # ============================================================
 # Section 4: Password Hashing -- Argon2id
 # ============================================================
