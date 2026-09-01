@@ -334,12 +334,25 @@ export default function App() {
   const [logFilterSeverity, setLogFilterSeverity] = useState("all");
   const [newPasswordVal, setNewPasswordVal] = useState("");
   const [tfaEnabled, setTfaEnabled] = useState(false);
-  const [auditEnabled, setAuditEnabled] = useState(true);
-  const [timeoutDuration, setTimeoutDuration] = useState("15m");
+  const [auditEnabled, setAuditEnabled] = useState(() => {
+    const saved = localStorage.getItem("vault_audit_enabled");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [timeoutDuration, setTimeoutDuration] = useState(() => {
+    return localStorage.getItem("vault_timeout_duration") || "15m";
+  });
   const [stealthMode, setStealthMode] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
   });
+
+  useEffect(() => {
+    localStorage.setItem("vault_timeout_duration", timeoutDuration);
+  }, [timeoutDuration]);
+
+  useEffect(() => {
+    localStorage.setItem("vault_audit_enabled", JSON.stringify(auditEnabled));
+  }, [auditEnabled]);
 
   // Auto-select first entity email if none is selected
   useEffect(() => {
@@ -370,7 +383,7 @@ export default function App() {
     try {
       const response = await api.get('/vault/');
       const activeKey = vaultKey;
-      
+
       if (!activeKey) {
         console.warn("No active encryption key found. Skipping bank decryption.");
         setError("Decryption Error: No active vault encryption key loaded. Please log in again.");
@@ -393,8 +406,8 @@ export default function App() {
             ifsc: await decryptData(bank.encrypted_ifsc, activeKey),
             username: await decryptData(bank.encrypted_username, activeKey),
             password: await decryptData(bank.encrypted_password, activeKey),
-            transactionPassword: bank.encrypted_transaction_password 
-              ? await decryptData(bank.encrypted_transaction_password, activeKey) 
+            transactionPassword: bank.encrypted_transaction_password
+              ? await decryptData(bank.encrypted_transaction_password, activeKey)
               : "",
             isDecrypted: true
           };
@@ -633,8 +646,8 @@ export default function App() {
         encrypted_ifsc: await encryptData(bankData.ifsc, activeKey),
         encrypted_username: await encryptData(bankData.username, activeKey),
         encrypted_password: await encryptData(bankData.password, activeKey),
-        encrypted_transaction_password: bankData.transactionPassword 
-          ? await encryptData(bankData.transactionPassword, activeKey) 
+        encrypted_transaction_password: bankData.transactionPassword
+          ? await encryptData(bankData.transactionPassword, activeKey)
           : null,
         photo_payload: bankData.photoPayload || null
       };
@@ -665,8 +678,8 @@ export default function App() {
         encrypted_ifsc: await encryptData(bankData.ifsc, activeKey),
         encrypted_username: await encryptData(bankData.username, activeKey),
         encrypted_password: await encryptData(bankData.password, activeKey),
-        encrypted_transaction_password: bankData.transactionPassword 
-          ? await encryptData(bankData.transactionPassword, activeKey) 
+        encrypted_transaction_password: bankData.transactionPassword
+          ? await encryptData(bankData.transactionPassword, activeKey)
           : null,
         photo_payload: bankData.photoPayload || null
       };
@@ -2995,11 +3008,10 @@ export default function App() {
                                         setRegAdminLevel(opt.value);
                                         setRegAdminLevelDropdownOpen(false);
                                       }}
-                                      className={`w-full text-left px-4 py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-                                        isSelected
+                                      className={`w-full text-left px-4 py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${isSelected
                                           ? "bg-[#FBF3F5] dark:bg-[#221015]"
                                           : "hover:bg-slate-50 dark:hover:bg-[#202020]"
-                                      }`}
+                                        }`}
                                       style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
                                     >
                                       <span className={isSelected ? "text-[#7B1535] dark:text-[#E27D9B] font-bold" : "dark:text-slate-200"}>{opt.label}</span>
@@ -3090,7 +3102,7 @@ export default function App() {
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
-                      
+
                       const currentVal = e.target.elements["currentPassword"].value;
                       const confirmVal = e.target.elements["confirmPassword"].value;
 
