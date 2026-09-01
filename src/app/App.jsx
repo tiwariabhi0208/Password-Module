@@ -312,6 +312,8 @@ export default function App() {
   const [duplicateEntityModal, setDuplicateEntityModal] = useState(null);
   const [bulkEntities, setBulkEntities] = useState([{ name: "", phone: "", email: "" }]);
   const [validationError, setValidationError] = useState(null);
+  const [regAdminLevel, setRegAdminLevel] = useState("1");
+  const [regAdminLevelDropdownOpen, setRegAdminLevelDropdownOpen] = useState(false);
 
   const handleBulkChange = (index, field, value) => {
     setBulkEntities(prev => {
@@ -2943,20 +2945,54 @@ export default function App() {
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                           Access Level Clearance
                         </label>
-                        <div className="relative">
-                          <select
-                            name="adminLevel"
-                            required
-                            className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
+                        <div className="relative z-20">
+                          <input type="hidden" name="adminLevel" value={regAdminLevel} />
+                          <button
+                            type="button"
+                            onClick={() => setRegAdminLevelDropdownOpen(!regAdminLevelDropdownOpen)}
+                            className="w-full h-11 px-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold flex items-center text-left cursor-pointer"
                             style={{ borderColor: BORDER }}
                           >
-                            <option value="1">Level 1 - Read Only</option>
-                            <option value="2">Level 2 - Limited Access</option>
-                            <option value="3">Level 3 - Super Admin</option>
-                          </select>
+                            <span className="font-bold text-[#7B1535] dark:text-[#E27D9B] truncate">
+                              {regAdminLevel === "3" ? "Level 3 - Super Admin" : regAdminLevel === "2" ? "Level 2 - Limited Access" : "Level 1 - Read Only"}
+                            </span>
+                          </button>
                           <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
-                            <ChevronDown size={16} />
+                            <ChevronDown size={16} className={`transition-transform duration-200 ${regAdminLevelDropdownOpen ? "rotate-180" : ""}`} />
                           </div>
+
+                          {regAdminLevelDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-30" onClick={() => setRegAdminLevelDropdownOpen(false)} />
+                              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#151515] rounded-xl shadow-2xl z-40 py-1.5 overflow-hidden border border-slate-200 dark:border-slate-800 animate-fade-in-up">
+                                {[
+                                  { value: "1", label: "Level 1 - Read Only" },
+                                  { value: "2", label: "Level 2 - Limited Access" },
+                                  { value: "3", label: "Level 3 - Super Admin" }
+                                ].map((opt) => {
+                                  const isSelected = regAdminLevel === opt.value;
+                                  return (
+                                    <button
+                                      key={opt.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setRegAdminLevel(opt.value);
+                                        setRegAdminLevelDropdownOpen(false);
+                                      }}
+                                      className={`w-full text-left px-4 py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                                        isSelected
+                                          ? "bg-[#FBF3F5] dark:bg-[#221015]"
+                                          : "hover:bg-slate-50 dark:hover:bg-[#202020]"
+                                      }`}
+                                      style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
+                                    >
+                                      <span className={isSelected ? "text-[#7B1535] dark:text-[#E27D9B] font-bold" : "dark:text-slate-200"}>{opt.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

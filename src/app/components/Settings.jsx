@@ -27,6 +27,7 @@ export function Settings({
   const [confirmPasswordHash, setConfirmPasswordHash] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [timeoutDropdownOpen, setTimeoutDropdownOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -174,27 +175,74 @@ export function Settings({
                   Automatically lock vault database after a period of user inactivity.
                 </span>
               </div>
-              <div className="relative">
-                <select
-                  value={timeoutDuration}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setTimeoutDuration(val);
-                    logActivity("Settings Updated", `Inactivity lock duration set to ${val === "never" ? "never" : val}`, "info");
-                  }}
-                  className="h-10 pl-3.5 pr-9 text-xs font-bold border border-slate-200 dark:border-slate-800 bg-[#FDFAFB] dark:bg-[#121212] text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all cursor-pointer appearance-none"
-                  style={{ borderColor: BORDER }}
-                >
-                  <option value="5m">5 min</option>
-                  <option value="10m">10 min</option>
-                  <option value="15m">15 min</option>
-                  <option value="30m">30 min</option>
-                  <option value="60m">60 min</option>
-                  <option value="never">Never</option>
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                  <ChevronDown size={14} />
-                </div>
+              <div className="relative z-20">
+                {(() => {
+                  const optionsMap = {
+                    "5m": "5 min",
+                    "10m": "10 min",
+                    "15m": "15 min",
+                    "30m": "30 min",
+                    "60m": "60 min",
+                    "never": "Never"
+                  };
+
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setTimeoutDropdownOpen(!timeoutDropdownOpen)}
+                        className="h-10 pl-3.5 pr-9 text-xs font-bold border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all flex items-center justify-between cursor-pointer min-w-[100px]"
+                        style={{ borderColor: BORDER }}
+                      >
+                        <span className="font-bold text-[#7B1535] dark:text-[#E27D9B]">
+                          {optionsMap[timeoutDuration] || "15 min"}
+                        </span>
+                      </button>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                        <ChevronDown size={14} className={`transition-transform duration-200 ${timeoutDropdownOpen ? "rotate-180" : ""}`} />
+                      </div>
+
+                      {timeoutDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-30" onClick={() => setTimeoutDropdownOpen(false)} />
+                          <div className="absolute right-0 top-full mt-1.5 bg-white dark:bg-[#151515] rounded-xl shadow-2xl z-40 py-1.5 w-32 overflow-hidden border border-slate-200 dark:border-slate-800 animate-fade-in-up">
+                            {[
+                              { value: "5m", label: "5 min" },
+                              { value: "10m", label: "10 min" },
+                              { value: "15m", label: "15 min" },
+                              { value: "30m", label: "30 min" },
+                              { value: "60m", label: "60 min" },
+                              { value: "never", label: "Never" }
+                            ].map((opt) => {
+                              const isSelected = timeoutDuration === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setTimeoutDuration(opt.value);
+                                    logActivity("Settings Updated", `Inactivity lock duration set to ${opt.value === "never" ? "never" : opt.value}`, "info");
+                                    setTimeoutDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
+                                    isSelected
+                                      ? "bg-[#FBF3F5] dark:bg-[#221015]"
+                                      : "hover:bg-slate-50 dark:hover:bg-[#202020]"
+                                  }`}
+                                  style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
+                                >
+                                  <span className={isSelected ? "text-[#7B1535] dark:text-[#E27D9B] font-bold" : "dark:text-slate-200"}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
