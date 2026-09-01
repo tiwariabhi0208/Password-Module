@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus, Edit2, AlertTriangle, X } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, ChevronDown, Search, Grid, List, ShieldCheck, Users, Info, Copy, Check, Eye, EyeOff, Trash2, Plus, AlertCircle, Landmark, History, User, Settings as SettingsIcon, UserPlus, Edit2, AlertTriangle, X } from "lucide-react";
 
 import { MAROON, GOLD, GOLD_LIGHT, MAROON_HOVER, BORDER, T, radius, font } from "./components/theme";
 import { BoyCharacter } from "./components/BoyCharacter";
@@ -417,6 +417,9 @@ export default function App() {
   const [duplicateEntityModal, setDuplicateEntityModal] = useState(null);
   const [bulkEntities, setBulkEntities] = useState([{ name: "", phone: "", email: "" }]);
   const [validationError, setValidationError] = useState(null);
+  const [regAdminName, setRegAdminName] = useState("");
+  const [regAdminEmail, setRegAdminEmail] = useState("");
+  const [regAdminPassword, setRegAdminPassword] = useState("");
   const [regAdminLevel, setRegAdminLevel] = useState("1");
   const [regAdminLevelDropdownOpen, setRegAdminLevelDropdownOpen] = useState(false);
   const [isHelpDeskOpen, setIsHelpDeskOpen] = useState(false);
@@ -441,6 +444,9 @@ export default function App() {
   const [logSearchQuery, setLogSearchQuery] = useState("");
   const [logFilterSeverity, setLogFilterSeverity] = useState("all");
   const [newPasswordVal, setNewPasswordVal] = useState("");
+  const [showRegAdminPassword, setShowRegAdminPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [tfaEnabled, setTfaEnabled] = useState(false);
   const [auditEnabled, setAuditEnabled] = useState(() => {
     const saved = localStorage.getItem("vault_audit_enabled");
@@ -1093,15 +1099,47 @@ export default function App() {
     );
   };
 
+  const hasRegisterAdminFormChanges = () => {
+    return regAdminName.trim() !== "" || regAdminEmail.trim() !== "" || regAdminPassword.trim() !== "";
+  };
+
+  const hasRegisterEntityFormChanges = () => {
+    return bulkEntities.some(ent => ent.name.trim() !== "" || ent.phone.trim() !== "" || ent.email.trim() !== "");
+  };
+
   const handleTabChange = (newTab) => {
     if (newTab === activeTab) return;
+
+    if (newTab === "logout") {
+      if ((activeTab === "register-admin" && hasRegisterAdminFormChanges()) ||
+          (activeTab === "entities" && hasRegisterEntityFormChanges()) ||
+          (isEditingProfile && hasProfileFormChanges())) {
+        setPendingTabChange("logout");
+        return;
+      }
+      handleLogout();
+      return;
+    }
+
+    if (activeTab === "register-admin" && hasRegisterAdminFormChanges()) {
+      setPendingTabChange(newTab);
+      return;
+    }
+
+    if (activeTab === "entities" && hasRegisterEntityFormChanges()) {
+      setPendingTabChange(newTab);
+      return;
+    }
+
     if (isEditingProfile && hasProfileFormChanges()) {
       setPendingTabChange(newTab);
       return;
     }
+
     if (isEditingProfile) {
       setIsEditingProfile(false);
     }
+
     setActiveTab(newTab);
   };
 
@@ -3052,6 +3090,9 @@ export default function App() {
 
                             setAdmins([...admins, response.data]);
                             logActivity("Admin Registered", `Registered new administrator: ${name} (Level ${levelVal})`, "updated");
+                            setRegAdminName("");
+                            setRegAdminEmail("");
+                            setRegAdminPassword("");
                             targetForm.reset();
                             setAdminSuccessMessage(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
                           } catch (err) {
@@ -3073,6 +3114,8 @@ export default function App() {
                           name="adminName"
                           required
                           placeholder="Your Name"
+                          value={regAdminName}
+                          onChange={(e) => setRegAdminName(e.target.value)}
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -3143,6 +3186,8 @@ export default function App() {
                           name="adminEmail"
                           required
                           placeholder="Your Email"
+                          value={regAdminEmail}
+                          onChange={(e) => setRegAdminEmail(e.target.value)}
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -3152,14 +3197,26 @@ export default function App() {
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                           Account Password
                         </label>
-                        <input
-                          type="password"
-                          name="adminPassword"
-                          required
-                          placeholder="Your Password"
-                          className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
-                          style={{ borderColor: BORDER }}
-                        />
+                        <div className="relative">
+                          <input
+                            type={showRegAdminPassword ? "text" : "password"}
+                            name="adminPassword"
+                            required
+                            placeholder="Your Password"
+                            value={regAdminPassword}
+                            onChange={(e) => setRegAdminPassword(e.target.value)}
+                            className="w-full h-11 pl-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                            style={{ borderColor: BORDER }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowRegAdminPassword(!showRegAdminPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer border-none bg-transparent flex items-center justify-center"
+                            title={showRegAdminPassword ? "Hide password" : "Show password"}
+                          >
+                            {showRegAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -3276,42 +3333,72 @@ export default function App() {
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                         Current Master Password
                       </label>
-                      <input
-                        type="password"
-                        name="currentPassword"
-                        required
-                        placeholder="Your Current Password"
-                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
-                        style={{ borderColor: BORDER }}
-                      />
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? "text" : "password"}
+                          name="currentPassword"
+                          required
+                          placeholder="Your Current Password"
+                          className="w-full h-11 pl-3.5 pr-10 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
+                          style={{ borderColor: BORDER }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer border-none bg-transparent flex items-center justify-center"
+                          title={showCurrentPassword ? "Hide password" : "Show password"}
+                        >
+                          {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                         New Master Password
                       </label>
-                      <input
-                        type="password"
-                        name="newPassword"
-                        required
-                        placeholder="Your New Password"
-                        value={newPasswordVal}
-                        onChange={(e) => setNewPasswordVal(e.target.value)}
-                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
-                        style={{ borderColor: BORDER }}
-                      />
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          name="newPassword"
+                          required
+                          placeholder="Your New Password"
+                          value={newPasswordVal}
+                          onChange={(e) => setNewPasswordVal(e.target.value)}
+                          className="w-full h-11 pl-3.5 pr-10 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
+                          style={{ borderColor: BORDER }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer border-none bg-transparent flex items-center justify-center"
+                          title={showNewPassword ? "Hide password" : "Show password"}
+                        >
+                          {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1.5">
                         Confirm New Password
                       </label>
-                      <input
-                        type="password"
-                        name="confirmPassword"
-                        required
-                        placeholder="Confirm Your New Password"
-                        className="w-full h-11 px-3.5 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
-                        style={{ borderColor: BORDER }}
-                      />
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          name="confirmPassword"
+                          required
+                          placeholder="Confirm Your New Password"
+                          className="w-full h-11 pl-3.5 pr-10 text-base border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all input-focus-container"
+                          style={{ borderColor: BORDER }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer border-none bg-transparent flex items-center justify-center"
+                          title={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
                     <button
                       type="submit"
@@ -3846,80 +3933,105 @@ export default function App() {
 
       {activeTab === "vault" && <Footer onOpenHelpDesk={() => setIsHelpDeskOpen(true)} />}
 
-      {/* Custom Leave Profile Confirmation Modal */}
-      {pendingTabChange && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
-          onClick={() => setPendingTabChange(null)}
-        >
+      {/* Custom Unsaved Changes Confirmation Modal */}
+      {pendingTabChange && (() => {
+        let title = "Unsaved Changes";
+        let message = "Are you sure you want to leave without saving? Your modifications will be permanently lost.";
+
+        if (activeTab === "register-admin") {
+          title = "Unsaved Admin Registration";
+          message = "Are you sure you don't want to register this administrator? Your entered details will be discarded.";
+        } else if (activeTab === "entities") {
+          title = "Unsaved Entity Registration";
+          message = "Are you sure you don't want to register this entity? Your entered details will be discarded.";
+        } else if (activeTab === "profile") {
+          title = "Unsaved Profile Changes";
+          message = "Are you sure you want to leave without saving your profile changes? Your modifications will be permanently lost.";
+        }
+
+        return (
           <div
-            className="w-full max-w-[400px] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border transform scale-100 transition-all duration-300 flex flex-col animate-fade-in-up"
-            style={{ borderColor: BORDER, fontFamily: "inherit" }}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
+            onClick={() => setPendingTabChange(null)}
           >
-            {/* Top Accent Line */}
-            <div className="h-1.5 w-full bg-[#C9A227]" />
+            <div
+              className="w-full max-w-[400px] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border transform scale-100 transition-all duration-300 flex flex-col animate-fade-in-up"
+              style={{ borderColor: BORDER, fontFamily: "inherit" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Accent Line */}
+              <div className="h-1.5 w-full bg-[#C9A227]" />
 
-            {/* Modal Header & Close Button */}
-            <div className="flex justify-end pt-3 pr-3">
-              <button
-                onClick={() => setPendingTabChange(null)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
-                title="Cancel"
-                style={{ border: "none", background: "none" }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="px-6 pb-6 flex flex-col items-center text-center">
-              {/* Pulsing Warning Icon Container */}
-              <div className="w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center text-[#C9A227] mb-4">
-                <AlertCircle size={28} />
-              </div>
-
-              {/* Title */}
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight mb-2">
-                Unsaved Changes
-              </h3>
-
-              {/* Description */}
-              <p className="text-sm text-[#7A6068] dark:text-slate-400 leading-relaxed mb-6 font-semibold">
-                Are you sure you want to leave without saving the changes? Your modifications will be permanently lost.
-              </p>
-
-              {/* Buttons Row */}
-              <div className="flex gap-3 w-full">
+              {/* Modal Header & Close Button */}
+              <div className="flex justify-end pt-3 pr-3">
                 <button
                   onClick={() => setPendingTabChange(null)}
-                  className="flex-1 h-10 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-350 text-xs font-bold rounded-lg transition-colors cursor-pointer bg-transparent"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  title="Cancel"
+                  style={{ border: "none", background: "none" }}
                 >
-                  Keep Editing
+                  <X size={16} />
                 </button>
-                <button
-                  onClick={() => {
-                    const destination = pendingTabChange;
-                    setPendingTabChange(null);
-                    setIsEditingProfile(false);
-                    if (destination === "logout") {
-                      handleLogout();
-                    } else {
-                      setActiveTab(destination);
-                    }
-                  }}
-                  className="flex-1 h-10 text-white text-xs font-bold rounded-lg transition-colors shadow-sm cursor-pointer border-none"
-                  style={{ backgroundColor: MAROON }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
-                >
-                  Discard & Leave
-                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 pb-6 flex flex-col items-center text-center">
+                {/* Pulsing Warning Icon Container */}
+                <div className="w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center text-[#C9A227] mb-4">
+                  <AlertCircle size={28} />
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight mb-2">
+                  {title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm text-[#7A6068] dark:text-slate-400 leading-relaxed mb-6 font-semibold">
+                  {message}
+                </p>
+
+                {/* Buttons Row */}
+                <div className="flex gap-3 w-full">
+                  <button
+                    onClick={() => setPendingTabChange(null)}
+                    className="flex-1 h-10 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-350 text-xs font-bold rounded-lg transition-colors cursor-pointer bg-transparent"
+                  >
+                    Keep Editing
+                  </button>
+                  <button
+                    onClick={() => {
+                      const destination = pendingTabChange;
+                      setPendingTabChange(null);
+                      if (activeTab === "register-admin") {
+                        setRegAdminName("");
+                        setRegAdminEmail("");
+                        setRegAdminPassword("");
+                      } else if (activeTab === "entities") {
+                        setBulkEntities([{ name: "", phone: "", email: "" }]);
+                      } else if (activeTab === "profile") {
+                        setIsEditingProfile(false);
+                      }
+
+                      if (destination === "logout") {
+                        handleLogout();
+                      } else {
+                        setActiveTab(destination);
+                      }
+                    }}
+                    className="flex-1 h-10 text-white text-xs font-bold rounded-lg transition-colors shadow-sm cursor-pointer border-none"
+                    style={{ backgroundColor: MAROON }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
+                  >
+                    Discard & Leave
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {notificationModal && (
         <NotificationModal

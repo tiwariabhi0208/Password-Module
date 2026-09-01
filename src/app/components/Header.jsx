@@ -93,7 +93,9 @@ export function Header({ activeAdmin, selectedUser, setSelectedUser, setScreen, 
               <button
                 onClick={() => {
                   setAvatarMenuOpen(false);
-                  if (onLogout) {
+                  if (onNavigate) {
+                    onNavigate("logout");
+                  } else if (onLogout) {
                     onLogout();
                   } else {
                     setScreen("login");

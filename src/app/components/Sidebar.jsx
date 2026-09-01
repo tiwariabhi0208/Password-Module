@@ -47,7 +47,10 @@ export function Sidebar({ activeTab, onTabChange, onLogout, vaultCount, activeAd
                     key={item.id}
                     onClick={() => {
                       if (item.isAction) {
-                        if (item.id === "logout") onLogout();
+                        if (item.id === "logout") {
+                          if (onTabChange) onTabChange("logout");
+                          else if (onLogout) onLogout();
+                        }
                       } else {
                         onTabChange(item.id);
                       }
