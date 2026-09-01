@@ -13,6 +13,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
   const [password, setPassword] = useState("");
   const [transactionPassword, setTransactionPassword] = useState("");
   const [accountType, setAccountType] = useState("corporate");
+  const [entityDropdownOpen, setEntityDropdownOpen] = useState(false);
+  const [loginTypeDropdownOpen, setLoginTypeDropdownOpen] = useState(false);
   const [photo, setPhoto] = useState(null);
   const [photoError, setPhotoError] = useState("");
 
@@ -187,29 +189,66 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
                     Select Registered Entity
                   </label>
-                  <div className="relative">
-                    <select
-                      value={entityId}
-                      onChange={(e) => {
-                        const selectedId = e.target.value;
-                        setEntityId(selectedId);
-                        const ent = entities.find(el => el.id === selectedId);
-                        if (ent) {
-                          setHolder(ent.name);
-                        }
-                      }}
-                      className="w-full h-10 px-3 pr-10 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
-                    >
-                      <option value="" disabled>-- Select registered entity --</option>
-                      {entities.map((ent) => (
-                        <option key={ent.id} value={ent.id}>
-                          {ent.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
-                      <ChevronDown size={15} />
-                    </div>
+                  <div className="relative z-20">
+                    {(() => {
+                      const selectedEntityObj = entities.find(e => e.id === entityId);
+
+                      return (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEntityDropdownOpen(!entityDropdownOpen);
+                              setLoginTypeDropdownOpen(false);
+                            }}
+                            className="w-full h-10 px-3 pr-10 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold flex items-center text-left cursor-pointer"
+                          >
+                            <span className={`truncate ${selectedEntityObj ? "font-bold text-[#7B1535] dark:text-[#E27D9B]" : "text-slate-400 font-medium"}`}>
+                              {selectedEntityObj ? selectedEntityObj.name : "-- Select registered entity --"}
+                            </span>
+                          </button>
+                          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
+                            <ChevronDown size={15} className={`transition-transform duration-200 ${entityDropdownOpen ? "rotate-180" : ""}`} />
+                          </div>
+
+                          {entityDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-30" onClick={() => setEntityDropdownOpen(false)} />
+                              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#151515] rounded-xl shadow-2xl z-40 py-1 max-h-56 overflow-y-auto border border-slate-200 dark:border-slate-800 animate-fade-in-up">
+                                {entities.length === 0 ? (
+                                  <div className="px-4 py-3 text-xs text-slate-400 font-semibold">No registered entities found</div>
+                                ) : (
+                                  entities.map((ent) => {
+                                    const isSelected = ent.id === entityId;
+                                    return (
+                                      <button
+                                        key={ent.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setEntityId(ent.id);
+                                          setHolder(ent.name);
+                                          setEntityDropdownOpen(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                                          isSelected
+                                            ? "bg-[#FBF3F5] dark:bg-[#221015]"
+                                            : "hover:bg-slate-50 dark:hover:bg-[#202020]"
+                                        }`}
+                                        style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
+                                      >
+                                        <span className={isSelected ? "text-[#7B1535] dark:text-[#E27D9B] font-bold" : "dark:text-slate-200"}>
+                                          {ent.name}
+                                        </span>
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -327,18 +366,54 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
                     Account Login Type
                   </label>
-                  <div className="relative">
-                    <select
-                      value={accountType}
-                      onChange={(e) => setAccountType(e.target.value)}
-                      className="w-full h-10 px-3 pr-10 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold appearance-none cursor-pointer"
+                  <div className="relative z-20">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginTypeDropdownOpen(!loginTypeDropdownOpen);
+                        setEntityDropdownOpen(false);
+                      }}
+                      className="w-full h-10 px-3 pr-10 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold flex items-center text-left cursor-pointer"
                     >
-                      <option value="corporate">Corporate Banking Login</option>
-                      <option value="retail">Retail / Personal Banking Login</option>
-                    </select>
+                      <span className="font-bold text-[#7B1535] dark:text-[#E27D9B] truncate">
+                        {accountType === "corporate" ? "Corporate Banking Login" : "Retail / Personal Banking Login"}
+                      </span>
+                    </button>
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
-                      <ChevronDown size={15} />
+                      <ChevronDown size={15} className={`transition-transform duration-200 ${loginTypeDropdownOpen ? "rotate-180" : ""}`} />
                     </div>
+
+                    {loginTypeDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-30" onClick={() => setLoginTypeDropdownOpen(false)} />
+                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-[#151515] rounded-xl shadow-2xl z-40 py-1.5 overflow-hidden border border-slate-200 dark:border-slate-800 animate-fade-in-up">
+                          {[
+                            { value: "corporate", label: "Corporate Banking Login" },
+                            { value: "retail", label: "Retail / Personal Banking Login" }
+                          ].map((opt) => {
+                            const isSelected = accountType === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  setAccountType(opt.value);
+                                  setLoginTypeDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? "bg-[#FBF3F5] dark:bg-[#221015]"
+                                    : "hover:bg-slate-50 dark:hover:bg-[#202020]"
+                                }`}
+                                style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
+                              >
+                                <span className={isSelected ? "text-[#7B1535] dark:text-[#E27D9B] font-bold" : "dark:text-slate-200"}>{opt.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
