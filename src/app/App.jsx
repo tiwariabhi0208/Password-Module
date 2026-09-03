@@ -38,31 +38,30 @@ export function NotificationModal({ isOpen, onClose, title, message, type = "err
   const isSuccess = type === "success";
   const isInfo = type === "info";
 
-  const defaultTitle = isSuccess 
-    ? "Success" 
-    : isInfo 
-    ? "Information" 
-    : "Validation Alert";
+  const defaultTitle = isSuccess
+    ? "Success"
+    : isInfo
+      ? "Information"
+      : "Validation Alert";
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-md animate-fade-in select-none cursor-pointer"
       onClick={onClose}
     >
-      <div 
+      <div
         className="relative w-full max-w-md bg-white dark:bg-[#141414] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-scale-up text-center cursor-default flex flex-col"
         style={{ borderColor: BORDER }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Accent Top Line */}
-        <div 
-          className={`h-1.5 w-full ${
-            isSuccess 
-              ? "bg-gradient-to-r from-emerald-500 to-teal-600" 
-              : isInfo 
-              ? "bg-gradient-to-r from-[#C9A227] to-[#7B1535]" 
-              : "bg-gradient-to-r from-red-500 to-[#7B1535]"
-          }`} 
+        <div
+          className={`h-1.5 w-full ${isSuccess
+              ? "bg-gradient-to-r from-emerald-500 to-teal-600"
+              : isInfo
+                ? "bg-gradient-to-r from-[#C9A227] to-[#7B1535]"
+                : "bg-gradient-to-r from-red-500 to-[#7B1535]"
+            }`}
         />
 
         {/* Top Close Button */}
@@ -78,15 +77,14 @@ export function NotificationModal({ isOpen, onClose, title, message, type = "err
 
         {/* Card Body Content */}
         <div className="px-6 pb-6 pt-1 flex flex-col items-center text-center">
-          
+
           {/* Animated Icon Circle */}
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 shadow-sm animate-pulse ${
-            isSuccess 
-              ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400" 
-              : isInfo 
-              ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-[#C9A227]" 
-              : "bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 text-red-600 dark:text-red-400"
-          }`}>
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 shadow-sm animate-pulse ${isSuccess
+              ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400"
+              : isInfo
+                ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-[#C9A227]"
+                : "bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 text-red-600 dark:text-red-400"
+            }`}>
             {isSuccess ? (
               <CheckCircle2 size={28} />
             ) : isInfo ? (
@@ -111,8 +109,8 @@ export function NotificationModal({ isOpen, onClose, title, message, type = "err
             type="button"
             onClick={onClose}
             className="w-full h-11 text-xs sm:text-sm font-extrabold rounded-xl text-white transition-all shadow-md active:scale-95 cursor-pointer border-none"
-            style={{ 
-              backgroundColor: isSuccess ? "#059669" : MAROON 
+            style={{
+              backgroundColor: isSuccess ? "#059669" : MAROON
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSuccess ? "#047857" : MAROON_HOVER)}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isSuccess ? "#059669" : MAROON)}
@@ -1114,8 +1112,8 @@ export default function App() {
 
     if (newTab === "logout") {
       if ((activeTab === "register-admin" && hasRegisterAdminFormChanges()) ||
-          (activeTab === "entities" && hasRegisterEntityFormChanges()) ||
-          (isEditingProfile && hasProfileFormChanges())) {
+        (activeTab === "entities" && hasRegisterEntityFormChanges()) ||
+        (isEditingProfile && hasProfileFormChanges())) {
         setPendingTabChange("logout");
         return;
       }
@@ -1245,7 +1243,7 @@ export default function App() {
       if (recoveredVaultKeyBuffer) {
         const newDerived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
         newEncryptedVaultKey = await encryptData(arrayBufferToHex(recoveredVaultKeyBuffer), newDerived.masterKey);
-        
+
         // Keep or generate recovery encrypted key
         const recKeyToUse = recoveryKeyInput.trim() || generateRecoveryKey();
         newRecoveryEncryptedVaultKey = await encryptVaultKeyWithRecoveryKey(recoveredVaultKeyBuffer, recKeyToUse);
@@ -3064,12 +3062,13 @@ export default function App() {
                   </h3>
 
                   <form
+                    autoComplete="off"
                     onSubmit={(e) => {
                       e.preventDefault();
                       const formData = new FormData(e.target);
-                      const name = formData.get("adminName").trim();
-                      const email = formData.get("adminEmail").trim();
-                      const passVal = formData.get("adminPassword").trim();
+                      const name = (formData.get("newAdminName") || "").trim();
+                      const email = (formData.get("newAdminEmail") || "").trim();
+                      const passVal = (formData.get("newAdminPassword") || "").trim();
                       const levelVal = parseInt(formData.get("adminLevel"), 10);
 
                       if (!name || !email || !passVal || !levelVal) {
@@ -3135,6 +3134,7 @@ export default function App() {
                             setRegAdminName("");
                             setRegAdminEmail("");
                             setRegAdminPassword("");
+                            setIsAdminFormDirty(false);
                             targetForm.reset();
                             setRescueKitModal({ key: newRecoveryKey, userName: name });
                           } catch (err) {
@@ -3153,11 +3153,15 @@ export default function App() {
                         </label>
                         <input
                           type="text"
-                          name="adminName"
+                          name="newAdminName"
+                          autoComplete="off"
                           required
-                          placeholder="Your Name"
+                          placeholder="e.g. Rahul Sharma"
                           value={regAdminName}
-                          onChange={(e) => setRegAdminName(e.target.value)}
+                          onChange={(e) => {
+                            setRegAdminName(e.target.value);
+                            setIsAdminFormDirty(true);
+                          }}
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -3202,8 +3206,8 @@ export default function App() {
                                         setRegAdminLevelDropdownOpen(false);
                                       }}
                                       className={`w-full text-left px-4 py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${isSelected
-                                          ? "bg-[#FBF3F5] dark:bg-[#221015]"
-                                          : "hover:bg-slate-50 dark:hover:bg-[#202020]"
+                                        ? "bg-[#FBF3F5] dark:bg-[#221015]"
+                                        : "hover:bg-slate-50 dark:hover:bg-[#202020]"
                                         }`}
                                       style={isSelected ? { color: MAROON } : { color: "#1A0810" }}
                                     >
@@ -3225,11 +3229,15 @@ export default function App() {
                         </label>
                         <input
                           type="email"
-                          name="adminEmail"
+                          name="newAdminEmail"
+                          autoComplete="off"
                           required
-                          placeholder="Your Email"
+                          placeholder="e.g. admin@southpoint.edu.in"
                           value={regAdminEmail}
-                          onChange={(e) => setRegAdminEmail(e.target.value)}
+                          onChange={(e) => {
+                            setRegAdminEmail(e.target.value);
+                            setIsAdminFormDirty(true);
+                          }}
                           className="w-full h-11 px-3.5 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                           style={{ borderColor: BORDER }}
                         />
@@ -3242,11 +3250,15 @@ export default function App() {
                         <div className="relative">
                           <input
                             type={showRegAdminPassword ? "text" : "password"}
-                            name="adminPassword"
+                            name="newAdminPassword"
+                            autoComplete="new-password"
                             required
-                            placeholder="Your Password"
+                            placeholder="Enter new account password"
                             value={regAdminPassword}
-                            onChange={(e) => setRegAdminPassword(e.target.value)}
+                            onChange={(e) => {
+                              setRegAdminPassword(e.target.value);
+                              setIsAdminFormDirty(true);
+                            }}
                             className="w-full h-11 pl-3.5 pr-10 text-sm border bg-[#FDFAFB] dark:bg-[#121212] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
                             style={{ borderColor: BORDER }}
                           />

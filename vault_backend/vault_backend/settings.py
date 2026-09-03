@@ -145,13 +145,14 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',  # Rate limit for unauthenticated users
-        'rest_framework.throttling.UserRateThrottle',  # Rate limit for authenticated users
+        'rest_framework.throttling.AnonRateThrottle',   # Rate limit for unauthenticated users (100/day)
+        'rest_framework.throttling.UserRateThrottle',   # Rate limit for authenticated users (1000/day)
+        'rest_framework.throttling.ScopedRateThrottle', # Rate limit by throttle_scope (5/minute for login/OTP)
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',    # An unauthenticated IP can make 100 requests per day
         'user': '1000/day',   # An authenticated admin can make 1000 requests per day
-        'login': '5/minute',  # The login endpoint specifically: max 5 attempts per minute
+        'login': '5/minute',  # The login & OTP endpoints specifically: max 5 attempts per minute
     }
 }
 
