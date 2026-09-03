@@ -191,3 +191,65 @@ export async function hashPasswordSHA256(password) {
     .join("");
 }
 
+/**
+ * Generates a 256-bit cryptographically secure Recovery Key string.
+ * Format: 24 uppercase hexadecimal characters grouped in 4-char chunks (e.g. "A3F8-99B2-4C1E-77D0-55FA-1234")
+ */
+export function generateRecoveryKey() {
+  const bytes = new Uint8Array(12);
+  window.crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  return hex.match(/.{1,4}/g).join('-');
+}
+
+/**
+ * Derives a 32-byte master key from a Recovery Key string.
+ */
+export async function deriveRecoveryMasterKey(recoveryKeyString) {
+  const cleanHex = recoveryKeyString.replace(/[^a-fA-F0-9]/g, '');
+  if (!cleanHex) throw new Error("Invalid Recovery Key format.");
+
+  const enc = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    enc.encode(cleanHex),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const salt = enc.encode("vault-rescue-kit-salt-2026");
+  const derivedBits = await window.crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100_000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+
+  return derivedBits;
+}
+
+/**
+ * Encrypts a vaultKey ArrayBuffer using a Recovery Key string.
+ */
+export async function encryptVaultKeyWithRecoveryKey(vaultKeyBuffer, recoveryKeyString) {
+  const recoveryMasterKey = await deriveRecoveryMasterKey(recoveryKeyString);
+  const hexVaultKey = arrayBufferToHex(vaultKeyBuffer);
+  return await encryptData(hexVaultKey, recoveryMasterKey);
+}
+
+/**
+ * Decrypts a base64-encoded recovery_encrypted_vault_key using a Recovery Key string.
+ * Returns the raw vaultKey ArrayBuffer.
+ */
+export async function decryptVaultKeyWithRecoveryKey(base64Ciphertext, recoveryKeyString) {
+  const recoveryMasterKey = await deriveRecoveryMasterKey(recoveryKeyString);
+  const hexVaultKey = await decryptData(base64Ciphertext, recoveryMasterKey);
+  return hexToArrayBuffer(hexVaultKey);
+}
+
+

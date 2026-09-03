@@ -18,7 +18,7 @@ import { HelpInfo } from "./components/HelpInfo";
 import { HelpDeskModal } from "./components/HelpDeskModal";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { api, setAccessToken } from "./utils/apiClient";
-import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer, hashPasswordSHA256 } from "./utils/cryptoHelper";
+import { deriveKeyAndHash, encryptData, decryptData, arrayBufferToHex, hexToArrayBuffer, hashPasswordSHA256, generateRecoveryKey, encryptVaultKeyWithRecoveryKey, decryptVaultKeyWithRecoveryKey } from "./utils/cryptoHelper";
 
 // --- INLINED COMPONENTS ---
 
@@ -418,6 +418,8 @@ export default function App() {
   const [bulkEntities, setBulkEntities] = useState([{ name: "", phone: "", email: "" }]);
   const [validationError, setValidationError] = useState(null);
   const [regAdminName, setRegAdminName] = useState("");
+  const [recoveryKeyInput, setRecoveryKeyInput] = useState("");
+  const [rescueKitModal, setRescueKitModal] = useState(null);
   const [regAdminEmail, setRegAdminEmail] = useState("");
   const [regAdminPassword, setRegAdminPassword] = useState("");
   const [regAdminLevel, setRegAdminLevel] = useState("1");
@@ -1201,48 +1203,62 @@ export default function App() {
       const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(forgotEmail.trim())}`);
       const serverSaltHex = saltResponse.data.salt;
 
-      // Step 2: Validate OTP and retrieve the encrypted vault key
+      // Step 2: Validate OTP and retrieve encrypted vault key and recovery encrypted vault key
       let encryptedVaultKey = null;
+      let recoveryEncryptedVaultKey = null;
       try {
         const keyResponse = await api.post('/auth/password-reset/key/', {
           email: forgotEmail.trim(),
           otp: otpCode
         });
         encryptedVaultKey = keyResponse.data.encrypted_vault_key;
+        recoveryEncryptedVaultKey = keyResponse.data.recovery_encrypted_vault_key;
       } catch (keyErr) {
         throw new Error(keyErr.response?.data?.detail || "Invalid OTP code.");
       }
 
-      // Step 3: Handle vault key re-wrapping if old password was provided
+      // Step 3: Handle vault key re-wrapping via Old Password OR Recovery Key
       let newEncryptedVaultKey = undefined;
-      if (oldPassword.trim()) {
-        if (encryptedVaultKey) {
-          try {
-            // Derive old master key to decrypt the vault key
-            const oldDerived = await deriveKeyAndHash(oldPassword.trim(), serverSaltHex);
-            const decryptedHexKey = await decryptData(encryptedVaultKey, oldDerived.masterKey);
-            const rawVKey = hexToArrayBuffer(decryptedHexKey);
+      let newRecoveryEncryptedVaultKey = undefined;
+      let recoveredVaultKeyBuffer = null;
 
-            // Derive new master key to re-encrypt
-            const newDerived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
-            newEncryptedVaultKey = await encryptData(arrayBufferToHex(rawVKey), newDerived.masterKey);
-          } catch (decryptErr) {
-            setError("Incorrect current master password. Please verify your current password, or leave it blank to reset vault access (warning: this will lock existing credentials).");
-            setLoading(false);
-            return;
-          }
+      if (oldPassword.trim() && encryptedVaultKey) {
+        try {
+          const oldDerived = await deriveKeyAndHash(oldPassword.trim(), serverSaltHex);
+          const decryptedHexKey = await decryptData(encryptedVaultKey, oldDerived.masterKey);
+          recoveredVaultKeyBuffer = hexToArrayBuffer(decryptedHexKey);
+        } catch (decryptErr) {
+          setError("Incorrect current master password. Please check your password or use your Recovery Key.");
+          setLoading(false);
+          return;
         }
+      } else if (recoveryKeyInput.trim() && recoveryEncryptedVaultKey) {
+        try {
+          recoveredVaultKeyBuffer = await decryptVaultKeyWithRecoveryKey(recoveryEncryptedVaultKey, recoveryKeyInput.trim());
+        } catch (recErr) {
+          setError("Invalid Recovery Key. Could not decrypt vault credentials.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (recoveredVaultKeyBuffer) {
+        const newDerived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
+        newEncryptedVaultKey = await encryptData(arrayBufferToHex(recoveredVaultKeyBuffer), newDerived.masterKey);
+        
+        // Keep or generate recovery encrypted key
+        const recKeyToUse = recoveryKeyInput.trim() || generateRecoveryKey();
+        newRecoveryEncryptedVaultKey = await encryptVaultKeyWithRecoveryKey(recoveredVaultKeyBuffer, recKeyToUse);
       } else {
-        // If old password not provided, warn the user about permanent vault locking
         const proceed = window.confirm(
-          "WARNING: You did not enter your current master password. Resetting your password without it will permanently lock you out of all currently saved credentials. Are you sure you want to proceed?"
+          "WARNING: You did not enter your current master password or Recovery Key. Resetting your password without it will permanently lock you out of all currently saved credentials. Are you sure you want to proceed?"
         );
         if (!proceed) {
           setLoading(false);
           return;
         }
-        // Explicitly pass null to clear the encrypted vault key
         newEncryptedVaultKey = null;
+        newRecoveryEncryptedVaultKey = null;
       }
 
       // Step 4: Derive the new login hash
@@ -1253,7 +1269,8 @@ export default function App() {
         email: forgotEmail.trim(),
         otp: otpCode,
         new_password: derived.loginHashHex,
-        encrypted_vault_key: newEncryptedVaultKey
+        encrypted_vault_key: newEncryptedVaultKey,
+        recovery_encrypted_vault_key: newRecoveryEncryptedVaultKey
       });
 
       setSuccess("Password has been reset successfully. Please log in with your new password.");
@@ -1262,6 +1279,7 @@ export default function App() {
       setNewPassword("");
       setPassword("");
       setOldPassword("");
+      setRecoveryKeyInput("");
       setTimeout(() => {
         setScreen("login");
         setSuccess("");
@@ -1735,7 +1753,7 @@ export default function App() {
         <div style={{ marginBottom: 14, textAlign: "left" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <FormLabel text="Current Master Password" />
-            <span style={{ fontSize: 9, color: "#9CA3AF", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Optional</span>
+            <span style={{ fontSize: 9, color: "#9CA3AF", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Option 1</span>
           </div>
           <CustomInput
             icon={
@@ -1747,12 +1765,31 @@ export default function App() {
             type={showOldPassword ? "text" : "password"}
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
-            placeholder="Required to preserve saved credentials..."
+            placeholder="Enter current password..."
             showPasswordToggle={true}
             onToggleShowPassword={() => setShowOldPassword(!showOldPassword)}
           />
-          <p className="text-[10px] text-slate-400 mt-1 font-medium leading-tight">
-            ⚠️ If you forgot your password, leave this blank. Your account will reset but existing vault credentials will be locked.
+        </div>
+
+        <div style={{ marginBottom: 14, textAlign: "left" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <FormLabel text="OR Recovery Key (Rescue Kit)" />
+            <span style={{ fontSize: 9, color: "#059669", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Option 2 (Preserves Data)</span>
+          </div>
+          <CustomInput
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 2l-2 2m-2-2l2 2m7 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <circle cx="9" cy="15" r="4"></circle>
+              </svg>
+            }
+            type="text"
+            value={recoveryKeyInput}
+            onChange={(e) => setRecoveryKeyInput(e.target.value)}
+            placeholder="e.g. A3F8-99B2-4C1E-77D0-55FA-1234"
+          />
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium leading-tight">
+            💡 Enter your 24-character Recovery Key to unlock and preserve all your saved credentials.
           </p>
         </div>
 
@@ -3069,12 +3106,16 @@ export default function App() {
                             const saltResponse = await api.get(`/auth/salt/?email=${encodeURIComponent(email)}`);
                             const newAdminDerived = await deriveKeyAndHash(passVal, saltResponse.data.salt);
 
-                            // Encrypt the current shared vaultKey with the new admin's masterKey
+                            // Encrypt the current shared vaultKey with the new admin's masterKey & Recovery Key
                             const activeVaultKey = vaultKey || masterKey;
                             let encryptedVKeyForNewAdmin = null;
+                            let recEncVKeyForNewAdmin = null;
+                            const newRecoveryKey = generateRecoveryKey();
+
                             if (activeVaultKey) {
                               const hexVaultKey = arrayBufferToHex(activeVaultKey);
                               encryptedVKeyForNewAdmin = await encryptData(hexVaultKey, newAdminDerived.masterKey);
+                              recEncVKeyForNewAdmin = await encryptVaultKeyWithRecoveryKey(activeVaultKey, newRecoveryKey);
                             }
 
                             const response = await api.post('/admins/', {
@@ -3085,7 +3126,8 @@ export default function App() {
                               dept: departments[levelVal],
                               campus: "",
                               designation: designations[levelVal],
-                              encrypted_vault_key: encryptedVKeyForNewAdmin
+                              encrypted_vault_key: encryptedVKeyForNewAdmin,
+                              recovery_encrypted_vault_key: recEncVKeyForNewAdmin
                             });
 
                             setAdmins([...admins, response.data]);
@@ -3094,7 +3136,7 @@ export default function App() {
                             setRegAdminEmail("");
                             setRegAdminPassword("");
                             targetForm.reset();
-                            setAdminSuccessMessage(`Administrator "${name}" successfully registered! They can now log in using their email and password.`);
+                            setRescueKitModal({ key: newRecoveryKey, userName: name });
                           } catch (err) {
                             console.error("Admin registration failed.", err);
                             setValidationError(err.response?.data?.email?.[0] || err.response?.data?.detail || "Failed to register administrator. Please try again.");
@@ -3480,6 +3522,19 @@ export default function App() {
               defaultBanks={BANKS}
               masterPasswordHash={passwordHash}
               activeAdmin={activeAdmin}
+              onGenerateRescueKit={async () => {
+                const activeVaultKey = vaultKey || masterKey;
+                const recKey = generateRecoveryKey();
+                if (activeVaultKey) {
+                  try {
+                    const recEncVKey = await encryptVaultKeyWithRecoveryKey(activeVaultKey, recKey);
+                    await api.patch('/auth/profile/', { recovery_encrypted_vault_key: recEncVKey });
+                  } catch (e) {
+                    console.error("Failed to upload recovery key:", e);
+                  }
+                }
+                setRescueKitModal({ key: recKey, userName: activeAdmin?.name || "Admin" });
+              }}
             />
           )}
 
@@ -4033,6 +4088,15 @@ export default function App() {
         );
       })()}
 
+      {rescueKitModal && (
+        <RescueKitModal
+          isOpen={!!rescueKitModal}
+          onClose={() => setRescueKitModal(null)}
+          recoveryKey={rescueKitModal.key}
+          userName={rescueKitModal.userName}
+        />
+      )}
+
       {notificationModal && (
         <NotificationModal
           isOpen={!!notificationModal}
@@ -4045,3 +4109,83 @@ export default function App() {
     </div>
   );
 }
+
+export function RescueKitModal({ isOpen, onClose, recoveryKey, userName }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(recoveryKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const textContent = `========================================================\nSOUTH POINT SCHOOL - PASSWORD MODULE RESCUE KIT\n========================================================\nAdministrator: ${userName || "User"}\nDate Generated: ${new Date().toLocaleDateString()}\n\nRECOVERY KEY:\n${recoveryKey}\n\nIMPORTANT:\nKeep this Recovery Key safe and offline! If you ever forget\nyour Master Password, this key is required to decrypt and\nrecover all your stored bank cards and credentials.\n========================================================\n`;
+    const blob = new Blob([textContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Rescue_Kit_${userName ? userName.replace(/\s+/g, '_') : 'Admin'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-slate-800 dark:text-slate-100">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+              <ShieldCheck size={22} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-base leading-tight">Emergency Rescue Kit</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Zero-Knowledge Recovery Key</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 border-none bg-transparent cursor-pointer">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="mb-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3.5 text-xs text-amber-800 dark:text-amber-300 leading-relaxed text-left">
+          <strong>Save this Recovery Key!</strong> If you ever forget your Master Password, this key will allow you to reset your password without losing any encrypted bank data.
+        </div>
+
+        <div className="mb-5 text-left">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+            Your 256-Bit Recovery Key
+          </label>
+          <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 font-mono font-bold text-base text-slate-900 dark:text-slate-100 tracking-wider">
+            <span>{recoveryKey}</span>
+            <button
+              onClick={handleCopy}
+              className="ml-2 p-1.5 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-slate-700 dark:text-slate-200 border-none cursor-pointer"
+              title="Copy to Clipboard"
+            >
+              {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleDownload}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition-all shadow-md border-none cursor-pointer"
+          >
+            <span>Download Rescue Kit (.txt)</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="py-2.5 px-5 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all bg-transparent cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

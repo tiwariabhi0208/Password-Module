@@ -20,7 +20,8 @@ export function Settings({
   setDarkMode,
   defaultBanks,
   masterPasswordHash,
-  activeAdmin
+  activeAdmin,
+  onGenerateRescueKit
 }) {
   const [actionType, setActionType] = useState(null); // 'export' | 'reset' | null
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -123,7 +124,7 @@ export function Settings({
 
             {/* 2FA Toggle */}
             <div className="flex items-start justify-between gap-4 py-4">
-              <div className="flex flex-col">
+              <div className="flex flex-col text-left">
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Two-Factor Authentication (2FA)</span>
                 <span className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-normal mt-0.5">
                   Require a mobile authenticator code when logging in from new sessions.
@@ -145,6 +146,22 @@ export function Settings({
                 className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 ${tfaEnabled ? "bg-[#7B1535] dark:bg-[#E27D9B]" : "bg-slate-200 dark:bg-slate-800"} relative cursor-pointer`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-100 shadow transition-all duration-300 ${tfaEnabled ? "translate-x-4" : "translate-x-0"}`} />
+              </button>
+            </div>
+
+            {/* Emergency Rescue Kit */}
+            <div className="flex items-center justify-between gap-4 py-4 border-t border-slate-100 dark:border-slate-800/60 text-left">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Emergency Rescue Kit</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-normal mt-0.5">
+                  Generate or view your 256-bit Recovery Key to preserve credentials if password is lost.
+                </span>
+              </div>
+              <button
+                onClick={onGenerateRescueKit}
+                className="px-3.5 py-1.5 rounded-lg bg-[#7B1535] hover:bg-[#5C0C21] text-white text-xs font-bold transition-all shadow-sm border-none cursor-pointer"
+              >
+                Generate Rescue Kit
               </button>
             </div>
 

@@ -9,7 +9,7 @@ class AdminSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Admin
-        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'phone', 'is_active', 'date_joined', 'tfa_enabled', 'encrypted_vault_key')
+        fields = ('id', 'email', 'name', 'level', 'dept', 'campus', 'designation', 'phone', 'is_active', 'date_joined', 'tfa_enabled', 'encrypted_vault_key', 'recovery_encrypted_vault_key')
         read_only_fields = ('id', 'date_joined')
 
 
@@ -24,7 +24,7 @@ class AdminProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Admin
-        fields = ('name', 'dept', 'campus', 'designation', 'phone', 'encrypted_vault_key', 'password')
+        fields = ('name', 'dept', 'campus', 'designation', 'phone', 'encrypted_vault_key', 'recovery_encrypted_vault_key', 'password')
 
     def validate_phone(self, value):
         if not value:
@@ -50,7 +50,7 @@ class AdminCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Admin
-        fields = ('email', 'name', 'password', 'level', 'dept', 'campus', 'designation', 'phone', 'encrypted_vault_key')
+        fields = ('email', 'name', 'password', 'level', 'dept', 'campus', 'designation', 'phone', 'encrypted_vault_key', 'recovery_encrypted_vault_key')
 
     def create(self, validated_data):
         # Uses the custom create_user method in AdminManager which handles Argon2id hashing

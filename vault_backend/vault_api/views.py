@@ -404,10 +404,12 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # OTP is valid, update password and optionally re-wrapped encrypted_vault_key, then clear OTP fields
+        # OTP is valid, update password and optionally re-wrapped encrypted_vault_key/recovery_encrypted_vault_key, then clear OTP fields
         user.set_password(new_password)
         if 'encrypted_vault_key' in request.data:
             user.encrypted_vault_key = encrypted_vault_key
+        if 'recovery_encrypted_vault_key' in request.data:
+            user.recovery_encrypted_vault_key = request.data.get('recovery_encrypted_vault_key')
         user.otp_code = None
         user.otp_expires_at = None
         user.save()
@@ -427,8 +429,8 @@ class PasswordResetConfirmView(APIView):
 
 class PasswordResetKeyView(APIView):
     """
-    Verifies the password-reset OTP and returns the user's encrypted vault key.
-    This enables the client to decrypt it (using the old password) and re-encrypt
+    Verifies the password-reset OTP and returns the user's encrypted vault key and recovery encrypted vault key.
+    This enables the client to decrypt it (using the old password or recovery key) and re-encrypt
     it (using the new password) before completing the reset, preventing permanent data loss.
     Protected by the login rate limiter.
     """
@@ -458,7 +460,8 @@ class PasswordResetKeyView(APIView):
             return Response({"detail": "OTP code has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
             
         return Response({
-            "encrypted_vault_key": user.encrypted_vault_key
+            "encrypted_vault_key": user.encrypted_vault_key,
+            "recovery_encrypted_vault_key": user.recovery_encrypted_vault_key
         }, status=status.HTTP_200_OK)
 
 
