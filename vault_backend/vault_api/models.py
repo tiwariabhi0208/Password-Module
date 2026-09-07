@@ -109,6 +109,13 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     encrypted_vault_key = models.TextField(blank=True, null=True)
     recovery_encrypted_vault_key = models.TextField(blank=True, null=True)
 
+    # Server-side escrow copy of the raw vault key, encrypted with settings.VAULT_ESCROW_KEY
+    # (a secret only the server holds). Lets a verified-OTP password reset recover the vault
+    # even if the user has neither their old password nor their Recovery Key. This deliberately
+    # breaks the zero-knowledge guarantee for that recovery path -- accepted tradeoff so OTP-only
+    # resets don't permanently lock users out of their vault.
+    escrow_encrypted_vault_key = models.TextField(blank=True, null=True)
+
     # auto_now_add=True: Django sets this once when the record is created, never changes it
     date_joined = models.DateTimeField(auto_now_add=True)
 

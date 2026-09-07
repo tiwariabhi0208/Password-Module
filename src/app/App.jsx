@@ -481,8 +481,20 @@ export default function App() {
       fetchEntities();
       fetchBanks();
       fetchActivities();
+      syncVaultKeyEscrow();
     }
   }, [accessToken, vaultKey]);
+
+  // Sends the raw vault key to the server so it can be wrapped with a server-only key
+  // (VAULT_ESCROW_KEY). This lets a later OTP-only password reset recover the vault
+  // instead of permanently losing it. No-op if the server has escrow disabled.
+  const syncVaultKeyEscrow = async () => {
+    try {
+      await api.post('/auth/vault/escrow-sync/', { vault_key: arrayBufferToHex(vaultKey) });
+    } catch (error) {
+      console.warn("Vault key escrow sync failed:", error);
+    }
+  };
 
   const fetchEntities = async () => {
     try {
@@ -1237,6 +1249,24 @@ export default function App() {
           setError("Invalid Recovery Key. Could not decrypt vault credentials.");
           setLoading(false);
           return;
+        }
+      } else {
+        // Neither old password nor Recovery Key given. Last resort: ask the server for its
+        // escrowed copy of the vault key (only available if VAULT_ESCROW_KEY is configured
+        // and this account synced its key while previously logged in). This is the one path
+        // that relies on the server being able to decrypt the vault key -- everywhere else
+        // stays zero-knowledge.
+        try {
+          const escrowResponse = await api.post('/auth/password-reset/escrow-key/', {
+            email: forgotEmail.trim(),
+            otp: otpCode
+          });
+          if (escrowResponse.data?.vault_key) {
+            recoveredVaultKeyBuffer = hexToArrayBuffer(escrowResponse.data.vault_key);
+          }
+        } catch (escrowErr) {
+          // No escrowed key available (feature disabled, or never synced) -- fall through
+          // to the explicit data-loss confirmation below.
         }
       }
 

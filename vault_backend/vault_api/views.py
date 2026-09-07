@@ -23,6 +23,7 @@ from .serializers import (
     AdminSerializer, AdminCreateSerializer, AdminProfileUpdateSerializer,
     EncryptedBankSerializer, ActivityLogSerializer, EntitySerializer
 )
+from . import vault_escrow
 
 
 class IsSuperAdmin(permissions.BasePermission):
@@ -468,6 +469,79 @@ class PasswordResetKeyView(APIView):
             "encrypted_vault_key": user.encrypted_vault_key,
             "recovery_encrypted_vault_key": user.recovery_encrypted_vault_key
         }, status=status.HTTP_200_OK)
+
+
+class VaultEscrowSyncView(APIView):
+    """
+    Accepts the caller's own raw vault key (hex) while they're authenticated and already
+    hold it in memory, wraps it with the server-held VAULT_ESCROW_KEY, and stores it.
+    This is what lets a later OTP-only password reset recover the vault. No-op (204) if
+    escrow is disabled, so the client doesn't need to know whether it's configured.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        if not vault_escrow.escrow_enabled():
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        vault_key_hex = request.data.get('vault_key')
+        if not vault_key_hex:
+            return Response({"detail": "vault_key is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.escrow_encrypted_vault_key = vault_escrow.encrypt_vault_key_escrow(vault_key_hex)
+        request.user.save(update_fields=['escrow_encrypted_vault_key'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetEscrowKeyView(APIView):
+    """
+    Verifies the password-reset OTP and, if a server-side escrow copy of the vault key
+    exists, decrypts and returns it directly. Used only when the admin has neither their
+    old password nor their Recovery Key -- this is the one path that breaks zero-knowledge
+    encryption, so it's gated behind the same OTP + throttle as every other reset step.
+    """
+    permission_classes = (AllowAny,)
+    throttle_scope = 'login'
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        otp_submitted = request.data.get('otp')
+
+        if not email or not otp_submitted:
+            return Response({"detail": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Admin.objects.get(email=email.strip().lower())
+        except Admin.DoesNotExist:
+            return Response({"detail": "Invalid OTP code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_active:
+            return Response({"detail": "This account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not user.otp_code or not hmac.compare_digest(user.otp_code, otp_submitted.strip() if otp_submitted else ""):
+            return Response({"detail": "Invalid OTP code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if timezone.now() > user.otp_expires_at:
+            return Response({"detail": "OTP code has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vault_escrow.escrow_enabled() or not user.escrow_encrypted_vault_key:
+            return Response({"detail": "No escrowed vault key is available for this account."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            vault_key_hex = vault_escrow.decrypt_vault_key_escrow(user.escrow_encrypted_vault_key)
+        except vault_escrow.InvalidToken:
+            return Response({"detail": "Escrowed vault key could not be decrypted."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        ActivityLog.objects.create(
+            action="Vault Key Escrow Recovery",
+            details=f"Admin {user.name} recovered their vault key via server-side escrow during an OTP-only password reset",
+            user=user,
+            user_snapshot=user.name,
+            log_type="warning",
+            ip_address=get_client_ip(request)
+        )
+
+        return Response({"vault_key": vault_key_hex}, status=status.HTTP_200_OK)
 
 
 class EmailChangeRequestView(APIView):

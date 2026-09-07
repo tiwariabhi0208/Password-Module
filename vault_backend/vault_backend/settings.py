@@ -23,6 +23,14 @@ if len(SECRET_KEY) < 50:
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'  # NEVER set this to True in production
 
+# Server-held key used to escrow a copy of each admin's raw vault key, so an OTP-verified
+# password reset can recover the vault without the old password or Recovery Key. This
+# intentionally breaks zero-knowledge encryption for that one recovery path -- anyone who
+# can read this key (or breach the server) can decrypt any admin's vault key. Left unset,
+# the escrow feature is simply disabled (OTP-only resets fall back to permanent data loss).
+# Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+VAULT_ESCROW_KEY = os.environ.get('VAULT_ESCROW_KEY', '')
+
 allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
 if allowed_hosts_env:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
@@ -338,17 +346,30 @@ CELERY_TIMEZONE = TIME_ZONE
 # ============================================================
 REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', 'redis://127.0.0.1:6379/1')
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_CACHE_URL,
-        'KEY_PREFIX': 'vault_cache',
-        'OPTIONS': {
-            'socket_timeout': 2,
-            'socket_connect_timeout': 2,
+# Local-dev escape hatch only -- defaults to False so deployed environments always use
+# Redis. Set USE_LOCAL_CACHE=True in your own .env if you don't have Redis running
+# locally. Django's LocMemCache is per-process and not shared across workers, so it must
+# never be used in production (throttling/rate-limits would no longer be enforced globally).
+USE_LOCAL_CACHE = os.environ.get('USE_LOCAL_CACHE', 'False') == 'True'
+
+if USE_LOCAL_CACHE:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_CACHE_URL,
+            'KEY_PREFIX': 'vault_cache',
+            'OPTIONS': {
+                'socket_timeout': 2,
+                'socket_connect_timeout': 2,
+            }
+        }
+    }
 
 # ============================================================
 # Section 15: Observability and Error Tracking (Sentry APM)

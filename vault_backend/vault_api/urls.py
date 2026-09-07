@@ -4,6 +4,7 @@ from .views import (
     LoginView, LoginVerifyView, LogoutView, CustomTokenRefreshView,
     EncryptedBankViewSet, ActivityLogListView, SaltView,
     PasswordResetRequestView, PasswordResetConfirmView, PasswordResetKeyView,
+    VaultEscrowSyncView, PasswordResetEscrowKeyView,
     EmailChangeRequestView, EmailChangeConfirmView, TfaToggleView,
     DatabaseResetView, EntityViewSet, AdminProfileView, AdminViewSet
 )
@@ -29,6 +30,8 @@ urlpatterns = [
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('auth/password-reset/verify/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('auth/password-reset/key/', PasswordResetKeyView.as_view(), name='password_reset_key'),
+    path('auth/password-reset/escrow-key/', PasswordResetEscrowKeyView.as_view(), name='password_reset_escrow_key'),
+    path('auth/vault/escrow-sync/', VaultEscrowSyncView.as_view(), name='vault_escrow_sync'),
     path('auth/email-change/', EmailChangeRequestView.as_view(), name='email_change_request'),
     path('auth/email-change/verify/', EmailChangeConfirmView.as_view(), name='email_change_confirm'),
     path('auth/tfa/toggle/', TfaToggleView.as_view(), name='tfa_toggle'),
