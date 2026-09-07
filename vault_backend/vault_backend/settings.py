@@ -65,7 +65,7 @@ INSTALLED_APPS = [
     'corsheaders',                             # CORS headers for React frontend
 
     # Our application
-    'vault_api',
+    'vault_api.apps.VaultApiConfig',
 ]
 
 # ============================================================
@@ -147,12 +147,16 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',   # Rate limit for unauthenticated users (100/day)
         'rest_framework.throttling.UserRateThrottle',   # Rate limit for authenticated users (1000/day)
-        'rest_framework.throttling.ScopedRateThrottle', # Rate limit by throttle_scope (5/minute for login/OTP)
+        'rest_framework.throttling.ScopedRateThrottle', # Rate limit by throttle_scope (login, salt, refresh, etc.)
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',    # An unauthenticated IP can make 100 requests per day
-        'user': '1000/day',   # An authenticated admin can make 1000 requests per day
-        'login': '5/minute',  # The login & OTP endpoints specifically: max 5 attempts per minute
+        'anon': '100/day',        # An unauthenticated IP can make 100 requests per day
+        'user': '1000/day',       # An authenticated admin can make 1000 requests per day
+        'login': '5/minute',      # Login, verification, and password reset endpoints: max 5 attempts per minute
+        'otp_email': '5/minute',  # Email change request & confirmation endpoints: max 5 attempts per minute
+        'salt': '20/minute',      # Salt generation query endpoint: max 20 requests per minute
+        'refresh': '10/minute',   # Token refresh endpoint: max 10 requests per minute
+        'sensitive': '5/minute',  # Destructive administrative operations (e.g. Database Reset): max 5 attempts per minute
     }
 }
 
@@ -310,4 +314,14 @@ LOGGING = {
         }
     }
 }
+
+# ============================================================
+# Section 13: Celery & Redis Configuration
+# ============================================================
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
 

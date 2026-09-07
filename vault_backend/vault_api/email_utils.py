@@ -1,8 +1,22 @@
+from celery import shared_task
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from email.mime.image import MIMEImage
 import os
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=5)
+def send_otp_email_task(self, recipient_email, name, otp_code, email_type):
+    """
+    Celery background task to send OTP emails asynchronously via Redis broker.
+    Retries up to 3 times on SMTP / network failure.
+    """
+    try:
+        send_otp_email(recipient_email, name, otp_code, email_type)
+    except Exception as exc:
+        raise self.retry(exc=exc)
+
 
 def send_otp_email(recipient_email, name, otp_code, email_type):
     if email_type == 'login':

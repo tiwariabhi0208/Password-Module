@@ -17,7 +17,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from .models import Admin, EncryptedBank, ActivityLog, Entity
-from .email_utils import send_otp_email
+from .email_utils import send_otp_email, send_otp_email_task
 from .serializers import (
     AdminSerializer, AdminCreateSerializer, AdminProfileUpdateSerializer,
     EncryptedBankSerializer, ActivityLogSerializer, EntitySerializer
@@ -124,12 +124,14 @@ class LoginView(APIView):
             user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
             user.save()
 
-            # Send OTP via email
+            # Send OTP via Celery task (or fallback to sync email if queue is unavailable)
             try:
-                send_otp_email(user.email, user.name, otp_code, 'login')
+                send_otp_email_task.delay(user.email, user.name, otp_code, 'login')
             except Exception as e:
-                # Fallback for development/testing: log to console if mail server isn't set up
-                print(f"SMTP Error: {str(e)}. Simulated OTP Sent to {user.email}: {otp_code}")
+                try:
+                    send_otp_email(user.email, user.name, otp_code, 'login')
+                except Exception as sync_e:
+                    print(f"SMTP Error: {str(sync_e)}. Simulated OTP Sent to {user.email}: {otp_code}")
 
             return Response({
                 "detail": "OTP code has been sent to your registered email address.",
@@ -345,12 +347,14 @@ class PasswordResetRequestView(APIView):
         user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
         user.save()
 
-        # Send OTP via email
+        # Send OTP via Celery task (or fallback to sync email if queue is unavailable)
         try:
-            send_otp_email(user.email, user.name, otp_code, 'password_reset')
+            send_otp_email_task.delay(user.email, user.name, otp_code, 'password_reset')
         except Exception as e:
-            # Fallback for development/testing: log to console if mail server isn't set up
-            print(f"SMTP Error: {str(e)}. Simulated Password Reset OTP Sent to {user.email}: {otp_code}")
+            try:
+                send_otp_email(user.email, user.name, otp_code, 'password_reset')
+            except Exception as sync_e:
+                print(f"SMTP Error: {str(sync_e)}. Simulated Password Reset OTP Sent to {user.email}: {otp_code}")
 
         return Response({
             "detail": "Password reset OTP sent successfully.",
@@ -471,6 +475,7 @@ class EmailChangeRequestView(APIView):
     Protected: Only authenticated admins can change their email.
     """
     permission_classes = (IsAuthenticated,)
+    throttle_scope = 'otp_email'
 
     def post(self, request, *args, **kwargs):
         new_email = request.data.get('new_email')
@@ -489,12 +494,14 @@ class EmailChangeRequestView(APIView):
         request.user.otp_expires_at = timezone.now() + timezone.timedelta(minutes=5)
         request.user.save()
 
-        # Send OTP to the new email address
+        # Send OTP via Celery task (or fallback to sync email if queue is unavailable)
         try:
-            send_otp_email(new_email_clean, request.user.name, otp_code, 'email_change')
+            send_otp_email_task.delay(new_email_clean, request.user.name, otp_code, 'email_change')
         except Exception as e:
-            # Fallback for development/testing
-            print(f"SMTP Error: {str(e)}. Simulated Email Change OTP Sent to {new_email_clean}: {otp_code}")
+            try:
+                send_otp_email(new_email_clean, request.user.name, otp_code, 'email_change')
+            except Exception as sync_e:
+                print(f"SMTP Error: {str(sync_e)}. Simulated Email Change OTP Sent to {new_email_clean}: {otp_code}")
 
         return Response({
             "detail": "Verification OTP sent successfully to the new email address.",
@@ -507,6 +514,7 @@ class EmailChangeConfirmView(APIView):
     Verifies the OTP and updates the email address of the authenticated admin.
     """
     permission_classes = (IsAuthenticated,)
+    throttle_scope = 'otp_email'
 
     def post(self, request, *args, **kwargs):
         new_email = request.data.get('new_email')
@@ -561,6 +569,7 @@ class CustomTokenRefreshView(TokenRefreshView):
     Reads the refresh token from the secure HttpOnly cookie rather than the JSON body,
     rotates the refresh token (saving the new one back to the cookie), and returns the new access token.
     """
+    throttle_scope = 'refresh'
     def post(self, request, *args, **kwargs):
         # Extract refresh token from cookie instead of body
         refresh_token = request.COOKIES.get('refresh_token')
@@ -689,6 +698,7 @@ class SaltView(APIView):
     the new salt (handled by the email-change confirmation flow on the client).
     """
     permission_classes = (AllowAny,)
+    throttle_scope = 'salt'
 
     def get(self, request, *args, **kwargs):
         email = request.query_params.get('email')
@@ -795,6 +805,7 @@ class DatabaseResetView(APIView):
     Deletes all EncryptedBank, Entity, and ActivityLog records, leaving Admin accounts intact.
     """
     permission_classes = (IsAuthenticated, IsSuperAdmin)
+    throttle_scope = 'sensitive'
 
     def post(self, request, *args, **kwargs):
         ip = get_client_ip(request)
