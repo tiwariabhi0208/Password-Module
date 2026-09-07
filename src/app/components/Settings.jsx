@@ -60,6 +60,8 @@ export function Settings({
     logActivity("Backup Exported", "Exported vault credentials database to JSON backup", "info");
   };
 
+  const [purgeAdmins, setPurgeAdmins] = useState(false);
+
   const handleConfirmAction = async () => {
     if (!isMatch) return;
     
@@ -68,10 +70,15 @@ export function Settings({
       setSuccessMessage("Database backup JSON file generated successfully.");
     } else if (actionType === "reset") {
       try {
-        await api.post('/auth/reset-database/');
+        await api.post('/auth/reset-database/', { purge_admins: purgeAdmins });
         setBanks([]);
         setActivities([]);
         setEntities([]);
+        if (purgeAdmins) {
+          alert("Database completely wiped including all admin accounts. System is ready for first-time initial setup.");
+          window.location.reload();
+          return;
+        }
         logActivity("Database Reset", "Wiped all vault credentials, logs, and entities", "warning");
         setSuccessMessage("Database successfully reset. All credentials, activity logs, and entities have been erased.");
       } catch (error) {
@@ -82,6 +89,7 @@ export function Settings({
     setActionType(null);
     setConfirmPassword("");
     setShowPass(false);
+    setPurgeAdmins(false);
   };
 
   return (
@@ -423,6 +431,21 @@ export function Settings({
                   </span>
                 )}
               </div>
+
+              {actionType === "reset" && (
+                <div className="flex items-center gap-2 mt-2 p-3 bg-red-50 dark:bg-red-955/30 border border-red-200 dark:border-red-900/50 rounded-xl text-left">
+                  <input
+                    type="checkbox"
+                    id="purgeAdminsCheckbox"
+                    checked={purgeAdmins}
+                    onChange={(e) => setPurgeAdmins(e.target.checked)}
+                    className="w-4 h-4 accent-red-600 cursor-pointer shrink-0"
+                  />
+                  <label htmlFor="purgeAdminsCheckbox" className="text-xs font-bold text-red-800 dark:text-red-300 cursor-pointer">
+                    Purge all Admin Accounts too (Full Factory Reset for new evaluator/sir setup)
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}

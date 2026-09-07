@@ -820,6 +820,7 @@ class SaltView(APIView):
         return Response({"salt": salt_hex}, status=status.HTTP_200_OK)
 
 
+
 class TfaToggleView(APIView):
     """
     Toggles 2FA (Two-Factor Authentication) for the authenticated admin user.
@@ -909,6 +910,7 @@ class AdminViewSet(viewsets.ModelViewSet):
             ip_address=get_client_ip(self.request)
         )
 
+
     def perform_destroy(self, instance):
         admin_name = instance.name
         instance.delete()
@@ -922,6 +924,7 @@ class AdminViewSet(viewsets.ModelViewSet):
         )
 
 
+
 class DatabaseResetView(APIView):
     """
     Destructive database reset endpoint.
@@ -932,14 +935,12 @@ class DatabaseResetView(APIView):
 
     def post(self, request, *args, **kwargs):
         ip = get_client_ip(request)
+        purge_admins = request.data.get('purge_admins', False)
 
         # CRITICAL: Write the audit entry BEFORE wiping ActivityLog.
-        # If we log after the delete, the entry is gone the moment it is created
-        # because we are deleting the entire table. This entry is the only
-        # permanent record that a database wipe occurred and who performed it.
         ActivityLog.objects.create(
             action="Database Reset",
-            details=f"Admin {request.user.name} performed a full database reset. All credentials, entities, and logs have been permanently erased.",
+            details=f"Admin {request.user.name} performed a full database reset (purge_admins={purge_admins}).",
             user=request.user,
             user_snapshot=request.user.name,
             log_type="warning",
@@ -948,12 +949,21 @@ class DatabaseResetView(APIView):
 
         EncryptedBank.objects.all().delete()
         Entity.objects.all().delete()
+
+        if purge_admins:
+            ActivityLog.objects.all().delete()
+            Admin.objects.all().delete()
+            return Response({
+                "detail": "Database completely wiped including all admin accounts. System is ready for initial setup."
+            }, status=status.HTTP_200_OK)
+
         # Preserve only the reset entry we just wrote so the wipe is traceable
         ActivityLog.objects.exclude(action="Database Reset").delete()
 
         return Response({
             "detail": "Database successfully reset. All credentials, registered entities, and activity logs have been erased."
         }, status=status.HTTP_200_OK)
+
 
 
 class EntityViewSet(viewsets.ModelViewSet):

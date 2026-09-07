@@ -1,10 +1,17 @@
 import uuid
 import re
+import os
+import base64
+import hashlib
+import hmac
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, validate_email
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
 
 
 class SoftDeleteQuerySet(models.QuerySet):
@@ -43,20 +50,47 @@ class AdminManager(BaseUserManager):
         if not email:
             raise ValueError("Admins must have an email address")
 
-        # Step 2: Normalise the email (lowercase the domain part)
-        # This prevents Admin@GMAIL.COM and admin@gmail.com from being two different accounts
-        email = self.normalize_email(email)
+        # Step 2: Normalise the email
+        email = self.normalize_email(email).strip().lower()
 
-        # Step 3: Build the model instance (does NOT save to DB yet)
+        # Step 3: Handle raw plaintext password formatting (e.g. from python manage.py createsuperuser)
+        if password:
+            is_derived_hash = len(password) == 64 and all(c in '0123456789abcdefABCDEF' for c in password)
+            if not is_derived_hash:
+                key = settings.SECRET_KEY.encode('utf-8')
+                msg = email.encode('utf-8')
+                salt_hex = hmac.new(key, msg, hashlib.sha256).hexdigest()[:32]
+                salt_bytes = bytes.fromhex(salt_hex)
+
+                derived_64 = hashlib.pbkdf2_hmac(
+                    'sha256',
+                    password.encode('utf-8'),
+                    salt_bytes,
+                    600000,
+                    64
+                )
+                master_key_bytes = derived_64[:32]
+                login_hash_hex = derived_64[32:].hex()
+
+                if 'encrypted_vault_key' not in extra_fields or not extra_fields['encrypted_vault_key']:
+                    vault_key_hex = master_key_bytes.hex()
+                    aesgcm = AESGCM(master_key_bytes)
+                    iv = os.urandom(12)
+                    ciphertext = aesgcm.encrypt(iv, vault_key_hex.encode('utf-8'), None)
+                    extra_fields['encrypted_vault_key'] = base64.b64encode(iv + ciphertext).decode('utf-8')
+
+                password = login_hash_hex
+
+        # Step 4: Build the model instance
         user = self.model(email=email, name=name, level=level, **extra_fields)
 
-        # Step 4: Hash the password using Argon2id and store the hash
-        # set_password() NEVER stores the plaintext. It stores the hash.
+        # Step 5: Hash the password using Argon2id and store the hash
         user.set_password(password)
 
-        # Step 5: Save to the database
+        # Step 6: Save to the database
         user.save(using=self._db)
         return user
+
 
     def create_superuser(self, email, name, password=None, **extra_fields):
         # This is called by: python manage.py createsuperuser
