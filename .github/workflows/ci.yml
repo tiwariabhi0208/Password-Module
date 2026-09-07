@@ -1,0 +1,101 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-test:
+    name: Django Backend Tests & Integrity Check
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: vault_db
+          POSTGRES_USER: vault_user
+          POSTGRES_PASSWORD: vault_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'vault_backend/requirements.txt'
+
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r vault_backend/requirements.txt
+
+      - name: Run Django System Check
+        env:
+          SECRET_KEY: 'ci-secret-key-for-testing-only-must-be-long-enough-hex-value-abcdef0123456789'
+          DEBUG: 'False'
+          DB_NAME: 'vault_db'
+          DB_USER: 'vault_user'
+          DB_PASSWORD: 'vault_password'
+          DB_HOST: '127.0.0.1'
+          DB_PORT: '5432'
+          CELERY_BROKER_URL: 'redis://127.0.0.1:6379/0'
+          REDIS_CACHE_URL: 'redis://127.0.0.1:6379/1'
+        run: |
+          python vault_backend/manage.py check
+
+      - name: Run Backend Unit Tests
+        env:
+          SECRET_KEY: 'ci-secret-key-for-testing-only-must-be-long-enough-hex-value-abcdef0123456789'
+          DEBUG: 'False'
+          DB_NAME: 'vault_db'
+          DB_USER: 'vault_user'
+          DB_PASSWORD: 'vault_password'
+          DB_HOST: '127.0.0.1'
+          DB_PORT: '5432'
+          CELERY_BROKER_URL: 'redis://127.0.0.1:6379/0'
+          REDIS_CACHE_URL: 'redis://127.0.0.1:6379/1'
+        run: |
+          python vault_backend/manage.py test vault_api
+
+  frontend-build:
+    name: React Frontend Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci || npm install
+
+      - name: Build React Frontend App
+        run: npm run build

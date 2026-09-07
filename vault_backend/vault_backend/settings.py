@@ -342,3 +342,43 @@ CACHES = {
     }
 }
 
+# ============================================================
+# Section 15: Observability and Error Tracking (Sentry APM)
+# ============================================================
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+
+if SENTRY_DSN:
+    import logging
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+
+    def sanitize_sentry_event(event, hint):
+        """
+        Security Scrubber: Ensures sensitive PII and cryptographic vault keys
+        (passwords, OTPs, master keys, encrypted vault blobs) are stripped
+        before transmitting events to external Sentry infrastructure.
+        """
+        if 'request' in event and 'data' in event['request']:
+            data = event['request']['data']
+            if isinstance(data, dict):
+                for key in ['password', 'otp', 'new_password', 'encrypted_vault_key', 'recovery_encrypted_vault_key']:
+                    if key in data:
+                        data[key] = '[FILTERED_SENSITIVE_DATA]'
+        return event
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
+        ],
+        traces_sample_rate=1.0 if DEBUG else 0.2,
+        profiles_sample_rate=1.0 if DEBUG else 0.2,
+        send_default_pii=False,  # CRITICAL FOR VAULT SECURITY: Do not send default PII
+        environment='development' if DEBUG else 'production',
+        before_send=sanitize_sentry_event,
+    )
+
