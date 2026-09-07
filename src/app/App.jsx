@@ -369,6 +369,9 @@ export default function App() {
   const [resetEncryptedVaultKey, setResetEncryptedVaultKey] = useState(null);
   const [resetRecoveryEncryptedVaultKey, setResetRecoveryEncryptedVaultKey] = useState(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const [resetTab, setResetTab] = useState("recovery");
+  const [recoveryKeyVerified, setRecoveryKeyVerified] = useState(false);
+  const [recoveredKeyBuf, setRecoveredKeyBuf] = useState(null);
   const [forgotEmail, setForgotEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [focusField, setFocusField] = useState(null);
@@ -1237,6 +1240,33 @@ export default function App() {
     }
   };
 
+  const handleVerifyRecoveryKey = async () => {
+    if (!recoveryKeyInput.trim()) {
+      setError("Please enter your Rescue Kit Recovery Key.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      if (!resetRecoveryEncryptedVaultKey) {
+        throw new Error("No encrypted vault key found for this account.");
+      }
+      const buffer = await decryptVaultKeyWithRecoveryKey(resetRecoveryEncryptedVaultKey, recoveryKeyInput.trim());
+      if (buffer) {
+        setRecoveredKeyBuf(buffer);
+        setRecoveryKeyVerified(true);
+        setSuccess("✓ Recovery Key verified! Now set your new master password.");
+      } else {
+        throw new Error("Invalid Recovery Key.");
+      }
+    } catch (err) {
+      setError("Invalid Recovery Key. Could not decrypt vault credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFinalizeReset = async () => {
     if (!newPassword.trim()) {
       setError("Please enter your new master password.");
@@ -1254,25 +1284,22 @@ export default function App() {
       const serverSaltHex = resetSaltHex;
       const otpCode = verifiedResetOtp;
 
-      // Handle vault key re-wrapping. Try every available path before accepting data loss:
-      // 1) the Recovery Key, if one was entered and matches, 2) the server's escrowed copy
-      // (only available if VAULT_ESCROW_KEY is configured and this account synced its key
-      // while previously logged in -- the one path that relies on the server being able to
-      // decrypt the vault key, everywhere else stays zero-knowledge).
       let newEncryptedVaultKey = undefined;
       let newRecoveryEncryptedVaultKey = undefined;
-      let recoveredVaultKeyBuffer = null;
+      let recoveredVaultKeyBuffer = recoveredKeyBuf;
       let recoveryKeyWasWrong = false;
 
-      if (recoveryKeyInput.trim() && resetRecoveryEncryptedVaultKey) {
+      const activeRecoveryKey = resetTab === "recovery" ? recoveryKeyInput.trim() : "";
+
+      if (!recoveredVaultKeyBuffer && activeRecoveryKey && resetRecoveryEncryptedVaultKey) {
         try {
-          recoveredVaultKeyBuffer = await decryptVaultKeyWithRecoveryKey(resetRecoveryEncryptedVaultKey, recoveryKeyInput.trim());
+          recoveredVaultKeyBuffer = await decryptVaultKeyWithRecoveryKey(resetRecoveryEncryptedVaultKey, activeRecoveryKey);
         } catch (recErr) {
           recoveryKeyWasWrong = true;
         }
       }
 
-      if (!recoveredVaultKeyBuffer) {
+      if (!recoveredVaultKeyBuffer && !recoveryKeyWasWrong) {
         try {
           const escrowResponse = await api.post('/auth/password-reset/escrow-key/', {
             email: forgotEmail.trim(),
@@ -1282,8 +1309,7 @@ export default function App() {
             recoveredVaultKeyBuffer = hexToArrayBuffer(escrowResponse.data.vault_key);
           }
         } catch (escrowErr) {
-          // No escrowed key available (feature disabled, or never synced) -- fall through
-          // to the explicit data-loss confirmation below.
+          // No escrowed key available
         }
       }
 
@@ -1297,13 +1323,11 @@ export default function App() {
         const newDerived = await deriveKeyAndHash(newPassword.trim(), serverSaltHex);
         newEncryptedVaultKey = await encryptData(arrayBufferToHex(recoveredVaultKeyBuffer), newDerived.masterKey);
 
-        // Keep the entered Recovery Key only if it was the one that actually worked;
-        // otherwise (escrow recovery, or no key entered) mint a fresh one.
-        const recKeyToUse = (!recoveryKeyWasWrong && recoveryKeyInput.trim()) || generateRecoveryKey();
+        const recKeyToUse = (!recoveryKeyWasWrong && activeRecoveryKey) || generateRecoveryKey();
         newRecoveryEncryptedVaultKey = await encryptVaultKeyWithRecoveryKey(recoveredVaultKeyBuffer, recKeyToUse);
       } else {
         const proceed = window.confirm(
-          "WARNING: You did not enter your Recovery Key. Resetting your password without it will permanently lock you out of all currently saved credentials. Are you sure you want to proceed?"
+          "WARNING: Resetting your password without a valid Recovery Key will lock/reset saved vault items. Are you sure you want to proceed?"
         );
         if (!proceed) {
           setLoading(false);
@@ -1335,6 +1359,8 @@ export default function App() {
       setResetSaltHex("");
       setResetEncryptedVaultKey(null);
       setResetRecoveryEncryptedVaultKey(null);
+      setRecoveryKeyVerified(false);
+      setRecoveredKeyBuf(null);
       setTimeout(() => {
         setScreen("login");
         setSuccess("");
@@ -1715,7 +1741,7 @@ export default function App() {
               type="email"
               value={forgotEmail}
               onChange={(e) => setForgotEmail(e.target.value)}
-              placeholder="e.g. admin@school.edu"
+              placeholder=""
               icon={<Mail size={14} />}
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && sendOtp()}
@@ -1879,52 +1905,144 @@ export default function App() {
           Back
         </button>
         <h2 className="text-base font-semibold mb-1" style={{ color: MAROON }}>Reset Master Password</h2>
-        <p className="text-sm text-[#7A6068] mb-5">
-          Identity verified. Choose how to unlock your vault, then set a new master password.
+        <p className="text-sm text-[#7A6068] mb-4">
+          Identity verified. Select your recovery option below:
         </p>
 
-        <div style={{ marginBottom: 14, textAlign: "left" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <FormLabel text="Recovery Key (Rescue Kit)" />
-            <span style={{ fontSize: 9, color: "#059669", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Preserves Data</span>
-          </div>
-          <CustomInput
-            icon={
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 2l-2 2m-2-2l2 2m7 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                <circle cx="9" cy="15" r="4"></circle>
-              </svg>
-            }
-            type="text"
-            value={recoveryKeyInput}
-            onChange={(e) => setRecoveryKeyInput(e.target.value)}
-            placeholder=""
-          />
-          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium leading-tight">
-            💡 Enter your 24-character Recovery Key to unlock and preserve all your saved credentials. Leave blank if you don't have it (your saved credentials will be lost).
-          </p>
+        {/* 2 Clickable Tab Headings */}
+        <div style={{
+          display: "flex",
+          background: "#F3F4F6",
+          padding: 4,
+          borderRadius: 12,
+          marginBottom: 18,
+          border: `1px solid ${BORDER}`
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              setResetTab("recovery");
+              setRecoveryKeyVerified(false);
+              setRecoveredKeyBuf(null);
+              setError("");
+              setSuccess("");
+            }}
+            style={{
+              flex: 1,
+              padding: "9px 10px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              background: resetTab === "recovery" ? MAROON : "transparent",
+              color: resetTab === "recovery" ? "#fff" : "#6B7280",
+              boxShadow: resetTab === "recovery" ? "0 2px 6px rgba(114, 16, 42, 0.25)" : "none"
+            }}
+          >
+            🔑 Recovery Kit
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setResetTab("direct");
+              setError("");
+              setSuccess("");
+            }}
+            style={{
+              flex: 1,
+              padding: "9px 10px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              background: resetTab === "direct" ? MAROON : "transparent",
+              color: resetTab === "direct" ? "#fff" : "#6B7280",
+              boxShadow: resetTab === "direct" ? "0 2px 6px rgba(114, 16, 42, 0.25)" : "none"
+            }}
+          >
+            🔒 New Master Password
+          </button>
         </div>
 
-        <div style={{ marginBottom: 14, textAlign: "left" }}>
-          <FormLabel text="New Master Password" />
-          <CustomInput
-            icon={
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-            }
-            type={showNewPassword ? "text" : "password"}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder=""
-            showPasswordToggle={true}
-            onToggleShowPassword={() => setShowNewPassword(!showNewPassword)}
-            required
-          />
-        </div>
-
-        {primaryBtn(loading ? "Resetting..." : "Reset Password", handleFinalizeReset, undefined, !newPassword.trim() || loading)}
+        {resetTab === "recovery" ? (
+          !recoveryKeyVerified ? (
+            <>
+              <div style={{ marginBottom: 14, textAlign: "left" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <FormLabel text="Recovery Key (Rescue Kit)" />
+                  <span style={{ fontSize: 9, color: "#059669", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Preserves Vault Data</span>
+                </div>
+                <CustomInput
+                  icon={
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 2l-2 2m-2-2l2 2m7 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      <circle cx="9" cy="15" r="4"></circle>
+                    </svg>
+                  }
+                  type="text"
+                  value={recoveryKeyInput}
+                  onChange={(e) => setRecoveryKeyInput(e.target.value)}
+                  placeholder=""
+                />
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium leading-tight">
+                  💡 Enter your Rescue Kit key to decrypt and restore all your saved bank credentials.
+                </p>
+              </div>
+              {primaryBtn(loading ? "Verifying..." : "Verify Recovery Key", handleVerifyRecoveryKey, undefined, !recoveryKeyInput.trim() || loading)}
+            </>
+          ) : (
+            <>
+              <div style={{ marginBottom: 14, textAlign: "left" }}>
+                <FormLabel text="New Master Password" />
+                <CustomInput
+                  icon={
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  }
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder=""
+                  showPasswordToggle={true}
+                  onToggleShowPassword={() => setShowNewPassword(!showNewPassword)}
+                  required
+                />
+              </div>
+              {primaryBtn(loading ? "Resetting..." : "Reset Password", handleFinalizeReset, undefined, !newPassword.trim() || loading)}
+            </>
+          )
+        ) : (
+          <>
+            <div style={{ marginBottom: 14, textAlign: "left" }}>
+              <FormLabel text="New Master Password" />
+              <CustomInput
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                }
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder=""
+                showPasswordToggle={true}
+                onToggleShowPassword={() => setShowNewPassword(!showNewPassword)}
+                required
+              />
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 font-medium leading-tight">
+                💡 Enter your new master password below. Server Key Escrow is active, so your existing saved bank credentials will be preserved and accessible when you log in with your new password.
+              </p>
+            </div>
+            {primaryBtn(loading ? "Resetting..." : "Reset Password", handleFinalizeReset, undefined, !newPassword.trim() || loading)}
+          </>
+        )}
       </AuthCard>
     );
   }
