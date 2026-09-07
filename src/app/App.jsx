@@ -496,10 +496,18 @@ export default function App() {
     }
   };
 
+  const extractDataList = (res) => {
+    if (!res || !res.data) return [];
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.data.results)) return res.data.results;
+    return [];
+  };
+
   const fetchEntities = async () => {
     try {
       const response = await api.get('/entities/');
-      setEntities(response.data);
+      const list = extractDataList(response);
+      setEntities(list);
     } catch (error) {
       console.error("Failed to fetch entities:", error);
     }
@@ -508,6 +516,7 @@ export default function App() {
   const fetchBanks = async () => {
     try {
       const response = await api.get('/vault/');
+      const list = extractDataList(response);
       const activeKey = vaultKey;
 
       if (!activeKey) {
@@ -517,7 +526,7 @@ export default function App() {
       }
 
       // Decrypt credentials client-side on-the-fly
-      const decryptedBanks = await Promise.all(response.data.map(async (bank) => {
+      const decryptedBanks = await Promise.all(list.map(async (bank) => {
         try {
           return {
             id: bank.id,
@@ -567,8 +576,9 @@ export default function App() {
   const fetchActivities = async () => {
     try {
       const response = await api.get('/audit-logs/');
+      const list = extractDataList(response);
       // Map API fields to UI field format: time, action, details, user, type, ip
-      const mapped = response.data.map((log) => ({
+      const mapped = list.map((log) => ({
         id: log.id,
         time: new Date(log.timestamp).toLocaleString(),
         action: log.action,
