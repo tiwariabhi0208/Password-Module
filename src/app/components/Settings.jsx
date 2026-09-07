@@ -21,7 +21,8 @@ export function Settings({
   defaultBanks,
   masterPasswordHash,
   activeAdmin,
-  onGenerateRescueKit
+  onGenerateRescueKit,
+  onLogout
 }) {
   const [actionType, setActionType] = useState(null); // 'export' | 'reset' | null
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,6 +30,7 @@ export function Settings({
   const [showPass, setShowPass] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [timeoutDropdownOpen, setTimeoutDropdownOpen] = useState(false);
+  const [purgeAdmins, setPurgeAdmins] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -60,8 +62,6 @@ export function Settings({
     logActivity("Backup Exported", "Exported vault credentials database to JSON backup", "info");
   };
 
-  const [purgeAdmins, setPurgeAdmins] = useState(false);
-
   const handleConfirmAction = async () => {
     if (!isMatch) return;
     
@@ -74,12 +74,15 @@ export function Settings({
         setBanks([]);
         setActivities([]);
         setEntities([]);
-        if (purgeAdmins) {
-          alert("Database completely wiped including all admin accounts. System is ready for first-time initial setup.");
-          window.location.reload();
+        setActionType(null);
+        setConfirmPassword("");
+        setShowPass(false);
+        setPurgeAdmins(false);
+        
+        if (onLogout) {
+          onLogout();
           return;
         }
-        logActivity("Database Reset", "Wiped all vault credentials, logs, and entities", "warning");
         setSuccessMessage("Database successfully reset. All credentials, activity logs, and entities have been erased.");
       } catch (error) {
         console.error("Failed to reset database:", error);

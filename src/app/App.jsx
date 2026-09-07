@@ -855,6 +855,7 @@ export default function App() {
         setTempLoginHash("");
         setPasswordHash("");
         setCurrentAdmin(null);
+        setSelectedUser("");
         setBanks([]);
         setActivities([]);
         setEntities([]);
@@ -3587,6 +3588,7 @@ export default function App() {
                 }
                 setRescueKitModal({ key: recKey, userName: activeAdmin?.name || "Admin" });
               }}
+              onLogout={handleLogout}
             />
           )}
 
