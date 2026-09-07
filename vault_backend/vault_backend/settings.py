@@ -148,6 +148,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'vault_api.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v1',
+    'ALLOWED_VERSIONS': ['v1'],
+    'VERSION_PARAM': 'version',
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',   # Rate limit for unauthenticated users (100/day)
         'rest_framework.throttling.UserRateThrottle',   # Rate limit for authenticated users (1000/day)

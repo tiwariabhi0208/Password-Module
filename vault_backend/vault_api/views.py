@@ -617,11 +617,12 @@ class EncryptedBankViewSet(viewsets.ModelViewSet):
         # Granular mapping of API actions to custom clearance permissions
         if self.action in ['list', 'retrieve']:
             permission_classes = [IsReadOnlyOrAbove]
-        elif self.action in ['create', 'destroy']:
+        elif self.action in ['create', 'destroy', 'restore']:
             permission_classes = [IsSuperAdmin]
         else:  # update, partial_update
             permission_classes = [IsLimitedAccessOrAbove]
         return [permission() for permission in permission_classes]
+
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -663,12 +664,29 @@ class EncryptedBankViewSet(viewsets.ModelViewSet):
         instance.delete()
         ActivityLog.objects.create(
             action="Credential Deleted",
-            details=f"Permanently deleted credential card: {card_name}",
+            details=f"Soft deleted credential card: {card_name}",
             user=self.request.user,
             user_snapshot=self.request.user.name,
             log_type="warning",
             ip_address=get_client_ip(self.request)
         )
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        instance = EncryptedBank.all_objects.filter(pk=pk).first()
+        if not instance:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        instance.restore()
+        ActivityLog.objects.create(
+            action="Credential Restored",
+            details=f"Restored credential card: {instance.name}",
+            user=request.user,
+            user_snapshot=request.user.name,
+            log_type="info",
+            ip_address=get_client_ip(request)
+        )
+        return Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)
+
 
 
 class ActivityLogListView(generics.ListAPIView):
@@ -874,9 +892,12 @@ class EntityViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             permission_classes = [IsReadOnlyOrAbove]
+        elif self.action in ['create', 'destroy', 'restore']:
+            permission_classes = [IsSuperAdmin]
         else:
             permission_classes = [IsSuperAdmin]
         return [permission() for permission in permission_classes]
+
 
     def list(self, request, *args, **kwargs):
         cache_key = 'entities_list'
@@ -914,12 +935,30 @@ class EntityViewSet(viewsets.ModelViewSet):
         self._invalidate_entities_cache()
         ActivityLog.objects.create(
             action="Entity Removed",
-            details=f"Unregistered school entity: {entity_name}",
+            details=f"Soft deleted school entity: {entity_name}",
             user=self.request.user,
             user_snapshot=self.request.user.name,
             log_type="warning",
             ip_address=get_client_ip(self.request)
         )
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        instance = Entity.all_objects.filter(pk=pk).first()
+        if not instance:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        instance.restore()
+        self._invalidate_entities_cache()
+        ActivityLog.objects.create(
+            action="Entity Restored",
+            details=f"Restored school entity: {instance.name}",
+            user=request.user,
+            user_snapshot=request.user.name,
+            log_type="info",
+            ip_address=get_client_ip(request)
+        )
+        return Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)
+
 
     @action(detail=False, methods=['post'], url_path='bulk')
     def bulk(self, request):

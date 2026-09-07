@@ -1,9 +1,39 @@
 import uuid
 import re
 from django.db import models
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, validate_email
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+
+
+class SoftDeleteQuerySet(models.QuerySet):
+    def delete(self):
+        return super().update(is_deleted=True, deleted_at=timezone.now())
+
+    def hard_delete(self):
+        return super().delete()
+
+    def alive(self):
+        return self.filter(is_deleted=False)
+
+    def dead(self):
+        return self.filter(is_deleted=True)
+
+
+class SoftDeleteManager(models.Manager):
+    def __init__(self, *args, **kwargs):
+        self.alive_only = kwargs.pop('alive_only', True)
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        if self.alive_only:
+            return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=False)
+        return SoftDeleteQuerySet(self.model, using=self._db)
+
+    def hard_delete(self):
+        return self.get_queryset().hard_delete()
+
 
 
 class AdminManager(BaseUserManager):
@@ -156,6 +186,26 @@ class EncryptedBank(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # Set once on INSERT, never changes
     updated_at = models.DateTimeField(auto_now=True)      # Updated on every SAVE automatically
 
+    # Soft deletion fields
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = SoftDeleteManager(alive_only=False)
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['is_deleted', 'deleted_at'])
+
+    def hard_delete(self):
+        super().delete()
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save(update_fields=['is_deleted', 'deleted_at'])
+
     def __str__(self):
         return f"{self.name} - Account ending in ...{self.id.hex[-4:]}"
 
@@ -165,7 +215,9 @@ class EncryptedBank(models.Model):
             models.Index(fields=['name'], name='bank_name_idx'),
             models.Index(fields=['account_type'], name='bank_account_type_idx'),
             models.Index(fields=['entity', '-created_at'], name='bank_entity_created_idx'),
+            models.Index(fields=['is_deleted'], name='bank_is_deleted_idx'),
         ]
+
 
 
 
@@ -235,11 +287,33 @@ class Entity(models.Model):
     phone = models.CharField(max_length=15, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Soft deletion fields
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = SoftDeleteManager(alive_only=False)
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['is_deleted', 'deleted_at'])
+
+    def hard_delete(self):
+        super().delete()
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save(update_fields=['is_deleted', 'deleted_at'])
+
     class Meta:
         indexes = [
             models.Index(fields=['name'], name='entity_name_idx'),
             models.Index(fields=['-created_at'], name='entity_created_idx'),
+            models.Index(fields=['is_deleted'], name='entity_is_deleted_idx'),
         ]
+
 
 
     def __str__(self):
