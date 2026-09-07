@@ -100,6 +100,13 @@ class Admin(AbstractBaseUser, PermissionsMixin):
             self.original_email = self.email
         super().save(*args, **kwargs)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['name'], name='admin_name_idx'),
+            models.Index(fields=['is_active'], name='admin_is_active_idx'),
+        ]
+
+
 
 class EncryptedBank(models.Model):
     ACCOUNT_TYPE_CHOICES = (
@@ -152,6 +159,15 @@ class EncryptedBank(models.Model):
     def __str__(self):
         return f"{self.name} - Account ending in ...{self.id.hex[-4:]}"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['-created_at'], name='bank_created_at_idx'),
+            models.Index(fields=['name'], name='bank_name_idx'),
+            models.Index(fields=['account_type'], name='bank_account_type_idx'),
+            models.Index(fields=['entity', '-created_at'], name='bank_entity_created_idx'),
+        ]
+
+
 
 class ActivityLog(models.Model):
     LOG_TYPE_CHOICES = (
@@ -201,14 +217,30 @@ class ActivityLog(models.Model):
     def __str__(self):
         return f"{self.timestamp} | {self.action} | {self.user_snapshot}"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['-timestamp'], name='log_timestamp_idx'),
+            models.Index(fields=['action'], name='log_action_idx'),
+            models.Index(fields=['log_type'], name='log_type_idx'),
+            models.Index(fields=['user', '-timestamp'], name='log_user_ts_idx'),
+        ]
+
+
 
 class Entity(models.Model):
     # UUID primary key -- unguessable
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True, max_length=255)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=15, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name'], name='entity_name_idx'),
+            models.Index(fields=['-created_at'], name='entity_created_idx'),
+        ]
+
 
     def __str__(self):
         return f"{self.name} ({self.email})"
