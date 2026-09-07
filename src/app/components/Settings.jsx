@@ -346,8 +346,8 @@ export function Settings({
 
       {/* Strict Security Modal Confirmation */}
       {actionType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-md w-full mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up text-left">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-md w-full my-auto rounded-2xl p-6 shadow-2xl animate-fade-in-up text-left">
             
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-4">
@@ -479,8 +479,8 @@ export function Settings({
 
       {/* Success Notification Modal */}
       {successMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up text-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-slate-800 max-w-sm w-full my-auto rounded-2xl p-6 shadow-2xl animate-fade-in-up text-center">
             <div 
               className="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl mb-4 animate-bounce"
               style={{ backgroundColor: `${MAROON}15`, color: MAROON }}
