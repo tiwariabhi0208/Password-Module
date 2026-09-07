@@ -325,3 +325,20 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+# ============================================================
+# Section 14: In-Memory Caching Configuration (Redis)
+# ============================================================
+REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', 'redis://127.0.0.1:6379/1')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_CACHE_URL,
+        'KEY_PREFIX': 'vault_cache',
+        'OPTIONS': {
+            'socket_timeout': 2,
+            'socket_connect_timeout': 2,
+        }
+    }
+}
+

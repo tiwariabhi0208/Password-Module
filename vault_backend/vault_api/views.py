@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import secrets
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.core.validators import validate_email
@@ -706,14 +707,23 @@ class SaltView(APIView):
             return Response({"detail": "Email parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         email_clean = email.strip().lower()
+        cache_key = f"salt_{hashlib.md5(email_clean.encode('utf-8')).hexdigest()}"
 
-        # Derive a 16-byte salt using HMAC -- no DB lookup performed.
-        # Both registered and unregistered emails produce identically-structured
-        # output, giving an unauthenticated caller zero information about whether
-        # the email is registered in this system.
+        try:
+            cached_salt = cache.get(cache_key)
+            if cached_salt:
+                return Response({"salt": cached_salt}, status=status.HTTP_200_OK)
+        except Exception:
+            pass
+
         key = settings.SECRET_KEY.encode('utf-8')
         msg = email_clean.encode('utf-8')
         salt_hex = hmac.new(key, msg, hashlib.sha256).hexdigest()[:32]  # 32 hex chars = 16 bytes
+
+        try:
+            cache.set(cache_key, salt_hex, timeout=3600)  # Cache for 1 hour
+        except Exception:
+            pass
 
         return Response({"salt": salt_hex}, status=status.HTTP_200_OK)
 
@@ -744,12 +754,33 @@ class AdminProfileView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
-        return Response(AdminSerializer(request.user).data, status=status.HTTP_200_OK)
+        cache_key = f"admin_profile_{request.user.id}"
+        try:
+            cached_profile = cache.get(cache_key)
+            if cached_profile:
+                return Response(cached_profile, status=status.HTTP_200_OK)
+        except Exception:
+            pass
+
+        data = AdminSerializer(request.user).data
+        try:
+            cache.set(cache_key, data, timeout=300)  # Cache for 5 minutes
+        except Exception:
+            pass
+
+        return Response(data, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
         serializer = AdminProfileUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Invalidate profile cache
+        try:
+            cache.delete(f"admin_profile_{request.user.id}")
+        except Exception:
+            pass
+
         ActivityLog.objects.create(
             action="Profile Updated",
             details="Updated name, designation, department, phone, and/or campus details",
@@ -835,7 +866,7 @@ class DatabaseResetView(APIView):
 
 class EntityViewSet(viewsets.ModelViewSet):
     """
-    CRUD Viewset for Entity.
+    CRUD Viewset for Entity with Redis response caching.
     """
     queryset = Entity.objects.all().order_by('name')
     serializer_class = EntitySerializer
@@ -847,9 +878,40 @@ class EntityViewSet(viewsets.ModelViewSet):
             permission_classes = [IsSuperAdmin]
         return [permission() for permission in permission_classes]
 
+    def list(self, request, *args, **kwargs):
+        cache_key = 'entities_list'
+        try:
+            cached_entities = cache.get(cache_key)
+            if cached_entities is not None:
+                return Response(cached_entities, status=status.HTTP_200_OK)
+        except Exception:
+            pass
+
+        response = super().list(request, *args, **kwargs)
+        try:
+            cache.set(cache_key, response.data, timeout=900)  # Cache for 15 minutes
+        except Exception:
+            pass
+        return response
+
+    def _invalidate_entities_cache(self):
+        try:
+            cache.delete('entities_list')
+        except Exception:
+            pass
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        self._invalidate_entities_cache()
+
+    def perform_update(self, serializer):
+        super().perform_update(serializer)
+        self._invalidate_entities_cache()
+
     def perform_destroy(self, instance):
         entity_name = instance.name
         instance.delete()
+        self._invalidate_entities_cache()
         ActivityLog.objects.create(
             action="Entity Removed",
             details=f"Unregistered school entity: {entity_name}",
@@ -927,6 +989,9 @@ class EntityViewSet(viewsets.ModelViewSet):
             log_type="success",
             ip_address=get_client_ip(request)
         )
+
+        # Invalidate entities list cache
+        self._invalidate_entities_cache()
 
         serializer = self.get_serializer(created_entities, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
