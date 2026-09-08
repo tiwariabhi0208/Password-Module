@@ -12,7 +12,12 @@ import {
   Info,
   Lock,
   Layers,
-  Headphones
+  Headphones,
+  KeyRound,
+  Download,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw
 } from "lucide-react";
 import { MAROON, MAROON_HOVER, GOLD, BORDER } from "./theme";
 
@@ -63,6 +68,11 @@ export function HelpInfo({ onOpenHelpDesk }) {
   ];
 
   const glossaryItems = [
+    {
+      title: "Emergency Rescue Kit (Zero-Knowledge Key Recovery)",
+      icon: KeyRound,
+      content: "A 256-bit emergency recovery key generated specifically for your administrator account. Because the vault uses zero-knowledge AES-256 encryption, your master password is never stored anywhere on the server. If you forget your password, your Emergency Rescue Kit allows you to re-encrypt and recover your saved bank credentials during a password reset without losing any vault data."
+    },
     {
       title: "Lock Screen & Inactivity Lock",
       icon: EyeOff,
@@ -214,6 +224,76 @@ export function HelpInfo({ onOpenHelpDesk }) {
           </div>
         </div>
 
+      </div>
+
+      {/* Emergency Rescue Kit Dedicated Guide Section */}
+      <div className="bg-gradient-to-br from-[#FDF6F7] via-white to-[#FFFDF9] dark:from-[#1C0C11] dark:via-[#141414] dark:to-[#181510] border border-amber-200/70 dark:border-amber-900/40 rounded-2xl p-6 shadow-sm space-y-5" style={{ borderColor: BORDER }}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 border-slate-200/60 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7B1535] text-amber-300 shadow-md">
+              <KeyRound size={20} />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-wide flex items-center gap-2">
+                Emergency Rescue Kit — Zero-Knowledge Recovery Guide
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Protect your encrypted bank credentials against permanent data loss.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold shrink-0">
+            <ShieldCheck size={15} />
+            <span>256-Bit Cryptographic Key</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Step 1 */}
+          <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200/70 dark:border-slate-800 space-y-2">
+            <div className="flex items-center gap-2 text-[#7B1535] dark:text-[#E27D9B] font-extrabold text-xs uppercase tracking-wider">
+              <Download size={15} />
+              <span>1. Generate & Save</span>
+            </div>
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">How to get your Rescue Kit</h3>
+            <p className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              Navigate to <strong>Settings</strong> → <strong>Security</strong> → <strong>Generate Rescue Kit</strong>. Copy your 256-bit key or click <strong>Download Rescue Kit (.txt)</strong> to keep a offline physical or digital backup.
+            </p>
+          </div>
+
+          {/* Step 2 */}
+          <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200/70 dark:border-slate-800 space-y-2">
+            <div className="flex items-center gap-2 text-[#C9A227] dark:text-[#F3D778] font-extrabold text-xs uppercase tracking-wider">
+              <RefreshCw size={15} />
+              <span>2. Recover Vault Data</span>
+            </div>
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">During Password Reset</h3>
+            <p className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              If you forget your Master Password, click <strong>Forgot Password?</strong> on login, enter your 6-digit email OTP, and paste your <strong>Rescue Key</strong>. Your vault credentials will be safely decrypted and re-wrapped under your new password.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div className="bg-white dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200/70 dark:border-slate-800 space-y-2">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
+              <CheckCircle2 size={15} />
+              <span>3. Zero-Knowledge Principle</span>
+            </div>
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">Why it is Essential</h3>
+            <p className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              Because zero-knowledge encryption ensures server admins cannot read your master key, your Rescue Kit is the <em>only</em> cryptographic key that can restore your bank data if your password is forgotten.
+            </p>
+          </div>
+
+        </div>
+
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-medium">
+          <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            <strong>Security Warning:</strong> Store your Emergency Rescue Kit in a secure location (e.g., password manager, safe deposit box, or encrypted drive). Never share your Rescue Key with unauthorized personnel.
+          </span>
+        </div>
       </div>
 
       {/* Access levels Section */}
