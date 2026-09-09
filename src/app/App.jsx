@@ -2234,7 +2234,7 @@ export default function App() {
                 </div>
 
                 {/* Right: Layout Switcher, View State, and Add Button */}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-3">
                   {/* Grid / List View Toggle */}
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
                     <button
@@ -2257,7 +2257,7 @@ export default function App() {
                   {activeAdmin?.level === 3 && (
                     <button
                       onClick={handleOpenAddModal}
-                      className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md cursor-pointer hover:scale-102"
+                      className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md cursor-pointer hover:scale-102 ml-auto sm:ml-0"
                       style={{ backgroundColor: MAROON }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
