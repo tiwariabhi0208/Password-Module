@@ -2954,7 +2954,7 @@ export default function App() {
 
             return (
               <div className="w-full text-left animate-fade-in">
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h1 className="text-2xl font-black tracking-tight" style={{ color: MAROON }}>My Profile</h1>
                     <p className="text-sm text-[#7A6068] dark:text-slate-400 mt-0.5 font-medium">
@@ -2964,12 +2964,13 @@ export default function App() {
                   {!isEditingProfile && (
                     <button
                       onClick={() => setIsEditingProfile(true)}
-                      className="px-4.5 h-11 text-xs font-black text-white rounded-xl shadow-sm hover:shadow-md cursor-pointer border-none transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-5 h-10.5 text-xs font-bold text-white rounded-xl shadow-sm hover:shadow-md cursor-pointer border-none transition-all shrink-0 self-start sm:self-auto"
                       style={{ backgroundColor: MAROON }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = MAROON_HOVER}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = MAROON}
                     >
-                      ✏️ Edit Profile
+                      <Edit2 size={14} className="stroke-[2.5]" />
+                      <span>Edit Profile</span>
                     </button>
                   )}
                 </div>
