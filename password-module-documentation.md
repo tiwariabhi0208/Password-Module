@@ -19,12 +19,12 @@
 9. [Email System — When & Why You Get Emails](#9-email-system--when--why-you-get-emails)
 10. [Database — Models & Schema](#10-database--models--schema)
 11. [JWT Authentication & Token Security](#11-jwt-authentication--token-security)
-12. [Rate Limiting & Security Headers](#12-rate-limiting--security-headers)
+12. [Rate Limiting, Security Headers & Connection Pooling](#12-rate-limiting-security-headers--connection-pooling)
 13. [Audit Trail / Activity Logs](#13-audit-trail--activity-logs)
 14. [Django Admin Portal](#14-django-admin-portal)
 15. [Environment Variables & Configuration](#15-environment-variables--configuration)
 16. [Access Level Reference (RBAC Matrix)](#16-access-level-reference-rbac-matrix)
-17. [Setup & Running Locally](#17-setup--running-locally)
+17. [Setup, Docker & CI/CD Deployment](#17-setup-docker--cicd-deployment)
 
 ---
 
@@ -51,50 +51,56 @@ The Password Module solves all of these problems by:
 ## 2. System Architecture
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                     USER'S BROWSER                             │
-│                                                                │
-│  React App (Vite)  ──── cryptoHelper.js (AES-256, PBKDF2)     │
-│                    │                                           │
-│  Password is       │  Only encrypted ciphertexts leave browser │
-│  NEVER sent        │  Master key NEVER leaves browser          │
-│  to server         ▼                                           │
-└────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                            USER'S BROWSER                                      │
+│                                                                                │
+│  React App (Vite)  ──── cryptoHelper.js (AES-256-GCM, PBKDF2)                   │
+│                    │                                                           │
+│  Password &        │  • Only ciphertexts & hashes leave browser                 │
+│  Master Key        │  • Zero-Knowledge Rescue Kit (Recovery Key) supported    │
+│  NEVER sent        │  • In-memory JWT access token, HttpOnly refresh cookie    │
+│  to server         ▼                                                           │
+└────────────────────────────────────────────────────────────────────────────────┘
           │ HTTPS + JWT Bearer Token
-          │ POST /api/v1/auth/login/  →  { email, loginHashHex }
-          │ POST /api/v1/vault/       →  { encrypted_holder, encrypted_password, ... }
+          │ POST /api/v1/auth/login/         → { email, loginHashHex }
+          │ POST /api/v1/vault/              → { encrypted_holder, encrypted_password, ... }
+          │ POST /api/v1/vault/escrow-sync/  → Syncs Fernet-wrapped escrow key
           ▼
-┌────────────────────────────────────────────────────────────────┐
-│                     DJANGO BACKEND                             │
-│                                                                │
-│  DRF Views → Permission Checks → JWT Verification             │
-│         ↓                                                      │
-│  ActivityLog (every action logged)                             │
-│         ↓                                                      │
-│  OTP Email via SMTP (Gmail / Custom SMTP)                      │
-└────────────────────────────────────────────────────────────────┘
-          │ SQL Queries (psycopg2)
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                            DJANGO BACKEND                                      │
+│                                                                                │
+│  DRF Views → RBAC Clearance → Scoped Rate Throttling → DRF Versioning (v1)      │
+│         │                                                                      │
+│         ├── Celery Worker Queue ─── Async Security Alert Emails via SMTP       │
+│         ├── Redis In-Memory Cache ─ Response Caching & Cache Invalidation     │
+│         ├── Server Escrow Engine ── Fernet Vault Key Recovery Engine           │
+│         └── ActivityLog ────────── Immutable Audit Trail (IP & Snapshot)       │
+└────────────────────────────────────────────────────────────────────────────────┘
+          │ SQL Queries (psycopg2, Connection Pool max_age=600)
           ▼
-┌────────────────────────────────────────────────────────────────┐
-│                     POSTGRESQL DATABASE                        │
-│                                                                │
-│  vault_api_admin          ← Admin user accounts                │
-│  vault_api_encryptedbank  ← Encrypted bank credentials         │
-│  vault_api_activitylog    ← Immutable audit trail              │
-│  vault_api_entity         ← Registered school entities         │
-│  token_blacklist_*        ← JWT logout blacklist               │
-└────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                         POSTGRESQL DATABASE (UUID PKs)                         │
+│                                                                                │
+│  vault_api_admin          ← Admins & Key Escrow/Rescue Kit Hashes              │
+│  vault_api_encryptedbank  ← Encrypted Bank Credentials (Soft Delete Enabled)  │
+│  vault_api_activitylog    ← B-Tree Indexed Audit Trail Logs                   │
+│  vault_api_entity         ← Registered Entities (Soft Delete Enabled)          │
+│  token_blacklist_*        ← JWT Logout Blacklist Table                         │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Design Principles
 
 | Principle | Implementation |
 |-----------|----------------|
-| **Zero Knowledge** | Server stores only ciphertexts. Master key derived client-side, never transmitted. |
-| **Defense in Depth** | PBKDF2 key derivation + AES-256-GCM + Argon2id server hashing + JWT + HTTPS + HSTS |
-| **Least Privilege** | 3-tier RBAC — each admin only gets the minimum permissions needed |
-| **Immutable Audit** | ActivityLog records are locked — even superusers cannot edit or delete logs |
-| **Fail Loudly** | Missing `SECRET_KEY`? Server refuses to start. Missing salt? 400 returned. |
+| **Zero Knowledge** | Server stores only ciphertexts. Master key derived client-side, never transmitted. Zero-knowledge Rescue Kit recovery key for lost password emergency restore. |
+| **Defense in Depth** | PBKDF2 key derivation (600,000 iterations) + AES-256-GCM + Argon2id server password hashing + JWT + HTTPS + HSTS |
+| **Server Key Escrow** | Optional Fernet key escrow engine (`vault_escrow.py`) encrypted under server secret (`VAULT_ESCROW_KEY`) to safely assist in OTP-verified resets. |
+| **Soft Deletion** | Models support `is_deleted` and `deleted_at` timestamps with Super Admin `.restore()` endpoints to protect against accidental data destruction. |
+| **Least Privilege** | 3-tier RBAC clearance matrix — each admin only gets the minimum permissions required for their role |
+| **Immutable Audit** | ActivityLog records are locked — even superusers cannot edit or delete logs outside factory database reset. |
+| **Async Tasks & Caching** | Redis caching for entity lists with automatic invalidation; Celery queue for asynchronous security alert emails. |
+| **Fail Loudly** | Missing `SECRET_KEY`? Server refuses to start. Missing salt or malformed payload? 400 Bad Request returned. |
 
 ---
 
@@ -115,18 +121,22 @@ The Password Module solves all of these problems by:
 | Technology | Why Used |
 |-----------|----------|
 | **Django 5** | Battle-tested Python web framework with built-in ORM, admin panel, and security middleware |
-| **Django REST Framework (DRF)** | Industry standard for building REST APIs in Django. Provides serializers, viewsets, permissions, throttling out of the box |
+| **Django REST Framework (DRF)** | Industry standard for building REST APIs in Django. Provides serializers, viewsets, permissions, throttling, and URL versioning out of the box |
 | **djangorestframework-simplejwt** | JWT implementation with refresh token rotation, blacklisting, and cookie-based storage |
 | **django-cors-headers** | Allows the React frontend (port 5173) to make API calls to Django (port 8000) during development |
 | **argon2-cffi** | Argon2id password hashing — the 2023 OWASP gold standard for password storage, resistant to GPU cracking |
+| **cryptography (Fernet)** | Used in `vault_escrow.py` for symmetric server-side key escrow encryption using `VAULT_ESCROW_KEY` |
+| **Redis & django-redis** | In-memory cache store providing high-performance entity caching and Celery task broker backend |
+| **Celery** | Asynchronous task queue for offloading audit alert email dispatching without blocking web threads |
 | **python-dotenv** | Loads environment variables from `.env` file, keeping secrets out of source code |
 
 ### Database
 
 | Technology | Why Used |
 |-----------|----------|
-| **PostgreSQL** | ACID-compliant, production-grade relational database. Chosen over SQLite for multi-user concurrent access and UUID primary key support |
+| **PostgreSQL 15** | ACID-compliant, production-grade relational database with connection pooling (`CONN_MAX_AGE=600`) |
 | **UUID Primary Keys** | All records use UUID (not auto-increment integers). UUIDs are unguessable — an attacker cannot enumerate records by incrementing IDs in API calls |
+| **B-Tree Indexes** | Single-column and composite database indexes across Admin, EncryptedBank, ActivityLog, and Entity tables for sub-millisecond query response times |
 
 ### Email
 
@@ -135,6 +145,13 @@ The Password Module solves all of these problems by:
 | **Django SMTP Email** | Sends OTP verification codes for login 2FA, password reset, and email changes |
 | **EmailMultiAlternatives** | Sends both HTML (styled) and plaintext fallback versions of OTP emails |
 | **Inline CID Logo** | School logo is embedded in the email body using MIME image attachment with Content-ID, so it renders even without external image loading |
+
+### DevOps & Infrastructure
+
+| Technology | Why Used |
+|-----------|----------|
+| **Docker & Docker Compose** | Multi-container stack definitions for Django web server, Gunicorn WSGI, PostgreSQL database, Redis, and Celery workers |
+| **GitHub Actions CI** | Automated continuous integration testing running backend Django check/tests and frontend Vite production builds on every push |
 
 ---
 
@@ -195,14 +212,27 @@ On success, the server returns:
 - `refresh_token` — 7-day HttpOnly cookie, inaccessible to JavaScript.
 - `user` — admin profile data including `level`, `name`, `email`, `tfa_enabled`.
 
-#### Forgot Password Flow
+#### Forgot Password & Key Recovery Flows
 
-1. User submits email → `POST /api/v1/auth/password-reset/` → OTP email sent.
-2. User submits OTP → `POST /api/v1/auth/password-reset/key/` → returns `encrypted_vault_key`.
-3. Client decrypts the vault key using the OLD password, re-encrypts it with the NEW password.
-4. User submits new password + re-encrypted vault key → `POST /api/v1/auth/password-reset/verify/`.
+The system provides three distinct recovery paths when resetting a password:
 
-**Why step 3?** The master encryption key that protects all bank data is stored encrypted with the admin's password. If we just reset the password without re-wrapping the vault key, the encrypted bank data would be permanently inaccessible (locked with the old key). The client-side re-wrapping process preserves data access across password changes.
+1. **Option A: Standard Password Reset (With Old Password)**
+   - User submits email → `POST /api/v1/auth/password-reset/` → OTP email sent.
+   - User submits OTP → `POST /api/v1/auth/password-reset/key/` → returns `encrypted_vault_key`.
+   - Client decrypts vault key using OLD password, re-encrypts with NEW password.
+   - User submits new password + re-encrypted vault key → `POST /api/v1/auth/password-reset/verify/`.
+
+2. **Option B: Emergency Rescue Kit Key Recovery (Zero Knowledge)**
+   - If old password is forgotten, user enters their 32-character **Rescue Kit Key** (`XXXX-XXXX-XXXX-XXXX-XXXX-XXXX`).
+   - Client derives recovery master key (PBKDF2 100k iterations) and decrypts `recovery_encrypted_vault_key`.
+   - Client re-encrypts the vault key with the NEW password and submits to `/auth/password-reset/verify/`.
+
+3. **Option C: Server-Side Escrow Recovery (OTP-Only)**
+   - If user has lost both old password and Emergency Rescue Kit, user requests server escrow key unwrap.
+   - Server verifies OTP and calls `POST /api/v1/auth/password-reset/escrow-key/`, returning the Fernet-decrypted vault key.
+   - Client re-encrypts the vault key under NEW password and calls `/auth/password-reset/verify/`.
+
+**Why client-side re-wrapping?** The master encryption key that protects all bank data is stored encrypted with the admin's password. Re-wrapping preserves data access across password changes without revealing the raw key to the server.
 
 ---
 
@@ -224,11 +254,8 @@ Clicking a card opens the `AccountModal`. This triggers:
 3. The browser decrypts the ciphertext fields using the in-memory master key.
 4. Decrypted values are shown in the modal with a copy button.
 
-**Why log every single view?**
-Because bank credentials are highly sensitive. If money goes missing from a school account, the audit log shows exactly who viewed that account's credentials, when, and from what IP address. This provides accountability.
-
 **Search & Filter:**
-The dashboard has a search bar that filters cards by bank name, branch, or entity name. It also supports Grid / List view toggle and sorting by creation date or bank name.
+The dashboard has a search bar that filters cards by bank name, branch, or entity name. It supports Grid / List view toggles, mobile responsive toolbar layout, and sorting by creation date or bank name. Paginated API responses (`{ count, results }`) are automatically normalized via `extractDataList()`.
 
 ---
 
@@ -243,10 +270,7 @@ The `AddBankModal` component allows Super Admins (Level 3) to add new bank accou
    - Encrypts each sensitive field individually using `encryptData(plaintext, masterKey)` → AES-256-GCM.
    - Each field gets its own random 12-byte IV, so identical values produce different ciphertexts.
    - Sends encrypted ciphertexts to the server: `POST /api/v1/vault/`.
-4. The server stores the ciphertexts in `EncryptedBank` table and logs the creation.
-
-**Why encrypt fields individually?**
-If all fields were encrypted together as one blob, changing the account number would require re-encrypting everything. Individual field encryption allows granular updates — only the changed field needs to be re-encrypted.
+4. The server stores the ciphertexts in `EncryptedBank` table (with `is_deleted=False`) and logs the creation.
 
 ---
 
@@ -255,22 +279,17 @@ If all fields were encrypted together as one blob, changing the account number w
 **Available to: Level 3 (Super Admin) only**
 
 This tab lets Super Admins:
-- **View all registered admins** — name, email, level, department, campus, designation, active status.
-- **Register a new admin** — fill in name, email, password, level (1/2/3), and optional profile fields.
+- **View all registered admins** — name, email, level, department, campus, designation, phone, active status.
+- **Register a new admin** — fill in name, email, password, level (1/2/3), and profile fields.
 - **Deactivate/Reactivate an admin** — a deactivated admin's JWT is immediately rejected on the next API call.
 - **Delete an admin** — permanently removes the account.
 - **Password visibility toggle** — the account password field has an Eye/EyeOff button to show/hide the typed password while registering.
-
-**Unsaved form warning:** If you type anything in the Register Admin form and then try to switch tabs, a warning modal appears asking whether you want to discard changes. This prevents accidentally losing a half-filled registration form.
-
-**Why can only Level 3 manage admins?**
-Admin management is the highest-privilege operation — a compromised Level 2 account should not be able to promote itself to Level 3 or create new super admin accounts.
 
 ---
 
 ### 4.5 Entity Management Tab
 
-**Available to: Level 3 (Super Admin) for add/delete; Level 1+ for viewing**
+**Available to: Level 3 (Super Admin) for add/delete/restore; Level 1+ for viewing**
 
 Entities represent organizational units — school branches, departments, or partner organizations — that own bank accounts. Examples: "South Point School, Guwahati", "DPS Nagaon", etc.
 
@@ -278,14 +297,8 @@ Entities represent organizational units — school branches, departments, or par
 - **View all registered entities** — name, email, phone, creation date.
 - **Register single entity** — name, email, phone number (exactly 10 digits validated).
 - **Bulk entity registration** — enter multiple entities in a structured form; all are validated and registered atomically.
-- **Delete an entity** — cascades to delete all bank accounts associated with it.
-
-**Validation rules enforced on both frontend and backend:**
-- Email must be valid.
-- Phone must be exactly 10 digits.
-- Entity email cannot match any admin email.
-- Entity name cannot match any admin name.
-- No duplicate emails or phone numbers.
+- **Delete an entity** — soft deletes the entity record (`is_deleted=True`), preserving data integrity.
+- **Restore an entity** — Super Admins can restore soft-deleted entities (`POST /api/v1/entities/<uuid>/restore/`).
 
 ---
 
@@ -295,24 +308,11 @@ Entities represent organizational units — school branches, departments, or par
 
 Shows the complete audit trail of all system actions in reverse chronological order. Each log entry shows:
 - Timestamp (UTC)
-- Action label (e.g., "Credential Accessed", "Login Success", "Admin Registered")
+- Action label (e.g., "Credential Accessed", "Login Success", "Admin Registered", "Vault Key Escrow Recovery")
 - Full details
 - Admin who performed the action
 - Log type color: Success (green), Info (blue), Warning (yellow), Error (red)
 - IP address
-
-**What actions are logged:**
-- Login attempts (success and failure)
-- OTP verification failures
-- Credential viewed (every single view)
-- Credential created / updated / deleted
-- Admin registered / removed
-- Profile updated
-- Password reset (success and failure)
-- Email changed
-- Entities registered (single and bulk) / removed
-- Database reset performed
-- Logout
 
 ---
 
@@ -320,12 +320,13 @@ Shows the complete audit trail of all system actions in reverse chronological or
 
 The `Settings` component provides personal configuration options:
 - **Dark/Light mode toggle** — theme persists to localStorage.
-- **Change master password** — enters current password, new password, confirm new password. Eye/EyeOff visibility toggles on all three fields. Process re-derives keys, re-encrypts vault key, and updates `encrypted_vault_key` on the server.
+- **Change master password** — enters current password, new password, confirm new password. Re-derives keys, re-encrypts vault key, updates server `encrypted_vault_key`, and re-syncs escrow key.
 - **Enable/Disable 2FA** — toggles `tfa_enabled` on the admin's account via `POST /api/v1/auth/tfa/toggle/`.
 - **Change email** — OTP verified: sends code to new email, then confirms change.
 - **Profile update** — name, department, campus, designation, phone.
-- **Lock screen timeout** — configures how many minutes of inactivity before the stealth lock screen activates.
-- **Database Reset** — destructive operation, Level 3 only, wipes all bank credentials, entities, and activity logs.
+- **Emergency Rescue Kit Generator** — generates and downloads/prints a 32-character Emergency Rescue Kit recovery key.
+- **Lock screen timeout** — configures inactivity timeout before stealth lock screen activates.
+- **Database Reset** — destructive operation (Level 3 only). Vertically/horizontally centered modal with optional `purgeAdmins` checkbox. Automatically purges client session (`onLogout`), clearing tokens and master key from memory.
 
 ---
 
@@ -333,14 +334,16 @@ The `Settings` component provides personal configuration options:
 
 The `HelpInfo` component serves as built-in documentation explaining:
 - What each access level can and cannot do (Levels 1, 2, 3).
+- **Emergency Rescue Kit User Guide** — step-by-step instructions on generating, storing, and using recovery keys.
 - Glossary of security terms used in the system:
   - Lock Screen & Inactivity Lock
   - AES-256 Encrypted Cryptographic Public Signature
+  - Emergency Rescue Kit & Key Escrow
   - Entities vs. Admins
   - Two-Factor Authentication (2FA/OTP)
   - Key Derivation (PBKDF2)
   - JWT & Session Management
-- A "Contact Help Desk" button that opens the `HelpDeskModal` for support requests.
+- A "Contact Help Desk" button that opens the `HelpDeskModal` with Rescue Kit support guidelines.
 
 ---
 
@@ -349,34 +352,21 @@ The `HelpInfo` component serves as built-in documentation explaining:
 The `StealthLockScreen` component activates after a configurable period of inactivity (default: 15 minutes). When locked:
 - The entire dashboard is covered by a dark overlay.
 - The admin must re-enter their master password to unlock.
-- This is a client-side re-authentication — the password is re-derived locally and verified against a stored hash.
-- The access token is NOT revoked — only the local screen is locked.
-- This protects against **shoulder surfing** and **unattended session abuse** at the physical machine level.
+- Client-side re-authentication — password is re-derived locally and verified against a stored hash.
+- Access token is NOT revoked — only local screen is locked, protecting against physical machine access.
 
 ---
 
 ### 4.10 Unsaved Form Warning Modal
 
-Implemented in the tab change logic inside `App.jsx`:
+Implements navigation guards in `App.jsx`:
+When an admin has typed into **Register Admin** or **Register Entity** forms and attempts to switch tabs or logout, a centered warning modal prompts for confirmation to discard or cancel.
 
-When an admin has typed into the **Register Admin** or **Register Entity** form and then tries to:
-- Click a different tab in the Sidebar
-- Click a different tab in the Header
-- Logout
+---
 
-A centered confirmation modal appears:
+### 4.11 Emergency Rescue Kit Modal
 
-```
-⚠️  Unsaved Admin Registration
-You have unsaved changes in the Register Admin form.
-Are you sure you want to leave? All entered data will be discarded.
-
-[Cancel]   [Yes, Discard & Leave]
-```
-
-If the admin clicks "Yes, Discard & Leave", the form state is cleared and navigation proceeds. If "Cancel" is clicked, they remain on the current tab with all their entered data intact.
-
-**Why?** Accidentally navigating away from a half-filled admin registration form would require starting over. This UX guard prevents frustration and data loss.
+The `RescueKitModal` UI component allows admins to view, copy, download, or print their 32-character Zero-Knowledge Emergency Rescue Kit. The key is formatted as 6 four-character blocks (`XXXX-XXXX-XXXX-XXXX-XXXX-XXXX`) for ease of physical paper transcription.
 
 ---
 
@@ -385,29 +375,29 @@ If the admin clicks "Yes, Discard & Leave", the form state is cleared and naviga
 ```
 src/
 ├── app/
-│   ├── App.jsx                      ← Main application root (all tabs, state, crypto logic)
+│   ├── App.jsx                      ← Main application root (all tabs, state, crypto logic, modals)
 │   ├── utils/
-│   │   ├── cryptoHelper.js          ← PBKDF2, AES-256-GCM, key derivation
+│   │   ├── cryptoHelper.js          ← PBKDF2, AES-256-GCM, Rescue Kit key derivation & wrapping
 │   │   └── apiClient.js             ← Axios-like API wrapper with JWT header injection
 │   └── components/
 │       ├── AuthCard.jsx             ← Login / OTP / Forgot Password screen card
 │       ├── Header.jsx               ← Top navigation bar with tab buttons
 │       ├── Sidebar.jsx              ← Left sidebar navigation (desktop)
-│       ├── Footer.jsx               ← Bottom footer with version / info
+│       ├── Footer.jsx               ← Bottom footer with version, compact mobile layout
 │       ├── BankCard.jsx             ← Individual credential card in the vault grid
 │       ├── AccountModal.jsx         ← Credential detail view (decrypts and shows fields)
 │       ├── AddBankModal.jsx         ← Add / Edit bank credential form
 │       ├── AccountSelectorModal.jsx ← Entity-filtered account picker
-│       ├── Settings.jsx             ← All account settings (password, 2FA, theme, etc.)
-│       ├── HelpInfo.jsx             ← Built-in user guide and glossary
-│       ├── HelpDeskModal.jsx        ← Support request / help desk modal
+│       ├── Settings.jsx             ← Account settings (password, 2FA, theme, Rescue Kit, DB reset)
+│       ├── HelpInfo.jsx             ← Built-in user guide, glossary, & Rescue Kit manual
+│       ├── HelpDeskModal.jsx        ← Support request & Rescue Kit emergency guide modal
 │       ├── StealthLockScreen.jsx    ← Inactivity lock overlay
-│       ├── LoadingScreen.jsx        ← Initial boot loading animation
-│       ├── BoyCharacter.jsx         ← SVG animated character on auth screen
+│       ├── LoadingScreen.jsx        ← Initial boot loading animation (1.2s branded splash)
+│       ├── BoyCharacter.jsx         ← SVG animated character on auth screen (hidden on mobile)
 │       ├── SchoolCrest.jsx          ← South Point School crest SVG
 │       ├── ModalDetailRow.jsx       ← Reusable label + value + copy button row
 │       ├── theme.js                 ← Design tokens (MAROON, GOLD, BORDER constants)
-│       └── ui/                      ← Low-level UI primitives (buttons, inputs, etc.)
+│       └── ui/                      ← Low-level UI primitives (buttons, inputs, modals)
 ```
 
 ---
@@ -463,12 +453,51 @@ The `masterKey` (32 bytes derived from the admin's password) is itself stored in
 **Why store the encrypted vault key?**
 When an admin changes their password, the master encryption key changes. Without re-wrapping, all encrypted bank data would become unreadable. The `encrypted_vault_key` allows the system to re-derive the new master key and re-wrap the vault key so data remains accessible.
 
-### 6.4 Why Zero-Knowledge Design
+### 6.4 Zero-Knowledge Emergency Rescue Kit (Recovery Key)
+
+To prevent permanent data loss when an admin forgets their master password, the system includes a zero-knowledge recovery key mechanism:
+
+```
+[ 24 Random Bytes ] → 32 Hex Characters → Formatted: "A3F8-99B2-4C1E-77D0-55FA-1234"
+                                  │
+                                  ▼
+                   PBKDF2-HMAC-SHA256 (100,000 iterations)
+                   Salt: "vault-rescue-kit-salt-2026"
+                                  │
+                                  ▼
+                        recoveryMasterKey (256-bit)
+                                  │
+                                  ▼
+    AES-256-GCM Encrypt(masterKey) → stored as `recovery_encrypted_vault_key`
+```
+
+- Generated client-side via `generateRecoveryKey()`.
+- The raw Recovery Key string is **never** sent to the server.
+- The server receives only `recovery_encrypted_vault_key` (the master key encrypted under the derived recovery key).
+- Allows full zero-knowledge recovery of the vault during password resets.
+
+### 6.5 Server-Side Key Escrow Engine (`vault_escrow.py`)
+
+As a safety net for admins who lose both their master password AND their paper Emergency Rescue Kit, the backend implements server-side key escrow:
+
+```
+masterKey (hex) ──── Fernet Symmetric Cipher ──── stored as `escrow_encrypted_vault_key`
+                             ▲
+                             │
+                  Key: settings.VAULT_ESCROW_KEY
+                       (SECRET_KEY + ESCROW_MASTER_SALT)
+```
+
+- When configured (`VAULT_ESCROW_KEY` set), the browser sends the vault key over authenticated HTTPS to `/api/v1/auth/vault/escrow-sync/`.
+- During an OTP-verified password reset, an admin without their Recovery Key can request escrow unwrap (`POST /api/v1/auth/password-reset/escrow-key/`).
+- This path deliberately breaks zero-knowledge guarantees to prevent total lockout, but is strictly gated behind OTP verification, IP logging, and rate throttling.
+
+### 6.6 Why Zero-Knowledge Design
 
 The server is designed to be "zero knowledge" about the content of bank credentials:
 - The server never receives plaintext passwords, account numbers, or IFSC codes.
-- Even if the PostgreSQL database were stolen, all credential fields are AES-256-GCM ciphertext — completely unreadable without the master key that only the admin's password can derive.
-- The server never stores the master key — only a re-encrypted version (`encrypted_vault_key`) that can only be unwrapped with the admin's password.
+- Even if the PostgreSQL database were stolen, all credential fields are AES-256-GCM ciphertext — completely unreadable without the master key that only the admin's password or Recovery Key can derive.
+- The server never stores the master key in plaintext — only re-encrypted versions (`encrypted_vault_key`, `recovery_encrypted_vault_key`, and Fernet-wrapped `escrow_encrypted_vault_key`).
 
 ---
 
@@ -479,18 +508,25 @@ The server is designed to be "zero knowledge" about the content of bank credenti
 ```
 vault_backend/
 ├── manage.py
+├── Dockerfile            ← Container definition for Django/Gunicorn
+├── .dockerignore
+├── requirements.txt      ← Dependencies (Django, DRF, Celery, Redis, argon2-cffi, cryptography)
 ├── vault_backend/
-│   ├── settings.py       ← All configuration (DB, JWT, email, security headers)
-│   ├── urls.py           ← Root URL dispatcher
-│   └── wsgi.py           ← WSGI entry point for production deployment
+│   ├── settings.py       ← Configuration (DB, JWT, Redis, Celery, Rate limits, Security headers)
+│   ├── celery.py         ← Celery worker app configuration & broker setup
+│   ├── urls.py           ← Root URL dispatcher with DRF Router & /api/v1/ versioning
+│   └── wsgi.py           ← WSGI entry point for Gunicorn
 └── vault_api/
-    ├── models.py         ← Admin, EncryptedBank, ActivityLog, Entity
-    ├── serializers.py    ← DRF serializers for all models
-    ├── views.py          ← All API views (919 lines, 18 views/viewsets)
-    ├── urls.py           ← API endpoint URL patterns
-    ├── admin.py          ← Django Admin panel registrations
-    ├── backends.py       ← Custom VaultAuthBackend
-    ├── email_utils.py    ← OTP email sending utility
+    ├── models.py         ← Admin, EncryptedBank, ActivityLog, Entity, SoftDeleteManager
+    ├── serializers.py    ← DRF serializers with escrow & recovery key fields
+    ├── views.py          ← DRF Views & ViewSets (Redis caching, Soft Delete, Escrow endpoints)
+    ├── urls.py           ← API endpoint routing definitions
+    ├── admin.py          ← Django Admin portal custom configuration
+    ├── backends.py       ← Custom VaultAuthBackend (supports CLI & PBKDF2 hashes)
+    ├── email_utils.py    ← Async OTP & Security email dispatchers
+    ├── tasks.py          ← Celery background task queue definitions
+    ├── pagination.py     ← StandardResultsSetPagination (page_size: 50, max: 200)
+    ├── vault_escrow.py   ← Server-side Fernet key escrow engine
     └── templates/
         └── vault_api/
             └── email_otp.html  ← Branded HTML email template
@@ -510,14 +546,52 @@ Django's default `User` model uses a `username` field. Our system uses **email a
 | `dept` | CharField | Department |
 | `campus` | CharField | Campus/branch |
 | `designation` | CharField | Job title |
-| `phone` | CharField | Phone number |
+| `phone` | CharField | Phone number (indexed) |
 | `is_active` | BooleanField | False = deactivated account, all JWTs rejected |
 | `is_staff` | BooleanField | True = allows access to `/admin/` portal |
 | `otp_code` | CharField(6) | Current active OTP (set to NULL after use) |
 | `otp_expires_at` | DateTimeField | OTP expiry window (5 minutes from generation) |
 | `tfa_enabled` | BooleanField | Per-user 2FA toggle (independent of global OTP_ENABLED setting) |
 | `encrypted_vault_key` | TextField | Admin's master key, encrypted with their password |
+| `recovery_encrypted_vault_key` | TextField | Master key encrypted with user's Emergency Rescue Kit key |
+| `escrow_encrypted_vault_key` | TextField | Server-side Fernet-encrypted copy of vault key for emergency reset |
 | `date_joined` | DateTimeField | Immutable creation timestamp (`auto_now_add=True`) |
+
+---
+
+### 7.5 Soft Deletion Architecture
+
+To prevent irreversible data loss when credentials or school entities are deleted, the system implements soft deletion via `SoftDeleteQuerySet` and `SoftDeleteManager`:
+
+- Models `EncryptedBank` and `Entity` contain `is_deleted = BooleanField(default=False)` and `deleted_at = DateTimeField(null=True)`.
+- Standard queries (`objects.all()`) filter out soft-deleted records (`alive_only=True`).
+- Calling `.delete()` on an instance or QuerySet flags `is_deleted=True` and records timestamp instead of executing SQL `DELETE`.
+- Super Admins can restore soft-deleted items via `POST /api/v1/vault/<uuid>/restore/` and `POST /api/v1/entities/<uuid>/restore/`.
+
+---
+
+### 7.6 Redis In-Memory Caching & Cache Invalidation
+
+Entity listings are cached in Redis to minimize database query latency:
+- Key `entities_list` caches entity listings for 15 minutes (900s).
+- CRUD operations (Create, Update, Soft Delete, Restore) automatically trigger `_invalidate_entities_cache()`.
+
+---
+
+### 7.7 Celery Asynchronous Task Queue
+
+To prevent blocking WSGI worker threads during SMTP email dispatches:
+- Celery worker queue is configured via `vault_backend/celery.py`.
+- `@shared_task` asynchronous handler `send_security_alert_task` in `tasks.py` handles email alerts in the background.
+
+---
+
+### 7.8 Native `createsuperuser` CLI Integration
+
+The custom `AdminManager.create_user` method handles both web-derived `loginHashHex` and raw CLI passwords from `python manage.py createsuperuser`:
+- Automatically detects non-hex raw passwords.
+- Derives `loginHashHex` using SHA-256 PBKDF2 (600k iterations).
+- Automatically generates and encrypts `encrypted_vault_key` using `SECRET_KEY` so CLI-created superusers can log into the web UI without encryption errors.
 
 **`original_email` field:** When an admin changes their email, the salt derivation formula is `HMAC(SECRET_KEY, email)`. A different email would produce a different salt, making all previously derived keys invalid. `original_email` stores the email used during initial registration so the salt stays stable. When email is changed, the client re-derives keys with the new email and updates `encrypted_vault_key` accordingly.
 
@@ -577,8 +651,9 @@ class VaultAuthBackend(ModelBackend):
 
 ## 8. REST API Reference
 
-**Base URL:** `http://127.0.0.1:8000/api/v1/`
-**Authentication:** `Authorization: Bearer <access_token>` (except salt and public auth endpoints)
+**Base URL:** `http://127.0.0.1:8000/api/v1/`  
+**Authentication:** `Authorization: Bearer <access_token>` (except salt and public auth endpoints)  
+**Pagination:** Global `StandardResultsSetPagination` returning `{ "count": N, "next": url, "previous": url, "results": [...] }` (page size: 50, max: 200).
 
 ### 8.1 Authentication APIs
 
@@ -591,29 +666,30 @@ class VaultAuthBackend(ModelBackend):
 | `POST` | `/auth/refresh/` | Cookie | Reads refresh token from HttpOnly cookie, issues new access token + rotated refresh token. |
 | `POST` | `/auth/password-reset/` | None | Sends password reset OTP to admin's email. |
 | `POST` | `/auth/password-reset/key/` | None | Returns `encrypted_vault_key` after OTP verification (for client-side re-encryption). |
-| `POST` | `/auth/password-reset/verify/` | None | Verifies OTP, sets new password, optionally updates `encrypted_vault_key`. |
+| `POST` | `/auth/password-reset/escrow-key/` | None | Returns Fernet-decrypted escrow vault key after OTP verification (emergency fallback). |
+| `POST` | `/auth/password-reset/verify/` | None | Verifies OTP, sets new password, updates `encrypted_vault_key` & `recovery_encrypted_vault_key`. |
+| `POST` | `/auth/vault/escrow-sync/` | JWT | Syncs client vault key to server-side Fernet key escrow engine. |
 | `POST` | `/auth/email-change/` | JWT | Sends OTP to new email address for verification. |
 | `POST` | `/auth/email-change/verify/` | JWT | Verifies OTP and updates admin's email address. |
 | `POST` | `/auth/tfa/toggle/` | JWT | Enables or disables 2FA for the current admin. |
 | `GET` | `/auth/profile/` | JWT | Returns current admin's profile data. |
 | `PATCH` | `/auth/profile/` | JWT | Updates current admin's profile (name, dept, campus, designation, phone). |
-| `POST` | `/auth/reset-database/` | JWT (Level 3) | Destroys all credentials, entities, and activity logs. |
+| `POST` | `/auth/reset-database/` | JWT (Level 3) | Factory reset: destroys bank credentials, entities, and activity logs. |
 
 #### Rate Limiting on Auth Endpoints
 
-All auth endpoints (`/auth/login/`, `/auth/login/verify/`, `/auth/password-reset/`) are rate-limited to **5 requests per minute per IP** via the `login` throttle scope. This prevents brute-force attacks on OTP codes and login credentials.
+All auth endpoints (`/auth/login/`, `/auth/login/verify/`, `/auth/password-reset/`) are rate-limited to **5 requests per minute per IP** via `ScopedRateThrottle`.
 
 ### 8.2 Vault (Bank Credentials) APIs
 
 | Method | Endpoint | Min Level | Description |
 |--------|----------|-----------|-------------|
-| `GET` | `/vault/` | Level 1 | List all bank credential records (returns ciphertexts). |
+| `GET` | `/vault/` | Level 1 | List all bank credential records (returns ciphertexts, paginated). |
 | `POST` | `/vault/` | Level 3 | Create new bank credential (receives ciphertexts from client). |
 | `GET` | `/vault/<uuid>/` | Level 1 | Get single bank record. Logs access to ActivityLog. |
 | `PUT`/`PATCH` | `/vault/<uuid>/` | Level 2 | Update bank record fields. |
-| `DELETE` | `/vault/<uuid>/` | Level 3 | Permanently delete bank record. |
-
-> **Important:** The server receives and stores ciphertexts only. It cannot read the plaintext values. All encryption/decryption happens in the browser.
+| `DELETE` | `/vault/<uuid>/` | Level 3 | Soft delete bank record (`is_deleted=True`). |
+| `POST` | `/vault/<uuid>/restore/` | Level 3 | Restore soft-deleted bank record. |
 
 ### 8.3 Admin Management APIs
 
@@ -629,17 +705,18 @@ All auth endpoints (`/auth/login/`, `/auth/login/verify/`, `/auth/password-reset
 
 | Method | Endpoint | Min Level | Description |
 |--------|----------|-----------|-------------|
-| `GET` | `/entities/` | Level 1 | List all registered entities. |
+| `GET` | `/entities/` | Level 1 | List all registered entities (cached in Redis). |
 | `POST` | `/entities/` | Level 3 | Register single entity. |
 | `GET` | `/entities/<uuid>/` | Level 1 | Get single entity. |
-| `DELETE` | `/entities/<uuid>/` | Level 3 | Delete entity (cascades to its bank accounts). |
-| `POST` | `/entities/bulk/` | Level 3 | Bulk register multiple entities. Full validation: duplicates, format, admin conflicts. |
+| `DELETE` | `/entities/<uuid>/` | Level 3 | Soft delete entity (`is_deleted=True`). |
+| `POST` | `/entities/<uuid>/restore/` | Level 3 | Restore soft-deleted entity. |
+| `POST` | `/entities/bulk/` | Level 3 | Bulk register multiple entities atomically. |
 
 ### 8.5 Audit Log API
 
 | Method | Endpoint | Min Level | Description |
 |--------|----------|-----------|-------------|
-| `GET` | `/audit-logs/` | Level 2 | Returns all activity log entries, newest first. |
+| `GET` | `/audit-logs/` | Level 2 | Returns all activity log entries, newest first (B-Tree indexed). |
 
 ---
 
@@ -708,20 +785,22 @@ If `EMAIL_HOST_USER` is not set (development mode), Django falls back to `consol
 | `id` | UUID PK | Unguessable primary key |
 | `email` | VARCHAR UNIQUE | Login identifier |
 | `original_email` | VARCHAR | Email used at registration (for salt stability) |
-| `name` | VARCHAR | Display name |
+| `name` | VARCHAR | Display name (Indexed: `admin_name_idx`) |
 | `password` | VARCHAR | Argon2id hash of `loginHashHex` |
 | `level` | INTEGER | RBAC level: 1, 2, or 3 |
 | `dept` | VARCHAR | Department |
 | `campus` | VARCHAR | Campus/branch |
 | `designation` | VARCHAR | Job title |
 | `phone` | VARCHAR | Phone number |
-| `is_active` | BOOLEAN | False = deactivated account |
+| `is_active` | BOOLEAN | False = deactivated account (Indexed: `admin_is_active_idx`) |
 | `is_staff` | BOOLEAN | True = Django Admin portal access |
 | `is_superuser` | BOOLEAN | True = all Django permissions |
 | `otp_code` | VARCHAR(6) | Current active OTP (NULL when not active) |
 | `otp_expires_at` | TIMESTAMP | OTP expiry time |
 | `tfa_enabled` | BOOLEAN | Per-user 2FA toggle |
 | `encrypted_vault_key` | TEXT | Master key encrypted with admin's password |
+| `recovery_encrypted_vault_key` | TEXT | Master key encrypted with Emergency Rescue Kit key |
+| `escrow_encrypted_vault_key` | TEXT | Server-side Fernet-encrypted vault key for OTP-only reset |
 | `date_joined` | TIMESTAMP | Immutable creation timestamp |
 
 ### EncryptedBank Table (`vault_api_encryptedbank`)
@@ -730,10 +809,10 @@ If `EMAIL_HOST_USER` is not set (development mode), Django falls back to `consol
 |--------|------|-------------|
 | `id` | UUID PK | Unguessable primary key |
 | `entity_id` | UUID FK | Associated entity (school branch), CASCADE on delete |
-| `name` | VARCHAR | Bank name (e.g., "HDFC Bank") — plaintext, safe to store |
+| `name` | VARCHAR | Bank name (e.g., "HDFC Bank") — plaintext (Indexed: `bank_name_idx`) |
 | `initial` | VARCHAR(5) | Abbreviation (e.g., "HDFC") — plaintext |
 | `color` | VARCHAR(7) | UI card hex color — plaintext |
-| `account_type` | VARCHAR | "retail" or "corporate" — plaintext |
+| `account_type` | VARCHAR | "retail" or "corporate" — plaintext (Indexed: `bank_account_type_idx`) |
 | `branch_name` | VARCHAR | Branch name — plaintext |
 | `encrypted_holder` | TEXT | AES-256-GCM base64 ciphertext |
 | `encrypted_account_number` | TEXT | AES-256-GCM base64 ciphertext |
@@ -805,7 +884,7 @@ An HttpOnly cookie cannot be accessed by `document.cookie` or any JavaScript. Ev
 
 ---
 
-## 12. Rate Limiting & Security Headers
+## 12. Rate Limiting, Security Headers & Connection Pooling
 
 ### Rate Limiting
 
@@ -814,6 +893,18 @@ An HttpOnly cookie cannot be accessed by `document.cookie` or any JavaScript. Ev
     'anon': '100/day',     # Unauthenticated IPs: 100 requests/day
     'user': '1000/day',    # Authenticated admins: 1000 requests/day
     'login': '5/minute',   # Login, OTP, password reset: 5 attempts/minute
+}
+```
+
+### Database Connection Pooling
+
+```python
+DATABASES = {
+    'default': {
+        ...
+        'CONN_MAX_AGE': 600,         # Persist database connections for 10 minutes
+        'CONN_HEALTH_CHECKS': True,  # Verify DB connection health before re-use
+    }
 }
 ```
 
@@ -912,6 +1003,11 @@ The bank data was encrypted by the browser using a master key that the server ne
 | `DB_PASSWORD` | No | `<password>` | PostgreSQL password |
 | `DB_HOST` | No | `localhost` | PostgreSQL host |
 | `DB_PORT` | No | `5432` | PostgreSQL port |
+| `REDIS_URL` | No | `redis://redis:6379/1` | Redis connection URL for caching & Celery |
+| `CELERY_BROKER_URL` | No | `redis://redis:6379/0` | Celery async worker message broker URL |
+| `VAULT_ESCROW_KEY` | No | Fernet 32-byte key | Master key for server-side key escrow unwrap |
+| `ESCROW_MASTER_SALT` | No | 32-char hex string | Salt used to derive Fernet escrow key |
+| `SENTRY_DSN` | No | `https://...` | Sentry performance monitoring & exception logging DSN |
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:5173` | Frontend origins allowed |
 | `OTP_ENABLED` | No | `True` | Enable 2FA OTP globally for all logins |
 | `EMAIL_HOST` | No | `smtp.gmail.com` | SMTP server hostname |
@@ -940,30 +1036,34 @@ The bank data was encrypted by the browser using a master key that the server ne
 | Light/Dark mode toggle | ✅ | ✅ | ✅ |
 | Change own password | ✅ | ✅ | ✅ |
 | Enable/disable own 2FA | ✅ | ✅ | ✅ |
+| Generate Emergency Rescue Kit | ✅ | ✅ | ✅ |
 | Update own profile | ✅ | ✅ | ✅ |
 | Change own email | ✅ | ✅ | ✅ |
 | Edit bank credentials | ❌ | ✅ | ✅ |
 | View activity audit logs | ❌ | ✅ | ✅ |
 | Add new bank accounts | ❌ | ❌ | ✅ |
-| Delete bank accounts | ❌ | ❌ | ✅ |
+| Delete bank accounts (Soft Delete) | ❌ | ❌ | ✅ |
+| Restore soft-deleted bank accounts | ❌ | ❌ | ✅ |
 | Register entities (single) | ❌ | ❌ | ✅ |
 | Register entities (bulk) | ❌ | ❌ | ✅ |
-| Delete entities | ❌ | ❌ | ✅ |
+| Delete entities (Soft Delete) | ❌ | ❌ | ✅ |
+| Restore soft-deleted entities | ❌ | ❌ | ✅ |
 | Register new admins | ❌ | ❌ | ✅ |
 | Delete/deactivate admins | ❌ | ❌ | ✅ |
 | Reset entire database | ❌ | ❌ | ✅ |
 
 ---
 
-## 17. Setup & Running Locally
+## 17. Setup, Docker & CI/CD Deployment
 
-### Prerequisites
+### 17.1 Local Development Setup
 
+#### Prerequisites
 - Python 3.11+
 - Node.js 18+ and npm
-- PostgreSQL 15+
+- PostgreSQL 15+ & Redis
 
-### Backend Setup
+#### Backend Setup
 
 ```bash
 # 1. Navigate to backend directory
@@ -977,25 +1077,20 @@ venv\Scripts\activate           # Windows
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Create PostgreSQL database (run in psql)
-# CREATE DATABASE vault_db;
-# CREATE USER vault_user WITH PASSWORD 'yourpassword';
-# GRANT ALL PRIVILEGES ON DATABASE vault_db TO vault_user;
-
-# 5. Generate a strong SECRET_KEY
-python -c "import secrets; print(secrets.token_hex(64))"
-
-# 6. Run database migrations
+# 4. Run database migrations
 python manage.py migrate
 
-# 7. Create first Super Admin
+# 5. Create first Super Admin
 python manage.py createsuperuser
 
-# 8. Start backend server
+# 6. Start Celery worker (in separate terminal)
+celery -A vault_backend worker --loglevel=info
+
+# 7. Start backend server
 python manage.py runserver
 ```
 
-### Frontend Setup
+#### Frontend Setup
 
 ```bash
 # 1. Navigate to project root
@@ -1011,7 +1106,35 @@ npm install
 npm run dev
 ```
 
-### Accessing the System
+---
+
+### 17.2 Docker Compose Multi-Container Deployment
+
+Production stack orchestration is configured via [docker-compose.yml](file:///c:/Users/premc/Downloads/Password-Module/docker-compose.yml):
+
+```bash
+# Build and launch all services in detached mode
+docker-compose up --build -d
+```
+
+**Services Orchestrated:**
+- `web`: Django WSGI running under Gunicorn on port `8000`.
+- `db`: PostgreSQL 15 database container with persistent volume.
+- `redis`: Redis 7 in-memory cache & Celery message broker.
+- `celery`: Background worker process processing async tasks.
+
+---
+
+### 17.3 Automated CI/CD Pipeline
+
+Continuous Integration is managed via GitHub Actions [.github/workflows/ci.yml](file:///c:/Users/premc/Downloads/Password-Module/.github/workflows/ci.yml):
+- Triggers on all pushes and PRs to `main`.
+- Runs `python manage.py check` and Django unit test suites.
+- Executes `npm run build` to verify production frontend bundler integrity.
+
+---
+
+### 17.4 Accessing the System
 
 | URL | Description |
 |-----|-------------|
@@ -1021,5 +1144,5 @@ npm run dev
 
 ---
 
-*Document prepared for South Point School Security Terminal — Password Module v1.0*
+*Document updated for South Point School Security Terminal — Password Module v1.0*  
 *© 2026 South Point School. Guwahati, Assam, India.*
