@@ -1078,21 +1078,6 @@ class EntityViewSet(viewsets.ModelViewSet):
             if Admin.objects.filter(name__iexact=name).exists():
                 return Response({"error": f"Row {idx+1}: '{name}' is registered as an Administrator. Entities cannot have the same name as an administrator."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Check database duplicates
-            if Entity.objects.filter(email__iexact=email).exists():
-                return Response({"error": f"Row {idx+1}: The email address '{email}' is already registered to another entity."}, status=status.HTTP_400_BAD_REQUEST)
-
-            if Entity.objects.filter(phone=phone).exists():
-                return Response({"error": f"Row {idx+1}: The phone number '{phone}' is already registered to another entity."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Check internal duplicates in payload
-        emails = [ent.get('email', '').strip().lower() for ent in data]
-        phones = [ent.get('phone', '').strip() for ent in data]
-        if len(set(emails)) != len(emails):
-            return Response({"error": "Duplicate email addresses detected in your bulk entries. Each entity must have a unique email address."}, status=status.HTTP_400_BAD_REQUEST)
-        if len(set(phones)) != len(phones):
-            return Response({"error": "Duplicate phone numbers detected in your bulk entries. Each entity must have a unique phone number."}, status=status.HTTP_400_BAD_REQUEST)
-
         # 2. Save
         created_entities = []
         for ent in data:

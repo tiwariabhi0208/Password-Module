@@ -473,10 +473,10 @@ export default function App() {
     localStorage.setItem("vault_audit_enabled", JSON.stringify(auditEnabled));
   }, [auditEnabled]);
 
-  // Auto-select first entity email if none is selected
+  // Auto-select first entity if none is selected
   useEffect(() => {
     if (selectedUser === "" && entities.length > 0) {
-      setSelectedUser(entities[0].email);
+      setSelectedUser(entities[0].id || entities[0].email);
     }
   }, [entities, selectedUser]);
 
@@ -1393,7 +1393,7 @@ export default function App() {
   );
 
   const filteredBanks = banks.filter((bank) => {
-    const activeEntity = entities.find(e => e.email === selectedUser);
+    const activeEntity = entities.find(e => e.id === selectedUser || e.email === selectedUser);
     if (activeEntity && bank.entityId && bank.entityId !== activeEntity.id) {
       return false;
     }
@@ -2110,7 +2110,7 @@ export default function App() {
                     ) : (
                       <>
                         {(() => {
-                          const activeEntity = entities.find(e => e.email === selectedUser);
+                          const activeEntity = entities.find(e => e.id === selectedUser || e.email === selectedUser);
                           const activeDisplayName = activeEntity ? activeEntity.name : "Select Entity";
 
                           return (
@@ -2134,12 +2134,12 @@ export default function App() {
                                   <div className="fixed inset-0 z-10" onClick={() => setUserDropdownOpen(false)} />
                                   <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] rounded-xl shadow-xl z-20 py-1 overflow-hidden border border-slate-100 dark:border-slate-800 animate-fade-in-up" style={{ borderColor: BORDER }}>
                                     {entities.map((entity) => {
-                                      const isSelected = entity.email === selectedUser;
+                                      const isSelected = entity.id === selectedUser || entity.email === selectedUser;
                                       return (
                                         <button
                                           key={entity.id}
                                           onClick={() => {
-                                            setSelectedUser(entity.email);
+                                            setSelectedUser(entity.id || entity.email);
                                             setUserDropdownOpen(false);
                                           }}
                                           className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${isSelected ? "bg-[#FBF3F5] dark:bg-[#221015]" : "hover:bg-slate-50 dark:hover:bg-[#202020]"}`}
@@ -2534,8 +2534,8 @@ export default function App() {
                                         await api.delete(`/entities/${entity.id}/`);
                                         setEntities(prev => {
                                           const updated = prev.filter(e => e.id !== entity.id);
-                                          if (selectedUser === entity.email) {
-                                            setSelectedUser(updated.length > 0 ? updated[0].email : "");
+                                          if (selectedUser === entity.id || selectedUser === entity.email) {
+                                            setSelectedUser(updated.length > 0 ? (updated[0].id || updated[0].email) : "");
                                           }
                                           return updated;
                                         });
@@ -2627,71 +2627,6 @@ export default function App() {
                           }
                         }
 
-                        // 3. Check for duplicates within bulkEntities itself (email OR phone match)
-                        let internalEmailConflict = null;
-                        let internalPhoneConflict = null;
-
-                        for (let i = 0; i < bulkEntities.length; i++) {
-                          for (let j = i + 1; j < bulkEntities.length; j++) {
-                            if (bulkEntities[i].email.trim().toLowerCase() === bulkEntities[j].email.trim().toLowerCase()) {
-                              internalEmailConflict = bulkEntities[i].email.trim();
-                            }
-                            if (bulkEntities[i].phone.trim() === bulkEntities[j].phone.trim()) {
-                              internalPhoneConflict = bulkEntities[i].phone.trim();
-                            }
-                          }
-                        }
-
-                        if (internalEmailConflict || internalPhoneConflict) {
-                          const conflictItems = [];
-                          if (internalEmailConflict) conflictItems.push(`Email: ${internalEmailConflict}`);
-                          if (internalPhoneConflict) conflictItems.push(`Phone number: ${internalPhoneConflict}`);
-
-                          setValidationError(
-                            <div className="text-left space-y-2.5">
-                              <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                The following details are found to be matching/common in your bulk entries:
-                              </p>
-                              <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
-                                {conflictItems.map((item, idx) => (
-                                  <li key={idx}>{item}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          );
-                          return;
-                        }
-
-                        // 4. Check for duplicates in existing database (email OR phone match)
-                        for (let i = 0; i < bulkEntities.length; i++) {
-                          const ent = bulkEntities[i];
-                          const email = ent.email.trim().toLowerCase();
-                          const phone = ent.phone.trim();
-
-                          const emailExists = entities.some(ex => ex.email.toLowerCase() === email);
-                          const phoneExists = entities.some(ex => ex.phone === phone);
-
-                          if (emailExists || phoneExists) {
-                            const conflictItems = [];
-                            if (emailExists) conflictItems.push(`Email: ${ent.email}`);
-                            if (phoneExists) conflictItems.push(`Phone number: ${ent.phone}`);
-
-                            setValidationError(
-                              <div className="text-left space-y-2.5">
-                                <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                  The following details for row {i + 1} are found to be matching/common in the database:
-                                </p>
-                                <ul className="list-decimal pl-5 space-y-1.5 font-mono text-[11px] text-[#7A6068] dark:text-slate-400 font-bold">
-                                  {conflictItems.map((item, idx) => (
-                                    <li key={idx}>{item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
-                            return;
-                          }
-                        }
-
                         setEntityConfirmModal({
                           title: "Confirm Bulk Registration",
                           message: `Are you sure you want to register these ${bulkEntities.length} entities?`,
@@ -2707,7 +2642,7 @@ export default function App() {
                               setEntities(prev => {
                                 const updated = [...prev, ...newEntitiesList];
                                 if (selectedUser === "" && updated.length > 0) {
-                                  setSelectedUser(updated[0].email);
+                                  setSelectedUser(updated[0].id || updated[0].email);
                                 }
                                 return updated;
                               });
@@ -3820,7 +3755,7 @@ export default function App() {
           setEditingBank(null);
         }}
         entities={entities}
-        defaultEntityId={entities.find(e => e.email === selectedUser)?.id}
+        defaultEntityId={entities.find(e => e.id === selectedUser || e.email === selectedUser)?.id}
         bankToEdit={editingBank}
         onAdd={handleAddBank}
         onEdit={handleEditBank}
