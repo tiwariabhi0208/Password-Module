@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Shield, Search } from "lucide-react";
+import { X, Shield, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { MAROON, GOLD, BORDER } from "./theme";
 import { getBankLogo } from "./BankCard";
 
@@ -11,11 +11,18 @@ export function AccountSelectorModal({
   onViewDetails
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 4;
   const logoUrl = getBankLogo(bankName);
 
   useEffect(() => {
     setSearchQuery("");
+    setCurrentPage(1);
   }, [isOpen]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -41,6 +48,11 @@ export function AccountSelectorModal({
     return matchesLabel || matchesBranch || matchesHolder || matchesNumber || matchesType;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
@@ -49,7 +61,7 @@ export function AccountSelectorModal({
       }}
     >
       <div
-        className="w-[500px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up flex flex-col max-h-[85vh]"
+        className="w-[520px] max-w-full bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-2xl border animate-fade-in-up flex flex-col max-h-[88vh]"
         style={{ borderColor: BORDER }}
       >
         {/* Header */}
@@ -62,17 +74,17 @@ export function AccountSelectorModal({
               <img
                 src={accounts[0].photo}
                 alt={bankName}
-                className="h-16 w-16 rounded-xl object-contain shrink-0 bg-white"
+                className="h-14 w-14 rounded-xl object-contain shrink-0 bg-white"
               />
             ) : logoUrl ? (
               <img
                 src={logoUrl}
                 alt={bankName}
-                className="h-16 w-auto object-contain shrink-0"
+                className="h-14 w-auto object-contain shrink-0"
               />
             ) : (
               <div
-                className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
+                className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/20 bg-white/10 shadow-inner"
                 style={{ color: GOLD }}
               >
                 <span className="text-base font-black tracking-wider leading-none">
@@ -121,9 +133,9 @@ export function AccountSelectorModal({
         </div>
 
         {/* Content list */}
-        <div className="p-6 overflow-y-auto space-y-3 bg-slate-50/20 dark:bg-[#101010]/20 flex-grow">
+        <div className="p-5 overflow-y-auto space-y-3 bg-slate-50/20 dark:bg-[#101010]/20 flex-grow">
           {filteredAccounts.length > 0 ? (
-            filteredAccounts.map((acc) => {
+            paginatedAccounts.map((acc) => {
               const originalIndex = accounts.findIndex((a) => a.id === acc.id);
               const displayIndex = originalIndex >= 0 ? originalIndex + 1 : 1;
 
@@ -172,8 +184,57 @@ export function AccountSelectorModal({
             </div>
           )}
         </div>
+
+        {/* Footer Pagination Bar */}
+        {filteredAccounts.length > 0 && (
+          <div className="px-6 py-3.5 bg-white dark:bg-[#141414] border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between shrink-0">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              Showing <span className="font-black text-slate-800 dark:text-slate-200">{startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredAccounts.length)}</span> of <span className="font-black text-slate-800 dark:text-slate-200">{filteredAccounts.length}</span> accounts
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202020] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-transparent cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronLeft size={14} /> Prev
+              </button>
+
+              <div className="flex items-center gap-1 px-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    className={`w-7 h-7 rounded-lg text-xs font-extrabold transition-all cursor-pointer border ${
+                      pg === safeCurrentPage
+                        ? "bg-[#7B1535] text-white border-[#7B1535] dark:bg-[#E27D9B] dark:text-[#101010] dark:border-[#E27D9B]"
+                        : "bg-transparent text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#202020]"
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202020] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-transparent cursor-pointer"
+                title="Next Page"
+              >
+                Next <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
 
