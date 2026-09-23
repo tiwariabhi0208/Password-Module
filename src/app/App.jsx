@@ -549,6 +549,12 @@ export default function App() {
             transactionPassword: bank.encrypted_transaction_password
               ? await decryptData(bank.encrypted_transaction_password, activeKey)
               : "",
+            userIdMaker: bank.encrypted_user_id_maker
+              ? await decryptData(bank.encrypted_user_id_maker, activeKey)
+              : "",
+            userIdChecker: bank.encrypted_user_id_checker
+              ? await decryptData(bank.encrypted_user_id_checker, activeKey)
+              : "",
             isDecrypted: true
           };
         } catch (decryptError) {
@@ -568,6 +574,8 @@ export default function App() {
             username: "[Locked]",
             password: "[Locked]",
             transactionPassword: "",
+            userIdMaker: "",
+            userIdChecker: "",
             isDecrypted: false
           };
         }
@@ -790,6 +798,12 @@ export default function App() {
         encrypted_transaction_password: bankData.transactionPassword
           ? await encryptData(bankData.transactionPassword, activeKey)
           : null,
+        encrypted_user_id_maker: bankData.userIdMaker
+          ? await encryptData(bankData.userIdMaker, activeKey)
+          : null,
+        encrypted_user_id_checker: bankData.userIdChecker
+          ? await encryptData(bankData.userIdChecker, activeKey)
+          : null,
         photo_payload: bankData.photoPayload || null
       };
 
@@ -821,6 +835,12 @@ export default function App() {
         encrypted_password: await encryptData(bankData.password, activeKey),
         encrypted_transaction_password: bankData.transactionPassword
           ? await encryptData(bankData.transactionPassword, activeKey)
+          : null,
+        encrypted_user_id_maker: bankData.userIdMaker
+          ? await encryptData(bankData.userIdMaker, activeKey)
+          : null,
+        encrypted_user_id_checker: bankData.userIdChecker
+          ? await encryptData(bankData.userIdChecker, activeKey)
           : null,
         photo_payload: bankData.photoPayload || null
       };

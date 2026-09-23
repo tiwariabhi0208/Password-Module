@@ -817,9 +817,11 @@ If `EMAIL_HOST_USER` is not set (development mode), Django falls back to `consol
 | `encrypted_holder` | TEXT | AES-256-GCM base64 ciphertext |
 | `encrypted_account_number` | TEXT | AES-256-GCM base64 ciphertext |
 | `encrypted_ifsc` | TEXT | AES-256-GCM base64 ciphertext |
-| `encrypted_username` | TEXT | AES-256-GCM base64 ciphertext |
+| `encrypted_username` | TEXT | AES-256-GCM base64 ciphertext (Stores Corporate ID for corporate accounts or Username for retail accounts) |
 | `encrypted_password` | TEXT | AES-256-GCM base64 ciphertext |
 | `encrypted_transaction_password` | TEXT | AES-256-GCM base64 ciphertext (nullable) |
+| `encrypted_user_id_maker` | TEXT | AES-256-GCM base64 ciphertext (nullable, Corporate Banking User ID - Maker) |
+| `encrypted_user_id_checker` | TEXT | AES-256-GCM base64 ciphertext (nullable, Corporate Banking User ID - Checker) |
 | `photo_payload` | TEXT | Base64 encoded photo (max 1MB) — capped to prevent DoS |
 | `created_at` | TIMESTAMP | Auto-set on INSERT |
 | `updated_at` | TIMESTAMP | Auto-updated on every SAVE |

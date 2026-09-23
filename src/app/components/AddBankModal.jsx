@@ -13,6 +13,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
   const [password, setPassword] = useState("");
   const [transactionPassword, setTransactionPassword] = useState("");
   const [accountType, setAccountType] = useState("corporate");
+  const [userIdMaker, setUserIdMaker] = useState("");
+  const [userIdChecker, setUserIdChecker] = useState("");
   const [entityDropdownOpen, setEntityDropdownOpen] = useState(false);
   const [loginTypeDropdownOpen, setLoginTypeDropdownOpen] = useState(false);
   const [photo, setPhoto] = useState(null);
@@ -60,6 +62,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setPassword(bankToEdit.password || "");
         setTransactionPassword(bankToEdit.transactionPassword || "");
         setAccountType(bankToEdit.accountType || "corporate");
+        setUserIdMaker(bankToEdit.userIdMaker || "");
+        setUserIdChecker(bankToEdit.userIdChecker || "");
         setPhoto(bankToEdit.photo || null);
         setPhotoError("");
       } else {
@@ -77,6 +81,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         setPassword("");
         setTransactionPassword("");
         setAccountType("corporate");
+        setUserIdMaker("");
+        setUserIdChecker("");
         setPhoto(null);
         setPhotoError("");
       }
@@ -108,6 +114,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         password,
         transactionPassword,
         accountType,
+        userIdMaker: accountType === "corporate" ? userIdMaker : "",
+        userIdChecker: accountType === "corporate" ? userIdChecker : "",
         photo
       });
     } else {
@@ -127,6 +135,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
         password,
         transactionPassword,
         accountType,
+        userIdMaker: accountType === "corporate" ? userIdMaker : "",
+        userIdChecker: accountType === "corporate" ? userIdChecker : "",
         color,
         photo
       });
@@ -141,6 +151,8 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
     setPassword("");
     setTransactionPassword("");
     setAccountType("corporate");
+    setUserIdMaker("");
+    setUserIdChecker("");
     onClose();
   };
 
@@ -329,16 +341,16 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                 </div>
               </div>
 
-              {/* Row 4: Net Banking Username & Password */}
+              {/* Row 4: Net Banking Username / Corporate ID & Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
-                    Username
+                    {accountType === "corporate" ? "Corporate ID" : "Username"}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Corporate Username"
+                    placeholder={accountType === "corporate" ? "Corporate ID" : "Username"}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
@@ -359,6 +371,37 @@ export function AddBankModal({ isOpen, onClose, onAdd, onEdit, bankToEdit, entit
                   />
                 </div>
               </div>
+
+              {/* Conditional Row: User ID (Maker) & User ID (Checker) for Corporate Banking Login */}
+              {accountType === "corporate" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 animate-fade-in">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                      User ID (Maker) <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="User ID (Maker)"
+                      value={userIdMaker}
+                      onChange={(e) => setUserIdMaker(e.target.value)}
+                      className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7A6068] dark:text-slate-400 mb-1">
+                      User ID (Checker) <span className="text-slate-400 dark:text-slate-500 font-medium font-sans text-[10px] lowercase italic">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="User ID (Checker)"
+                      value={userIdChecker}
+                      onChange={(e) => setUserIdChecker(e.target.value)}
+                      className="w-full h-10 px-3 text-xs sm:text-sm border bg-[#FDFAFB] dark:bg-[#181818] border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-[#7B1535] dark:focus:border-[#E27D9B] transition-all font-semibold"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Row 5: Account Login Type & Transaction Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

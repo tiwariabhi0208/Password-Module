@@ -216,6 +216,8 @@ class EncryptedBank(models.Model):
     encrypted_username = models.TextField()
     encrypted_password = models.TextField()
     encrypted_transaction_password = models.TextField(blank=True, null=True)
+    encrypted_user_id_maker = models.TextField(blank=True, null=True)
+    encrypted_user_id_checker = models.TextField(blank=True, null=True)
 
     # Photo stored as base64 text -- capped at 1MB to prevent disk flooding (DoS)
     photo_payload = models.TextField(

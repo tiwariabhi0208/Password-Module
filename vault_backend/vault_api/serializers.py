@@ -69,6 +69,7 @@ class EncryptedBankSerializer(serializers.ModelSerializer):
             'id', 'entity', 'name', 'initial', 'color', 'account_type', 'branch_name',
             'encrypted_holder', 'encrypted_account_number', 'encrypted_ifsc',
             'encrypted_username', 'encrypted_password', 'encrypted_transaction_password',
+            'encrypted_user_id_maker', 'encrypted_user_id_checker',
             'photo_payload', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'created_at', 'updated_at')

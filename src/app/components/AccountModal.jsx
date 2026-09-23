@@ -146,7 +146,13 @@ export function AccountModal({ bank, activeAdmin, onClose, onDelete, onEdit }) {
             <ModalDetailRow label="Account Number" value={bank.accountNumber} isMonospaced={true} />
             <ModalDetailRow label="IFSC Code" value={bank.ifsc} isMonospaced={true} />
             <ModalDetailRow label="Branch Name" value={bank.branchName} />
-            <ModalDetailRow label="Net Banking Username" value={bank.username} isMonospaced={true} />
+            <ModalDetailRow label={bank.accountType === "corporate" ? "Corporate ID" : "Net Banking Username"} value={bank.username} isMonospaced={true} />
+            {bank.accountType === "corporate" && bank.userIdMaker && (
+              <ModalDetailRow label="User ID (Maker)" value={bank.userIdMaker} isMonospaced={true} />
+            )}
+            {bank.accountType === "corporate" && bank.userIdChecker && (
+              <ModalDetailRow label="User ID (Checker)" value={bank.userIdChecker} isMonospaced={true} />
+            )}
             <ModalDetailRow label="Password" value={bank.password} isMonospaced={true} isPassword={true} />
             {bank.transactionPassword && (
               <ModalDetailRow label="Transaction Password" value={bank.transactionPassword} isMonospaced={true} isPassword={true} />
