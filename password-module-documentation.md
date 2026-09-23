@@ -15,7 +15,7 @@
 5. [Frontend Component Architecture](#5-frontend-component-architecture)
 6. [Cryptography — How Encryption Works](#6-cryptography--how-encryption-works)
 7. [Backend — Django REST Framework](#7-backend--django-rest-framework)
-8. [REST API Reference](#8-rest-api-reference)
+8. [REST API Reference](#8-rest-api -reference)
 9. [Email System — When & Why You Get Emails](#9-email-system--when--why-you-get-emails)
 10. [Database — Models & Schema](#10-database--models--schema)
 11. [JWT Authentication & Token Security](#11-jwt-authentication--token-security)

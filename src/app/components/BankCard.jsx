@@ -96,7 +96,7 @@ export function BankCard({ accounts, onClick, onConfirmDelete, onEdit, activeAdm
                 {bank.name}
               </span>
               <span className="text-[8.5px] sm:text-[9.5px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
-                OFFICIAL BANK CARD
+                BANK ACCOUNT
               </span>
             </div>
           </div>
